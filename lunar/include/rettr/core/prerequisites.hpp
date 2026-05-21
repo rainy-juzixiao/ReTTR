@@ -474,4 +474,8 @@ static_assert(
 #include <meta>
 #endif
 
+namespace rettr {
+    using byte_t = unsigned char;
+}
+
 #endif

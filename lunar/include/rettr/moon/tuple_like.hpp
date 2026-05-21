@@ -15,12 +15,17 @@
  */
 #ifndef RETTR_MOON_TUPLE_LIKE_HPP
 #define RETTR_MOON_TUPLE_LIKE_HPP
+
+// NOLINTBEGIN, clang-format off
+
 #include <rettr/core/prerequisites.hpp>
 #include <rettr/core/marco_gen.hpp>
 #include <rettr/typeinfo.hpp>
 #include <tuple>
 #include <variant>
 #include <functional>
+
+// NOLINTEND, clang-format on
 
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
 #include <rettr/annotations/moon.hpp>

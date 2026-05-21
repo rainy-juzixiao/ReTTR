@@ -2162,6 +2162,90 @@ namespace rettr::helper {
     inline constexpr bool is_contiguous_iterator_v = is_contiguous_iterator<T>::value;
 
     /**
+ * @brief Variable template for checking if a type is an input iterator.
+ *        Input iterators support dereference and pre-increment.
+ *
+ *        检查类型是否为输入迭代器的变量模板。
+ *        输入迭代器支持解引用和前自增。
+ *
+ * @tparam It The type to check
+ *            要检查的类型
+ */
+    template<typename It>
+    RETTR_CONSTEXPR_BOOL is_input_iterator_v = helper::has_operator_deref_v<It> && helper::has_operator_preinc_v<It>;
+
+    /**
+     * @brief Variable template for checking if a type is an output iterator (primary template).
+     *        Output iterators support dereference as lvalue.
+     *
+     *        检查类型是否为输出迭代器的变量模板（主模板）。
+     *        输出迭代器支持解引用作为左值。
+     *
+     * @tparam It The type to check
+     *            要检查的类型
+     */
+    template<typename It, typename = void>
+    RETTR_CONSTEXPR_BOOL is_output_iterator_v = false;
+
+    /**
+     * @brief Specialization that checks for lvalue reference from dereference.
+     *        检查解引用是否产生左值引用的特化。
+     *
+     * @tparam It The type to check
+     *            要检查的类型
+     */
+    template<typename It>
+    RETTR_CONSTEXPR_BOOL
+    is_output_iterator_v<It, std::enable_if_t<helper::has_operator_deref_v<It> &&
+                                              std::is_lvalue_reference_v<decltype(*std::declval<It &>())>> > =
+            false;
+
+    /**
+     * @brief Variable template for checking if a type is a forward iterator.
+     *        Forward iterators are input iterators that are copyable, default constructible,
+     *        and support multiple passes.
+     *
+     *        检查类型是否为前向迭代器的变量模板。
+     *        前向迭代器是可拷贝、可默认构造的输入迭代器，支持多次遍历。
+     *
+     * @tparam It The type to check
+     *            要检查的类型
+     */
+    template<typename It>
+    RETTR_CONSTEXPR_BOOL is_forward_iterator_v =
+            is_input_iterator_v<It> && std::is_copy_constructible_v<It> && std::is_copy_assignable_v<It> &&
+            std::is_default_constructible_v<It>;
+
+    /**
+     * @brief Variable template for checking if a type is a bidirectional iterator.
+     *        Bidirectional iterators support decrement in addition to forward iterator operations.
+     *
+     *        检查类型是否为双向迭代器的变量模板。
+     *        双向迭代器在前向迭代器操作的基础上支持自减。
+     *
+     * @tparam It The type to check
+     *            要检查的类型
+     */
+    template<typename It>
+    RETTR_CONSTEXPR_BOOL is_bidirectional_iterator_v = is_forward_iterator_v<It> && helper::has_operator_predec_v<It>;
+
+    /**
+     * @brief Variable template for checking if a type is a random access iterator.
+     *        Random access iterators support addition, indexing, and comparison operations.
+     *
+     *        检查类型是否为随机访问迭代器的变量模板。
+     *        随机访问迭代器支持加法、索引和比较操作。
+     *
+     * @tparam It The type to check
+     *            要检查的类型
+     */
+    template<typename It>
+    RETTR_CONSTEXPR_BOOL is_random_access_iterator_v =
+            is_bidirectional_iterator_v<It> && helper::has_operator_addition_v<It> &&
+            helper::has_operator_index_v<It> && helper::has_operator_lt_v<It>;
+
+
+    /**
 * @brief Variable template for checking if a type is complete.
 *        Primary template defaults to false.
 *
@@ -2249,7 +2333,7 @@ namespace rettr::helper {
      * @tparam Ty Type (array or non-array)
      *            类型（数组或非数组）
      */
-    template <typename Ty>
+    template<typename Ty>
     static RETTR_INLINE_CONSTEXPR std::size_t array_size_v = 0;
 
     /**
@@ -2264,7 +2348,7 @@ namespace rettr::helper {
      * @tparam N Array size
      *            数组大小
      */
-    template <typename Ty, std::size_t N>
+    template<typename Ty, std::size_t N>
     static RETTR_INLINE_CONSTEXPR std::size_t array_size_v<Ty[N]> = N;
 
     /**
@@ -2277,9 +2361,609 @@ namespace rettr::helper {
      * @tparam Ty Type (array or non-array)
      *            类型（可以是数组或非数组）
      */
-    template <typename Ty>
-    struct array_size : std::integral_constant<std::size_t, array_size_v<Ty>> {};
+    template<typename Ty>
+    struct array_size : std::integral_constant<std::size_t, array_size_v<Ty> > {
+    };
+}
 
+namespace rettr::helper {
+    /**
+     * @brief Variable template for checking if a container has a nested `iterator` type.
+     *        检查容器是否具有嵌套的 `iterator` 类型的变量模板。
+     *
+     * @tparam Ty The container type to check
+     *            要检查的容器类型
+     */
+    template<typename Ty, typename = void>
+    RETTR_CONSTEXPR_BOOL has_iterator_v = false;
+
+    /**
+     * @brief Specialization that detects the presence of `Ty::iterator`.
+     *        检测是否存在 `Ty::iterator` 的特化。
+     *
+     * @tparam Ty The container type that provides `iterator`
+     *            提供 `iterator` 的容器类型
+     */
+    template<typename Ty>
+    RETTR_CONSTEXPR_BOOL has_iterator_v<Ty, std::void_t<typename helper::remove_cvref_t<Ty>::iterator> > = true;
+
+    /**
+     * @brief Variable template for checking if a container has a nested `const_iterator` type.
+     *        检查容器是否具有嵌套的 `const_iterator` 类型的变量模板。
+     *
+     * @tparam Ty The container type to check
+     *            要检查的容器类型
+     */
+    template<typename Ty, typename = void>
+    RETTR_CONSTEXPR_BOOL has_const_iterator_v = false;
+
+    /**
+     * @brief Specialization that detects the presence of `Ty::const_iterator`.
+     *        检测是否存在 `Ty::const_iterator` 的特化。
+     *
+     * @tparam Ty The container type that provides `const_iterator`
+     *            提供 `const_iterator` 的容器类型
+     */
+    template<typename Ty>
+    RETTR_CONSTEXPR_BOOL has_const_iterator_v<Ty, std::void_t<typename helper::remove_cvref_t<Ty>::const_iterator> > =
+            true;
+}
+
+namespace rettr::helper {
+
+    /**
+     * @brief Adds a const lvalue reference to a type.
+     *        向类型添加const左值引用。
+     *
+     * @tparam Ty The type to modify
+     *            要修改的类型
+     */
+    template <typename Ty>
+    struct add_const_lvalue_ref {
+        using type = std::add_lvalue_reference_t<std::add_const_t<std::remove_reference_t<Ty>>>;
+    };
+
+    /**
+     * @brief Alias template for add_const_lvalue_ref.
+     *        add_const_lvalue_ref 的别名模板。
+     *
+     * @tparam Ty The type to modify
+     *            要修改的类型
+     */
+    template <typename Ty>
+    using add_const_lvalue_ref_t = typename add_const_lvalue_ref<Ty>::type;
+
+    /**
+     * @brief Adds a const rvalue reference to a type.
+     *        向类型添加const右值引用。
+     *
+     * @tparam Ty The type to modify
+     *            要修改的类型
+     */
+    template <typename Ty>
+    struct add_const_rvalue_ref {
+        using type = std::add_rvalue_reference_t<std::add_const_t<typename std::remove_reference_t<Ty>>>;
+    };
+
+    /**
+     * @brief Alias template for add_const_rvalue_ref.
+     *        add_const_rvalue_ref 的别名模板。
+     *
+     * @tparam Ty The type to modify
+     *            要修改的类型
+     */
+    template <typename Ty>
+    using add_const_rvalue_ref_t = typename add_const_rvalue_ref<Ty>::type;
+}
+
+namespace rettr::helper {
+    /**
+     * @brief Type trait to check if standard hasher is available for a type.
+     *        检查类型的标准哈希器是否可用的类型特性。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template<typename Ty, typename = void>
+    struct is_support_standard_hasher_available : std::false_type {
+    };
+
+    /**
+     * @brief Specialization that detects if std::hash<Ty> is callable.
+     *        检测 std::hash<Ty> 是否可调用的特化。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template<typename Ty>
+    struct is_support_standard_hasher_available<
+                Ty, std::void_t<decltype(std::declval<std::hash<Ty> >()(std::declval<Ty>()))> >
+            : std::true_type {
+    };
+
+    /**
+ * @brief Type template for checking if a type is map-like (has key_type and mapped_type).
+ *        检查类型是否为类似映射的类型（具有 key_type 和 mapped_type）的类型模板。
+ *
+ * @tparam T The type to check
+ *           要检查的类型
+ */
+    template<typename, typename = void>
+    struct is_map_like : std::false_type {
+    };
+
+    /**
+     * @brief Specialization that detects key_type and mapped_type members.
+     *        检测 key_type 和 mapped_type 成员的特化。
+     *
+     * @tparam T The type to check
+     *           要检查的类型
+     */
+    template<typename T>
+    struct is_map_like<T, std::void_t<typename T::key_type, typename T::mapped_type> > : std::true_type {
+    };
+
+    /**
+     * @brief Variable template for checking if a type is map-like.
+     *        检查类型是否为类似映射的类型的变量模板。
+     *
+     * @tparam T The type to check
+     *           要检查的类型
+     */
+    template<typename T>
+    inline constexpr bool is_map_like_v = is_map_like<T>::value;
+}
+
+namespace rettr::helper {
+    /**
+     * @brief Variable template for checking if a type has a nested `value_type` member.
+     *        检查类型是否具有嵌套的 `value_type` 成员的变量模板。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template <typename Ty, typename = void>
+    RETTR_CONSTEXPR_BOOL has_value_type_v = false;
+
+    /**
+     * @brief Specialization that detects the presence of Ty::value_type.
+     *        检测是否存在 Ty::value_type 的特化。
+     *
+     * @tparam Ty The type that provides value_type
+     *            提供 value_type 的类型
+     */
+    template <typename Ty>
+    RETTR_CONSTEXPR_BOOL has_value_type_v<Ty, std::void_t<typename Ty::value_type>> = true;
+
+    /**
+     * @brief Type template for checking if a type has a nested `value_type` member.
+     *        检查类型是否具有嵌套的 `value_type` 成员的类型模板。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template <typename Ty>
+    struct has_value_type : std::bool_constant<has_value_type_v<Ty>> {};
+
+    /**
+     * @brief Variable template for checking if a type has a nested `size_type` member.
+     *        检查类型是否具有嵌套的 `size_type` 成员的变量模板。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template <typename Ty, typename = void>
+    RETTR_CONSTEXPR_BOOL has_size_type_v = false;
+
+    /**
+     * @brief Specialization that detects the presence of Ty::size_type.
+     *        检测是否存在 Ty::size_type 的特化。
+     *
+     * @tparam Ty The type that provides size_type
+     *            提供 size_type 的类型
+     */
+    template <typename Ty>
+    RETTR_CONSTEXPR_BOOL has_size_type_v<Ty, std::void_t<typename Ty::size_type>> = true;
+
+    /**
+     * @brief Type template for checking if a type has a nested `size_type` member.
+     *        检查类型是否具有嵌套的 `size_type` 成员的类型模板。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template <typename Ty>
+    struct has_size_type : std::bool_constant<has_size_type_v<Ty>> {};
+
+
+    /**
+     * @brief Variable template for checking if a type has a nested `difference_type` member.
+     *        检查类型是否具有嵌套的 `difference_type` 成员的变量模板。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template <typename Ty, typename = void>
+    RETTR_CONSTEXPR_BOOL has_difference_type_v = false;
+
+    /**
+     * @brief Specialization that detects the presence of Ty::difference_type.
+     *        检测是否存在 Ty::difference_type 的特化。
+     *
+     * @tparam Ty The type that provides difference_type
+     *            提供 difference_type 的类型
+     */
+    template <typename Ty>
+    RETTR_CONSTEXPR_BOOL has_difference_type_v<Ty, std::void_t<typename Ty::difference_type>> = true;
+
+    /**
+     * @brief Type template for checking if a type has a nested `difference_type` member.
+     *        检查类型是否具有嵌套的 `difference_type` 成员的类型模板。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template <typename Ty>
+    struct has_difference_type : std::bool_constant<has_difference_type_v<Ty>> {};
+
+    /**
+     * @brief Variable template for checking if a type has a nested `reference` member.
+     *        检查类型是否具有嵌套的 `reference` 成员的变量模板。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template <typename Ty, typename = void>
+    RETTR_CONSTEXPR_BOOL has_reference_v = false;
+
+    /**
+     * @brief Specialization that detects the presence of Ty::reference.
+     *        检测是否存在 Ty::reference 的特化。
+     *
+     * @tparam Ty The type that provides reference
+     *            提供 reference 的类型
+     */
+    template <typename Ty>
+    RETTR_CONSTEXPR_BOOL has_reference_v<Ty, std::void_t<typename Ty::reference>> = true;
+
+    /**
+     * @brief Type template for checking if a type has a nested `reference` member.
+     *        检查类型是否具有嵌套的 `reference` 成员的类型模板。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template <typename Ty>
+    struct has_reference : std::bool_constant<has_reference_v<Ty>> {};
+
+
+    /**
+     * @brief Variable template for checking if a type has a nested `const_reference` member.
+     *        检查类型是否具有嵌套的 `const_reference` 成员的变量模板。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template <typename Ty, typename = void>
+    RETTR_CONSTEXPR_BOOL has_const_reference_v = false;
+
+    /**
+     * @brief Specialization that detects the presence of Ty::const_reference.
+     *        检测是否存在 Ty::const_reference 的特化。
+     *
+     * @tparam Ty The type that provides const_reference
+     *            提供 const_reference 的类型
+     */
+    template <typename Ty>
+    RETTR_CONSTEXPR_BOOL has_const_reference_v<Ty, std::void_t<typename Ty::const_reference>> = true;
+
+    /**
+     * @brief Type template for checking if a type has a nested `const_reference` member.
+     *        检查类型是否具有嵌套的 `const_reference` 成员的类型模板。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template <typename Ty>
+    struct has_const_reference : std::bool_constant<has_const_reference_v<Ty>> {};
+
+    /**
+     * @brief Variable template for checking if a type has a nested `pointer` member.
+     *        检查类型是否具有嵌套的 `pointer` 成员的变量模板。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template <typename Ty, typename = void>
+    RETTR_CONSTEXPR_BOOL has_pointer_v = false;
+
+    /**
+     * @brief Specialization that detects the presence of Ty::pointer.
+     *        检测是否存在 Ty::pointer 的特化。
+     *
+     * @tparam Ty The type that provides pointer
+     *            提供 pointer 的类型
+     */
+    template <typename Ty>
+    RETTR_CONSTEXPR_BOOL has_pointer_v<Ty, std::void_t<typename Ty::pointer>> = true;
+
+    /**
+     * @brief Type template for checking if a type has a nested `pointer` member.
+     *        检查类型是否具有嵌套的 `pointer` 成员的类型模板。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template <typename Ty>
+    struct has_pointer : std::bool_constant<has_pointer_v<Ty>> {};
+
+    /**
+     * @brief Variable template for checking if a type has a nested `const_pointer` member.
+     *        检查类型是否具有嵌套的 `const_pointer` 成员的变量模板。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template <typename Ty, typename = void>
+    RETTR_CONSTEXPR_BOOL has_const_pointer_v = false;
+
+    /**
+     * @brief Specialization that detects the presence of Ty::const_pointer.
+     *        检测是否存在 Ty::const_pointer 的特化。
+     *
+     * @tparam Ty The type that provides const_pointer
+     *            提供 const_pointer 的类型
+     */
+    template <typename Ty>
+    RETTR_CONSTEXPR_BOOL has_const_pointer_v<Ty, std::void_t<typename Ty::const_pointer>> = true;
+
+    /**
+     * @brief Type template for checking if a type has a nested `const_pointer` member.
+     *        检查类型是否具有嵌套的 `const_pointer` 成员的类型模板。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template <typename Ty>
+    struct has_const_pointer : std::bool_constant<has_const_pointer_v<Ty>> {};
+
+    /**
+     * @brief Variable template for checking if a type has a nested `iterator` type.
+     *        检查类型是否具有嵌套的 `iterator` 类型的变量模板。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template <typename Ty, typename = void>
+    RETTR_CONSTEXPR_BOOL has_iterator_type_v = false;
+
+    /**
+     * @brief Specialization that detects the presence of Ty::iterator.
+     *        检测是否存在 Ty::iterator 的特化。
+     *
+     * @tparam Ty The type that provides iterator
+     *            提供 iterator 的类型
+     */
+    template <typename Ty>
+    RETTR_CONSTEXPR_BOOL has_iterator_type_v<Ty, std::void_t<typename Ty::iterator>> = true;
+
+    /**
+     * @brief Type template for checking if a type has a nested `iterator` type.
+     *        检查类型是否具有嵌套的 `iterator` 类型的类型模板。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template <typename Ty>
+    struct has_iterator_type : std::bool_constant<has_iterator_type_v<Ty>> {};
+
+    /**
+     * @brief Variable template for checking if a type has a nested `const_iterator` type.
+     *        检查类型是否具有嵌套的 `const_iterator` 类型的变量模板。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template <typename Ty, typename = void>
+    RETTR_CONSTEXPR_BOOL has_const_iterator_type_v = false;
+
+    /**
+     * @brief Specialization that detects the presence of Ty::const_iterator.
+     *        检测是否存在 Ty::const_iterator 的特化。
+     *
+     * @tparam Ty The type that provides const_iterator
+     *            提供 const_iterator 的类型
+     */
+    template <typename Ty>
+    RETTR_CONSTEXPR_BOOL has_const_iterator_type_v<Ty, std::void_t<typename Ty::const_iterator>> = true;
+
+    /**
+     * @brief Type template for checking if a type has a nested `const_iterator` type.
+     *        检查类型是否具有嵌套的 `const_iterator` 类型的类型模板。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template <typename Ty>
+    struct has_const_iterator_type : std::bool_constant<has_const_iterator_type_v<Ty>> {};
+
+    /**
+     * @brief Variable template for checking if a type has a nested `reverse_iterator` type.
+     *        检查类型是否具有嵌套的 `reverse_iterator` 类型的变量模板。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template <typename Ty, typename = void>
+    RETTR_CONSTEXPR_BOOL has_reverse_iterator_v = false;
+
+    /**
+     * @brief Specialization that detects the presence of Ty::reverse_iterator.
+     *        检测是否存在 Ty::reverse_iterator 的特化。
+     *
+     * @tparam Ty The type that provides reverse_iterator
+     *            提供 reverse_iterator 的类型
+     */
+    template <typename Ty>
+    RETTR_CONSTEXPR_BOOL has_reverse_iterator_v<Ty, std::void_t<typename Ty::reverse_iterator>> = true;
+
+    /**
+     * @brief Type template for checking if a type has a nested `reverse_iterator` type.
+     *        检查类型是否具有嵌套的 `reverse_iterator` 类型的类型模板。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template <typename Ty>
+    struct has_reverse_iterator : std::bool_constant<has_reverse_iterator_v<Ty>> {};
+
+    /**
+     * @brief Variable template for checking if a type has a nested `const_reverse_iterator` type.
+     *        检查类型是否具有嵌套的 `const_reverse_iterator` 类型的变量模板。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template <typename Ty, typename = void>
+    RETTR_CONSTEXPR_BOOL has_const_reverse_iterator_v = false;
+
+    /**
+     * @brief Specialization that detects the presence of Ty::const_reverse_iterator.
+     *        检测是否存在 Ty::const_reverse_iterator 的特化。
+     *
+     * @tparam Ty The type that provides const_reverse_iterator
+     *            提供 const_reverse_iterator 的类型
+     */
+    template <typename Ty>
+    RETTR_CONSTEXPR_BOOL has_const_reverse_iterator_v<Ty, std::void_t<typename Ty::const_reverse_iterator>> =
+        true;
+
+    /**
+     * @brief Type template for checking if a type has a nested `const_reverse_iterator` type.
+     *        检查类型是否具有嵌套的 `const_reverse_iterator` 类型的类型模板。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template <typename Ty>
+    struct has_const_reverse_iterator : std::bool_constant<has_const_reverse_iterator_v<Ty>> {};
+
+    /**
+     * @brief Variable template for checking if a type has a nested `key_type` member.
+     *        检查类型是否具有嵌套的 `key_type` 成员的变量模板。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template <typename Ty, typename = void>
+    RETTR_CONSTEXPR_BOOL has_key_type_v = false;
+
+    /**
+     * @brief Specialization that detects the presence of Ty::key_type.
+     *        检测是否存在 Ty::key_type 的特化。
+     *
+     * @tparam Ty The type that provides key_type
+     *            提供 key_type 的类型
+     */
+    template <typename Ty>
+    RETTR_CONSTEXPR_BOOL has_key_type_v<Ty, std::void_t<typename Ty::key_type>> = true;
+
+    /**
+     * @brief Type template for checking if a type has a nested `key_type` member.
+     *        检查类型是否具有嵌套的 `key_type` 成员的类型模板。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template <typename Ty>
+    struct has_key_type : std::bool_constant<has_key_type_v<Ty>> {};
+
+    /**
+     * @brief Variable template for checking if a type has a nested `allocator_type` member.
+     *        检查类型是否具有嵌套的 `allocator_type` 成员的变量模板。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template <typename Ty, typename = void>
+    RETTR_CONSTEXPR_BOOL has_allocator_type_v = false;
+
+    /**
+     * @brief Specialization that detects the presence of Ty::allocator_type.
+     *        检测是否存在 Ty::allocator_type 的特化。
+     *
+     * @tparam Ty The type that provides allocator_type
+     *            提供 allocator_type 的类型
+     */
+    template <typename Ty>
+    RETTR_CONSTEXPR_BOOL has_allocator_type_v<Ty, std::void_t<typename Ty::allocator_type>> = true;
+
+    /**
+     * @brief Type template for checking if a type has a nested `allocator_type` member.
+     *        检查类型是否具有嵌套的 `allocator_type` 成员的类型模板。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template <typename Ty>
+    struct has_allocator_type : std::bool_constant<has_allocator_type_v<Ty>> {};
+
+    /**
+     * @brief Variable template for checking if a type has a nested `char_type` member.
+     *        检查类型是否具有嵌套的 `char_type` 成员的变量模板。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template <typename Ty, typename = void>
+    RETTR_CONSTEXPR_BOOL has_char_type_v = false;
+
+    /**
+     * @brief Specialization that detects the presence of Ty::char_type.
+     *        检测是否存在 Ty::char_type 的特化。
+     *
+     * @tparam Ty The type that provides char_type
+     *            提供 char_type 的类型
+     */
+    template <typename Ty>
+    RETTR_CONSTEXPR_BOOL has_char_type_v<Ty, std::void_t<typename Ty::char_type>> = true;
+
+    /**
+     * @brief Type template for checking if a type has a nested `char_type` member.
+     *        检查类型是否具有嵌套的 `char_type` 成员的类型模板。
+     *
+     * @tparam Ty The type to check
+     *            要检查的类型
+     */
+    template <typename Ty>
+    struct has_char_type : std::bool_constant<has_char_type_v<Ty>> {};
+
+
+    /**
+     * @brief Variable template for checking if a type is a pointer reference (primary template).
+     *        Checks whether the type is an lvalue or rvalue reference to a pointer.
+     *
+     *        判断类型是否为指针引用的变量模板（主模板）。
+     *        检查类型是否为指向指针的左值或右值引用。
+     *
+     * @tparam Ty Type to check
+     *            要检查的类型
+     */
+    template <typename Ty>
+    RETTR_CONSTEXPR_BOOL is_pointer_reference_v = false;
+
+    /**
+     * @brief Variable template for checking if a type is a pointer reference (lvalue pointer reference specialization).
+     *        Specialization for lvalue references to pointers.
+     *
+     *        判断类型是否为指针引用的变量模板（左值指针引用特化）。
+     *        指向指针的左值引用特化。
+     *
+     * @tparam Ty The type pointed to
+     *            指针指向的类型
+     */
+    template <typename Ty>
+    RETTR_CONSTEXPR_BOOL is_pointer_reference_v<Ty *&> = true;
 }
 
 #endif
