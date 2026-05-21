@@ -15,8 +15,9 @@ namespace rettr {
      * @tparam Template The type to examine
      *                  要检查的类型
      */
-    template <typename Template>
-    struct template_traits : std::false_type {};
+    template<typename Template>
+    struct template_traits : std::false_type {
+    };
 
     /**
      * @brief Specialization for actual template instantiations.
@@ -30,8 +31,8 @@ namespace rettr {
      * @tparam Types The template arguments
      *               模板参数
      */
-    template <template <typename...> typename Template, typename... Types>
-    struct template_traits<Template<Types...>> : std::true_type {
+    template<template <typename...> typename Template, typename... Types>
+    struct template_traits<Template<Types...> > : std::true_type {
         /**
          * @brief Type list containing all template arguments.
          *        包含所有模板参数的类型列表。
@@ -46,7 +47,7 @@ namespace rettr {
      * @tparam Ty The type to check
      *            要检查的类型
      */
-    template <typename Ty>
+    template<typename Ty>
     RETTR_CONSTEXPR_BOOL is_template_v = template_traits<Ty>::value;
 
     /**
@@ -56,9 +57,43 @@ namespace rettr {
      * @tparam Ty The type to check
      *            要检查的类型
      */
-    template <typename Ty>
-    struct is_template : std::bool_constant<is_template_v<Ty>> {};
-}
+    template<typename Ty>
+    struct is_template : std::bool_constant<is_template_v<Ty> > {
+    };
 
+    /**
+ * @brief Variable template for checking if a type is a specialization of a template.
+ *        Detects whether Type is an instantiation of Template.
+ *
+ *        检索类型是否具有特化的变量模板。
+ *        检测 Type 是否为 Template 的实例化。
+ *
+ * @tparam Type The type to check
+ *              要检查的类型
+ * @tparam Template The template to check against
+ *                  要检查的特化模板
+ */
+    template<typename Type, template <typename...> typename Template>
+    RETTR_CONSTEXPR_BOOL is_specialization_v = false;
+
+    template<template <typename...> typename Template, typename... Types>
+    RETTR_CONSTEXPR_BOOL is_specialization_v<Template<Types...>, Template> = true;
+
+    /**
+     * @brief Type template for checking if a type is a specialization of a template.
+     *        Inherits from bool_constant based on is_specialization_v.
+     *
+     *        检索类型是否具有特化的类型模板。
+     *        基于 is_specialization_v 继承自 bool_constant。
+     *
+     * @tparam Type The type to check
+     *              要检查的类型
+     * @tparam Template The template to check against
+     *                  要检查的特化模板
+     */
+    template<typename Type, template <typename...> typename Template>
+    struct is_specialization : std::bool_constant<is_specialization_v<Type, Template> > {
+    };
+}
 
 #endif
