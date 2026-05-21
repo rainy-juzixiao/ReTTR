@@ -27,6 +27,8 @@
 #include <string_view>
 #include <utility>
 #include <memory>
+#include <limits>
+#include <stdexcept>
 
 #ifdef __linux__
 #include <csignal>

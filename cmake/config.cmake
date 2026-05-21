@@ -24,7 +24,7 @@ if (CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64|ARM64)$")
     message(STATUS "Target architecture is ARM64")
 endif ()
 
-rainy_load_flodar_files("${PROJECT_SOURCE_DIR}/lunar/sources" ".cpp" RETTR_FILES_LIST)
+rettr_load_flodar_files("${PROJECT_SOURCE_DIR}/lunar/sources" ".cpp" RETTR_FILES_LIST)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(rettr_libraryname "rettr-debug-package")
