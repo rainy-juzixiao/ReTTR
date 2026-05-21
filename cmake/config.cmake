@@ -1,0 +1,291 @@
+#                                 Apache License
+#                           Version 2.0, January 2004
+#                        http://www.apache.org/licenses/
+#
+#   Copyright 2026 rainy-juzixiao
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+message("Checking compiler...")
+RAINY_GET_CXX_COMPILER_ID(COMPILER_ID)
+
+set(RAINY_TOOLKIT_CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
+
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64|ARM64)$")
+    message(STATUS "Target architecture is ARM64")
+endif ()
+
+rainy_load_flodar_files("${PROJECT_SOURCE_DIR}/lunar/sources" ".cpp" RETTR_FILES_LIST)
+
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(rettr_libraryname "rettr-debug-package")
+else ()
+    set(rettr_libraryname "rettr-release-package")
+endif ()
+
+if (RAINY_BUILD_WITH_DYNAMIC AND NOT RAINY_USE_CROSSCOMPILE)
+    message("Build dynamic library target")
+    add_library(rettr SHARED ${RETTR_FILES_LIST})
+    set_target_properties(rettr PROPERTIES OUTPUT_NAME ${rettr_libraryname})
+    target_compile_definitions(rettr PRIVATE RAINY_DYNAMIC_EXPORTS=1)
+    target_compile_definitions(rettr PUBLIC RAINY_USING_DYNAMIC=1)
+else ()
+    message("Building library target")
+    add_library(rettr STATIC ${RETTR_FILES_LIST})
+    target_compile_definitions(rettr PRIVATE RAINY_DYNAMIC_EXPORTS=0)
+    target_compile_definitions(rettr PUBLIC RAINY_USING_DYNAMIC=0)
+endif ()
+
+set_target_properties(rettr PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+add_definitions(
+        -DRAINY_TOOLKIT_PROJECT_VERSION="${PROJECT_VERSION}"
+        -DRAINY_TOOLKIT_PROJECT_MAJOR=${PROJECT_VERSION_MAJOR}
+        -DRAINY_TOOLKIT_PROJECT_MINOR=${PROJECT_VERSION_MINOR}
+        -DRAINY_TOOLKIT_PROJECT_PATCH=${PROJECT_VERSION_PATCH}
+)
+
+target_include_directories(
+        rettr
+        PUBLIC
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/xaga/include>
+        $<INSTALL_INTERFACE:include>
+)
+
+message(STATUS "The rettr will use ${COMPILER_ID} complier to compile the sources files")
+message(STATUS "Starting configure the library")
+
+if (CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64" AND NOT RAINY_USE_CROSSCOMPILE)
+
+    if (CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT MSVC))
+        message("Detect Clang compiler or GNU compiler")
+        if (RAINY_USE_AVX2_BOOST)
+            message("The rettr will using avx2 boost")
+            add_definitions(-DRAINY_USING_AVX2=1)
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
+        else ()
+            add_definitions(-DRAINY_USING_AVX2=0)
+        endif ()
+    elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND MSVC)
+        message("Detect Clang-MSVC Cli compiler")
+        if (RAINY_USE_AVX2_BOOST)
+            message("The rettr will using avx2 boost")
+            add_definitions(-DRAINY_USING_AVX2=1)
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX2")
+        else ()
+            add_definitions(-DRAINY_USING_AVX2=0)
+        endif ()
+    endif ()
+
+endif ()
+
+if (MSVC AND NOT (CMAKE_CXX_COMPILER_ID MATCHES "Clang") AND NOT RAINY_USE_CROSSCOMPILE)
+    message("Detect MSVC compiler")
+    if (RAINY_CAN_USE_AVX2)
+        message("The rettr will using avx2 boost")
+        add_definitions(-DRAINY_USING_AVX2=1)
+        add_compile_options(/arch:AVX2)
+    else ()
+        add_definitions(-DRAINY_USING_AVX2=0)
+    endif ()
+
+    if (NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        if (RAINY_USING_UTF8_INPUT_FOR_MSVC)
+            message("Using UTF-8 for input encoding.")
+            target_compile_options(rettr PUBLIC /source-charset:utf-8)
+        else ()
+            message("Using GBK for input encoding.")
+            target_compile_options(rettr PUBLIC /execution-charset:gbk)
+        endif ()
+
+        if (RAINY_USING_UTF8_OUTPUT_FOR_MSVC)
+            message("Using UTF-8 for output encoding.")
+            target_compile_options(rettr PUBLIC /source-charset:utf-8)
+        else ()
+            message("Using GBK for output encoding.")
+            target_compile_options(rettr PUBLIC /execution-charset:gbk)
+        endif ()
+    endif ()
+endif ()
+
+if (COMPILER_ID MATCHES "MSVC")
+    target_compile_options(rettr PRIVATE /W4 /w14996)
+endif ()
+
+if (WIN32)
+    message("Linking libraries for windows package")
+    target_link_libraries(rettr PRIVATE windowsapp)
+    target_link_libraries(rettr PRIVATE synchronization)
+    target_link_libraries(rettr PRIVATE dbghelp)
+    target_link_libraries(rettr PRIVATE dbgeng)
+    target_link_libraries(rettr PRIVATE ws2_32)
+    target_link_libraries(rettr PRIVATE Shlwapi)
+    find_package(OpenSSL)
+    if(OpenSSL_FOUND)
+        target_link_libraries(rettr PRIVATE OpenSSL::SSL)
+        target_compile_definitions(rettr PUBLIC RAINY_HAS_OPENSSL=1)
+    else ()
+        target_compile_definitions(rettr PUBLIC RAINY_HAS_OPENSSL=0)
+        message(WARNING "OpenSSL not found, building without TLS support")
+    endif ()
+elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    message("Linking libraries for linux package")
+    target_link_libraries(rettr PRIVATE uring)
+
+    find_package(OpenSSL)
+
+    if(OpenSSL_FOUND)
+        target_link_libraries(rettr PRIVATE OpenSSL::SSL)
+        target_compile_definitions(rettr PUBLIC RAINY_HAS_OPENSSL=1)
+    else ()
+        target_compile_definitions(rettr PUBLIC RAINY_HAS_OPENSSL=0)
+        message(WARNING "OpenSSL not found, building without TLS support")
+    endif ()
+elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    message("Linking libraries for macos package")
+    find_library(COREFOUNDATION_LIBRARY CoreFoundation)
+    find_library(SECURITY_LIBRARY Security)
+    find_library(CORESERVICES_LIBRARY CoreServices)
+
+    target_link_libraries(rettr PRIVATE
+            ${COREFOUNDATION_LIBRARY}
+            ${SECURITY_LIBRARY}
+            ${CORESERVICES_LIBRARY}
+    )
+    
+    find_package(OpenSSL)
+   
+    if(OpenSSL_FOUND)
+        target_link_libraries(rettr PRIVATE OpenSSL::SSL)
+        target_compile_definitions(rettr PRIVATE RAINY_HAS_OPENSSL=1)
+    else ()
+        target_compile_definitions(rettr PRIVATE RAINY_HAS_OPENSSL=0)
+        message(WARNING "OpenSSL not found, building without TLS support")
+    endif ()
+else ()
+    message(FATAL_ERROR "Unsupported platform: ${CMAKE_SYSTEM_NAME}")
+endif ()
+
+if (RAINY_USE_NODE_ADDON)
+    message(STATUS "RAINY_USE_NODE_ADDON is ON: attempting to integrate node-addon-api")
+    if (EXISTS "${PROJECT_SOURCE_DIR}/node_modules/node-addon-api")
+        set(NODE_ADDON_API_DIR "${PROJECT_SOURCE_DIR}/node_modules/node-addon-api")
+        message(STATUS "Found node-addon-api in ${NODE_ADDON_API_DIR}")
+    else ()
+        message(FATAL_ERROR "node-addon-api not found in node_modules. Please run 'npm install'")
+    endif ()
+
+    target_include_directories(rettr
+            PUBLIC
+            $<BUILD_INTERFACE:${NODE_ADDON_API_DIR}>
+            $<INSTALL_INTERFACE:include/node-addon-api>
+    )
+
+    target_compile_definitions(rettr PUBLIC NAPI_CPP_EXCEPTIONS)
+    target_compile_definitions(rettr PUBLIC NAPI_VERSION=8)
+    message(STATUS "rettr will be built with node-addon-api support")
+    message("[rettr] Node addon support enabled")
+    rainy_find_nodejs()
+endif ()
+
+# 由于部分MacOS的工具链提供的一部分C++20头文件处于EXPERIMENTAL特性，因此，需要检查是否打开
+if (APPLE)
+    include(CheckCXXSourceCompiles)
+
+    set(CMAKE_REQUIRED_FLAGS "-std=c++20")
+
+    check_cxx_source_compiles("
+        #include <stop_token>
+        int main() {
+            std::stop_source ss;
+            std::stop_token st = ss.get_token();
+            return 0;
+        }
+    " LIBCPP_STOP_TOKEN_AVAILABLE)
+
+    if (NOT LIBCPP_STOP_TOKEN_AVAILABLE)
+        set(CMAKE_REQUIRED_DEFINITIONS "-D_LIBCPP_ENABLE_EXPERIMENTAL")
+        check_cxx_source_compiles("
+            #include <stop_token>
+            int main() {
+                std::stop_source ss;
+                std::stop_token st = ss.get_token();
+                return 0;
+            }
+        " LIBCPP_STOP_TOKEN_AVAILABLE_WITH_EXPERIMENTAL)
+        unset(CMAKE_REQUIRED_DEFINITIONS)
+
+        if (LIBCPP_STOP_TOKEN_AVAILABLE_WITH_EXPERIMENTAL)
+            message(STATUS "Enabling _LIBCPP_ENABLE_EXPERIMENTAL for some experimental support")
+            add_compile_definitions(_LIBCPP_ENABLE_EXPERIMENTAL)
+        endif ()
+    endif ()
+endif ()
+
+if (RAINY_USE_CXX26_RELFECTION_TS)
+    if (COMPILER_ID MATCHES "GCC")
+        set(_test_flags "-std=c++26 -freflection")
+
+        # 创建临时测试文件
+        file(WRITE ${CMAKE_BINARY_DIR}/test_reflection.cpp "
+        #include <meta>
+
+        int main() {
+            class TestClass {
+                int foo;
+                int bar;
+            public:
+                int baz;
+                int quux;
+            };
+            constexpr static auto ctx = std::meta::access_context::unchecked();
+            static constexpr size_t member_count = std::meta::nonstatic_data_members_of(^^TestClass, ctx).size();
+            static_assert(member_count == 4);
+            return 0;
+        }
+        ")
+
+        # 直接调用编译器（不通过 CMake）
+        execute_process(
+                COMMAND ${CMAKE_CXX_COMPILER}
+                -std=c++26 -freflection
+                ${CMAKE_BINARY_DIR}/test_reflection.cpp
+                -o ${CMAKE_BINARY_DIR}/test_reflection.out
+                RESULT_VARIABLE _compile_result
+                ERROR_VARIABLE _compile_error
+                OUTPUT_VARIABLE _compile_output
+        )
+
+        file(REMOVE ${CMAKE_BINARY_DIR}/test_reflection.cpp)
+        file(REMOVE ${CMAKE_BINARY_DIR}/test_reflection.out)
+
+        if (_compile_result EQUAL 0)
+            message(STATUS "Compiler supports C++26 Static Reflection (with <meta> and ^^ reflection operator)")
+            target_compile_options(rettr PUBLIC -std=c++26 -freflection)
+            target_compile_definitions(rettr PUBLIC RAINY_HAS_CXX26_STATIC_REFLECTION=1)
+            set(RAINY_TOOLKIT_HAVE_CXX26_STATIC_REFLECTION TRUE)
+        else()
+            message(STATUS "Compiler does NOT support C++26 Static Reflection, Disable it.")
+            target_compile_definitions(rettr PUBLIC RAINY_HAS_CXX26_STATIC_REFLECTION=0)
+            set(RAINY_TOOLKIT_HAVE_CXX26_STATIC_REFLECTION FALSE)
+        endif ()
+    endif ()
+else ()
+    target_compile_definitions(rettr PUBLIC RAINY_HAS_CXX26_STATIC_REFLECTION=0)
+    set(RAINY_TOOLKIT_HAVE_CXX26_STATIC_REFLECTION FALSE)
+endif ()
+
+if (RAINY_USE_WINDOWS_SCHANNEL AND WIN32)
+    target_compile_definitions(rettr PUBLIC RAINY_USE_WINDOWS_SCHANNEL=1)
+else()
+    target_compile_definitions(rettr PUBLIC RAINY_USE_WINDOWS_SCHANNEL=0)
+endif()
