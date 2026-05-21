@@ -17,14 +17,14 @@
 #   limitations under the License.
 include(CheckCXXSourceCompiles)
 
-function(RAINY_GET_CXX_COMPILER_ID result_var)
+function(RETTR_GET_CXX_COMPILER_ID result_var)
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
         set(${result_var} "GCC" PARENT_SCOPE)
     elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         if (MSVC)
-            set(${result_var} "MSVC-Clang" PARENT_SCOPE) # Clang on MSVC
+            set(${result_var} "MSVC-Clang" PARENT_SCOPE)
         else ()
-            set(${result_var} "Clang" PARENT_SCOPE)      # 普通 Clang
+            set(${result_var} "Clang" PARENT_SCOPE)
         endif ()
     elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
         set(${result_var} "MSVC" PARENT_SCOPE)
@@ -43,7 +43,7 @@ endfunction()
 #   DIRECTORY - 要搜索的目录
 #   EXTENSION - 要查找的文件扩展名（如 ".cpp"）
 #   RESULT_VAR - 存储结果的变量名
-function(rainy_load_flodar_files DIRECTORY EXTENSION RESULT_VAR)
+function(rettr_load_flodar_files DIRECTORY EXTENSION RESULT_VAR)
     set(IS_LINUX FALSE)
     set(IS_MACOS FALSE)
     set(IS_POSIX FALSE)
