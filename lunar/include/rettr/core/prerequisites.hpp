@@ -300,29 +300,29 @@ static_assert(false, "We detected you are using C++14 and below, and the library
 #endif
 
 // NOLINTBEGIN
-#define rainy_let auto
-#define rainy_ref auto &
-#define rainy_const const auto
-#define rainy_cref const auto &
+#define rettr_let auto
+#define rettr_ref auto &
+#define rettr_const const auto
+#define rettr_cref const auto &
 // NOLINTEND
 
 #if RETTR_ENABLE_DEBUG
 
-#define rainy_assume(expr) assert(expr)
+#define rettr_assume(expr) assert(expr)
 
 #else
 
 #if RETTR_USING_MSVC
 
-#define rainy_assume(expr) __assume(expr)
+#define rettr_assume(expr) __assume(expr)
 
 #elif RETTR_USING_CLANG
 
-#define rainy_assume(expr) __builtin_assume(expr)
+#define rettr_assume(expr) __builtin_assume(expr)
 
 #elif RETTR_USING_GCC
 
-#define rainy_assume(expr)                                                                                                            \
+#define rettr_assume(expr)                                                                                                            \
     if (expr) {                                                                                                                       \
     } else {                                                                                                                          \
         __builtin_unreachable();                                                                                                      \
@@ -333,11 +333,11 @@ static_assert(false, "We detected you are using C++14 and below, and the library
 #endif
 
 #if RETTR_USING_MSVC
-#define rainy_likely(x) (x)
-#define rainy_unlikely(x) (x)
+#define rettr_likely(x) (x)
+#define rettr_unlikely(x) (x)
 #else
-#define rainy_likely(x) __builtin_expect(!!(x), 1)
-#define rainy_unlikely(x) __builtin_expect(!!(x), 0)
+#define rettr_likely(x) __builtin_expect(!!(x), 1)
+#define rettr_unlikely(x) __builtin_expect(!!(x), 0)
 #endif
 
 #if RETTR_USING_MSVC
@@ -452,26 +452,8 @@ static_assert(false, "We detected you are using C++14 and below, and the library
 
 #endif
 
-#define RETTR_STAMP4(n, x)                                                                                                            \
-    x(n);                                                                                                                             \
-    x(n + 1);                                                                                                                         \
-    x(n + 2);                                                                                                                         \
-    x(n + 3)
-#define RETTR_STAMP16(n, x)                                                                                                           \
-    RETTR_STAMP4(n, x);                                                                                                               \
-    RETTR_STAMP4(n + 4, x);                                                                                                           \
-    RETTR_STAMP4(n + 8, x);                                                                                                           \
-    RETTR_STAMP4(n + 12, x)
-#define RETTR_STAMP64(n, x)                                                                                                           \
-    RETTR_STAMP16(n, x);                                                                                                              \
-    RETTR_STAMP16(n + 16, x);                                                                                                         \
-    RETTR_STAMP16(n + 32, x);                                                                                                         \
-    RETTR_STAMP16(n + 48, x)
-
-#define RETTR_STAMP(n, x) x(RETTR_STAMP##n, n)
-
-#define rain_fn auto
-#define rain_loop for (;;)
+#define rettr_fn auto
+#define rettr_loop for (;;)
 
 #define RETTR_TOOLKIT_VERSION                                                                                                         \
     "ReTTR:" RETTR_STRINGIFY(RETTR_TOOLKIT_PROJECT_MAJOR) "." RETTR_STRINGIFY(                                                \
