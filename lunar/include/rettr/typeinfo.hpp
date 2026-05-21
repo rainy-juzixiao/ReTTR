@@ -1,0 +1,1329 @@
+/*
+ * Copyright 2026 rainy-juzixiao
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#ifndef RETTR_FOUNDATION_TYPEINFO_HPP
+#define RETTR_FOUNDATION_TYPEINFO_HPP // NOLINT
+
+#include <rettr/core/prerequisites.hpp>
+#include <rettr/enum_flags.hpp>
+#include <rettr/core/meta_traits.hpp>
+#include <rettr/core/template_traits.hpp>
+#include <rettr/core/function_traits.hpp>
+#include <rettr/array_range.hpp>
+
+#include <string_view>
+#include <array>
+#include <unordered_map>
+
+#if RETTR_USING_CLANG || RETTR_USING_LLVM_GCC // workaround...
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wenum-constexpr-conversion"
+#endif
+
+namespace rettr {
+    class typeinfo;
+}
+
+namespace rettr {
+    enum class traits {
+        /* qualifiers */
+        is_lref = 1 << 0,
+        is_rref = 1 << 1,
+        is_const = 1 << 2,
+        is_volatile = 1 << 3,
+
+        /* fundamental types */
+        is_void = 1 << 4,
+        is_nullptr_t = 1 << 5,
+        is_integer = 1 << 6,
+        is_floating_point = 1 << 7,
+        is_unsigned = 1 << 8,
+        is_arithmetic = 1 << 9,
+        is_fundamental = 1 << 10,
+        is_trivial = 1 << 11,
+
+        /* pointer-related */
+        is_pointer = 1 << 12,
+
+        /* compound types */
+        is_array = 1 << 13,
+        is_class = 1 << 14,
+        is_union = 1 << 15,
+        is_enum = 1 << 16,
+        is_compound = 1 << 17,
+
+        /* function and member pointers */
+        is_function = 1 << 18,
+        is_function_pointer = 1 << 19,
+        is_member_fnptr = 1 << 20,
+        is_member_field_ptr = 1 << 21,
+
+        /* class traits */
+        is_template = 1 << 22,
+        is_polymorphic = 1 << 23,
+        is_abstract = 1 << 24,
+
+        /* reflection */
+        is_reflection_type = 1 << 25,
+        is_signed = 1 << 26,
+        is_sequential_container = 1 << 27,
+        is_associative_container = 1 << 28,
+    };
+
+    // @NODOCBEGIN
+    RETTR_ENABLE_ENUM_CLASS_BITMASK_OPERATORS(traits);
+    // @NODOCEND
+}
+
+// @NODOCBEGIN
+namespace rettr::implements {
+    using type_name_prober = void;
+
+    constexpr std::string_view type_name_prober_ = "void";
+
+    template<typename Ty>
+    constexpr rettr_fn wrapped_type_name() -> std::string_view { // NOLINT
+#if RETTR_USING_MSVC
+        return __FUNCSIG__;
+#elif RETTR_USING_CLANG || RETTR_USING_GCC
+        return __PRETTY_FUNCTION__;
+#else
+        static_assert(false, "unsupported compiler");
+#endif
+    }
+
+    constexpr rettr_fn wrapped_type_name_prefix_length() -> std::size_t { // NOLINT
+        return wrapped_type_name<type_name_prober>().find(type_name_prober_);
+    }
+
+    constexpr rettr_fn wrapped_type_name_suffix_length() -> std::size_t { // NOLINT
+        return wrapped_type_name<type_name_prober>().length() - wrapped_type_name_prefix_length() - type_name_prober_.
+               length();
+    }
+
+    template<auto Variable>
+    constexpr rettr_fn wrapped_variable_name() -> std::string_view {
+#if RETTR_USING_CLANG || RETTR_USING_GCC
+        return __PRETTY_FUNCTION__;
+#elif RETTR_USING_MSVC
+        return __FUNCSIG__;
+#else
+        static_assert(false, "unsupported compiler");
+#endif
+    }
+}
+
+namespace rettr::implements {
+    template<typename T, typename = void>
+    struct is_associative_container : std::false_type {
+    };
+
+    template<typename T>
+    struct is_associative_container<T, std::void_t<
+                typename T::key_type,
+                typename T::mapped_type
+            > > : std::true_type {
+    };
+
+    template<typename T>
+    inline constexpr bool is_associative_container_v = is_associative_container<T>::value;
+
+    template<typename T, typename = void>
+    struct is_sequential_container : std::false_type {
+    };
+
+    template<typename T>
+    struct is_sequential_container<T, std::void_t<
+                typename T::value_type,
+                decltype(std::declval<T>().begin())
+            > > : std::negation<is_associative_container<T> > {
+    };
+
+    template<typename T>
+    inline constexpr bool is_sequential_container_v = is_associative_container<T>::value;
+}
+
+namespace rettr::implements {
+    template<typename Ty>
+    static constexpr rettr_fn eval_traits_for_properties() noexcept -> traits {
+        traits traits_{0};
+
+        if constexpr (std::is_lvalue_reference_v<Ty>) {
+            traits_ |= traits::is_lref;
+        }
+        if constexpr (std::is_rvalue_reference_v<Ty>) {
+            traits_ |= traits::is_rref;
+        }
+
+        using base_type = std::remove_reference_t<Ty>;
+        if constexpr (std::is_const_v<base_type>) {
+            traits_ |= traits::is_const;
+        }
+        if constexpr (std::is_volatile_v<base_type>) {
+            traits_ |= traits::is_volatile;
+        }
+
+        using decay_type = std::decay_t<Ty>;
+        if constexpr (is_associative_container_v<decay_type>) {
+            traits_ |= traits::is_associative_container;
+        }
+        if constexpr (is_sequential_container_v<decay_type>) {
+            traits_ |= traits::is_sequential_container;
+        }
+
+        return traits_;
+    }
+
+    template<typename Ty>
+    static constexpr rettr_fn eval_traits_for_fundamental() noexcept -> traits {
+        traits traits_{0};
+
+        if constexpr (std::is_void_v<Ty>) {
+            traits_ |= traits::is_void;
+        }
+
+        if constexpr (std::is_pointer_v<helper::remove_cvref_t<Ty> > || std::is_same_v<Ty, std::nullptr_t>) {
+            traits_ |= traits::is_pointer;
+        }
+
+        if constexpr (std::is_integral_v<Ty>) {
+            traits_ |= traits::is_integer;
+        }
+
+        if constexpr (std::is_same_v<Ty, std::nullptr_t>) {
+            traits_ |= traits::is_nullptr_t;
+        }
+
+        if constexpr (std::is_floating_point_v<Ty>) {
+            traits_ |= traits::is_floating_point;
+        }
+
+        if constexpr (std::is_unsigned_v<Ty>) {
+            traits_ |= traits::is_unsigned;
+        }
+        if constexpr (std::is_signed_v<Ty>) {
+            traits_ |= traits::is_signed;
+        }
+
+        if constexpr (std::is_fundamental_v<Ty>) {
+            traits_ |= traits::is_fundamental;
+        }
+
+        if constexpr (std::is_trivial_v<Ty>) {
+            traits_ |= traits::is_trivial;
+        }
+
+        if constexpr (std::is_arithmetic_v<Ty>) {
+            traits_ |= traits::is_arithmetic;
+        }
+
+        return traits_;
+    }
+
+    template<typename Ty>
+    static constexpr rettr_fn eval_traits_for_compound() noexcept -> traits {
+        traits traits_{0};
+
+        using decay_type = std::decay_t<Ty>;
+
+        if constexpr (std::is_class_v<decay_type>) {
+            traits_ |= traits::is_class;
+        }
+
+        if constexpr (is_template_v<decay_type>) {
+            traits_ |= traits::is_template;
+        }
+
+        if constexpr (std::is_function_v<Ty>) {
+            traits_ |= traits::is_function;
+        }
+
+        if constexpr (std::is_pointer_v<Ty> && std::is_function_v<std::remove_pointer_t<Ty> >) {
+            traits_ |= traits::is_function_pointer;
+        }
+
+        if constexpr (std::is_member_pointer_v<Ty>) {
+            if constexpr (std::is_member_function_pointer_v<Ty>) {
+                traits_ |= traits::is_member_fnptr;
+            } else {
+                traits_ |= traits::is_member_field_ptr;
+            }
+        }
+
+        if constexpr (std::is_array_v<Ty>) {
+            traits_ |= traits::is_array;
+        }
+
+        if constexpr (std::is_enum_v<Ty>) {
+            traits_ |= traits::is_enum;
+        }
+
+        if constexpr (std::is_union_v<Ty>) {
+            traits_ |= traits::is_union;
+        }
+
+        if constexpr (std::is_compound_v<Ty>) {
+            traits_ |= traits::is_compound;
+        }
+
+        if constexpr (std::is_polymorphic_v<Ty>) {
+            traits_ |= traits::is_polymorphic;
+        }
+
+        if constexpr (std::is_abstract_v<Ty>) {
+            traits_ |= traits::is_abstract;
+        }
+
+        return traits_;
+    }
+
+    template<typename Ty>
+    constexpr rettr_fn eval_for_typeinfo() noexcept -> traits {
+        traits traits{}; // NOLINT
+        traits |= implements::eval_traits_for_properties<Ty>();
+        traits |= implements::eval_traits_for_fundamental<Ty>();
+        traits |= implements::eval_traits_for_compound<Ty>();
+        return traits;
+    }
+
+#if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
+    template<typename Ty>
+    consteval rettr_fn generate_type_name() -> std::string_view {
+        return std::meta::display_string_of(^^Ty);
+    }
+#else
+    template<typename Ty>
+    constexpr rettr_fn make_type_name_array() -> auto {
+        constexpr auto wrapped_name = implements::wrapped_type_name<Ty>();
+        constexpr auto prefix_length = implements::wrapped_type_name_prefix_length();
+        constexpr auto suffix_length = implements::wrapped_type_name_suffix_length();
+        constexpr auto type_name_length = wrapped_name.length() - prefix_length - suffix_length;
+        std::array<char, type_name_length + 1> arr{};
+        for (std::size_t i = 0; i < type_name_length; ++i) {
+            arr[i] = wrapped_name[prefix_length + i]; // NOLINT
+        }
+        arr[type_name_length] = '\0'; // NOLINT
+        return arr;
+    }
+
+    template<typename Ty>
+    constexpr auto type_name_array = make_type_name_array<Ty>();
+
+    template<typename Ty>
+    constexpr rettr_fn generate_type_name() -> std::string_view {
+        return {type_name_array<Ty>.data(), type_name_array<Ty>.size() - 1};
+    }
+#endif
+
+#if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
+    template<auto Variable>
+    constexpr auto generate_variable_name() -> std::string_view {
+        std::string_view raw_name = {};
+        if constexpr (constexpr auto r = std::meta::reflect_constant(Variable); std::meta::is_enumerator(r)) {
+            raw_name = std::meta::identifier_of(r);
+        } else if constexpr (std::meta::has_identifier(r)) {
+            raw_name = std::meta::identifier_of(r);
+        } else {
+            if constexpr (std::is_enum_v<decltype(Variable)>) {
+                raw_name = std::meta::display_string_of(r);
+            } else {
+                constexpr std::string_view full = std::meta::display_string_of(r);
+                constexpr auto last_dot = full.rfind('.');
+                constexpr std::string_view after_dot = (last_dot != std::string_view::npos && last_dot + 1 < full.
+                                                        size())
+                                                           ? full.substr(last_dot + 1)
+                                                           : (last_dot != std::string_view::npos
+                                                                  ? std::string_view{}
+                                                                  : full);
+                constexpr auto last_sep = after_dot.rfind("::");
+                constexpr std::string_view name = (last_sep != std::string_view::npos && last_sep + 2 <= after_dot.
+                                                   size())
+                                                      ? after_dot.substr(last_sep + 2)
+                                                      : after_dot;
+                raw_name = name;
+            }
+        }
+
+        bool is_parenthesized = false;
+
+        if (!raw_name.empty() && raw_name[0] == '(') {
+            if (auto last_rparen = raw_name.rfind(')');
+                last_rparen != std::string_view::npos && last_rparen + 1 < raw_name.size()) {
+                is_parenthesized = true;
+            }
+        }
+
+        if (is_parenthesized) {
+            return raw_name;
+        }
+
+        auto last_dot = raw_name.rfind('.');
+        auto last_arrow = raw_name.rfind("->");
+        auto last_colon = raw_name.rfind("::");
+
+        if (last_dot == std::string_view::npos) {
+            last_dot = 0;
+        }
+
+        if (last_arrow == std::string_view::npos) {
+            last_arrow = 0;
+        }
+
+        if (last_colon == std::string_view::npos) {
+            last_colon = 0;
+        }
+
+        auto last_sep = (core::max)({last_dot, last_arrow, last_colon});
+
+        if (last_sep != 0) {
+            auto sep_len = (last_sep == last_arrow || last_sep == last_colon) ? 2 : 1;
+            if (last_sep + sep_len <= raw_name.size()) {
+                return raw_name.substr(last_sep + sep_len);
+            }
+            return {};
+        }
+
+        return raw_name;
+    }
+#else
+    template<auto Variable>
+    static constexpr rettr_fn make_variable_name_ref() -> std::string_view {
+        constexpr std::string_view func_name = wrapped_variable_name<Variable>();
+#if RETTR_USING_CLANG || RETTR_USING_LLVM_GCC
+        constexpr auto split = func_name.substr(0, func_name.rfind("]"));
+        constexpr auto start = split.find("Variable = ") + 11;
+        constexpr auto end = split.find(";", start);
+        constexpr auto raw_name = split.substr(start, end - start);
+        constexpr auto dot_pos = raw_name.rfind('.');
+        if constexpr (dot_pos != std::string_view::npos) {
+            return raw_name.substr(dot_pos + 1);
+        } else {
+            return raw_name;
+        }
+#elif RETTR_USING_GCC
+        constexpr auto split = func_name.substr(0, func_name.rfind(']') - 1);
+        constexpr auto start = split.find("with auto Variable = ") + 21;
+        constexpr auto end = split.find(';', start);
+        constexpr auto full = split.substr(start, end - start);
+        constexpr auto pos = full.rfind("::");
+        constexpr auto rparen = full.rfind(')');
+
+        constexpr auto is_parenthesized = [&]() constexpr {
+            if (!full.empty() && full[0] == '(') {
+                if constexpr (constexpr auto last_rparen = full.rfind(')');
+                    last_rparen != std::string_view::npos && last_rparen + 1 < full.size()) {
+                    return true;
+                }
+            }
+            return false;
+        }();
+
+        if constexpr (is_parenthesized) {
+            return full; // NOLINT
+        }
+
+        if constexpr (pos != std::string_view::npos) {
+            return full.substr(pos + 2, rparen - (pos + 2));
+        }
+        return full; // NOLINT
+#elif RETTR_USING_MSVC
+        auto bracket_start = func_name.rfind('<');
+        auto bracket_end = func_name.rfind(">}");
+        if (bracket_end == std::string_view::npos) {
+            bracket_end = func_name.rfind('}');
+        }
+        if (bracket_end == std::string_view::npos) {
+            bracket_end = func_name.rfind('>');
+        }
+        if (bracket_start == std::string_view::npos || bracket_end == std::string_view::npos) {
+            return "";
+        }
+        auto content = func_name.substr(bracket_start + 1, bracket_end - bracket_start - 1);
+        bool is_parenthesized = false;
+        if (!content.empty() && content[0] == '(') {
+            auto last_rparen = content.rfind(')');
+            if (last_rparen != std::string_view::npos && last_rparen + 1 < content.size()) {
+                is_parenthesized = true;
+            }
+        }
+        if (is_parenthesized) {
+            return content;
+        }
+        auto last_dot = content.rfind('.');
+        auto last_arrow = content.rfind("->");
+        auto last_colon = content.rfind("::");
+        if (last_dot == std::string_view::npos) {
+            last_dot = 0;
+        }
+        if (last_arrow == std::string_view::npos) {
+            last_arrow = 0;
+        }
+        if (last_colon == std::string_view::npos) {
+            last_colon = 0;
+        }
+        auto last_sep = (core::max)({last_dot, last_arrow, last_colon});
+        if (last_sep != 0) {
+            auto sep_len = (last_sep == last_arrow || last_sep == last_colon) ? 2 : 1;
+            return content.substr(last_sep + sep_len);
+        }
+        return content;
+#else
+        static_assert(false, "Unsupported compiler");
+#endif
+    }
+
+    template<auto Variable>
+    constexpr rettr_fn make_variable_name_array() -> auto {
+        constexpr auto name_sv = make_variable_name_ref<Variable>();
+        std::array<char, name_sv.size()> arr{};
+        for (std::size_t i = 0; i < name_sv.size(); ++i) {
+            arr[i] = name_sv[i];
+        }
+        return arr;
+    }
+
+    template<auto Variable>
+    static constexpr auto variable_name_array = make_variable_name_array<Variable>();
+
+    template<auto Variable>
+    constexpr rettr_fn generate_variable_name() -> std::string_view {
+        return {variable_name_array<Variable>.data(), variable_name_array<Variable>.size()};
+    }
+#endif
+
+    RETTR_INLINE static constexpr std::size_t fnv1a_hash(std::string_view val) noexcept {
+        constexpr std::size_t fnv_offset_basis = 14695981039346656037ULL;
+        std::size_t hash = fnv_offset_basis;
+        for (const char i: val) {
+            constexpr std::size_t fnv_prime = 1099511628211ULL;
+            hash ^= static_cast<std::size_t>(static_cast<unsigned char>(i));
+            hash *= fnv_prime;
+        }
+        return hash;
+    }
+}
+
+// @NODOCEND
+
+// @NODOCBEGIN
+namespace rettr::implements {
+#define raw_type_id(x) typeinfo_component::typehash<x>()
+
+    enum class type_operation {
+        remove_pointer,
+        remove_const,
+        remove_volatile,
+        remove_const_volatile,
+        remove_cvref,
+        remove_reference,
+        decay_type
+    };
+
+    template<typename MainTypeInfo>
+    struct typeinfo_component {
+        using is_comptaible_fnptr_t = bool (*)(const typeinfo_component &);
+        using type_modifer = const typeinfo_component *(*)(type_operation);
+
+        constexpr typeinfo_component() = default;
+
+        template<typename TypeList>
+        struct template_argument_generater {
+        };
+
+        template<typename... Types>
+        struct template_argument_generater<helper::type_list<Types...> > {
+            static inline constexpr std::array<MainTypeInfo, sizeof...(Types)> value = {
+                MainTypeInfo::template create<Types>()...
+            };
+        };
+
+        template<typename Ty>
+        static rettr_fn constexpr make() -> typeinfo_component {
+            typeinfo_component raw;
+            constexpr std::string_view name = generate_type_name<Ty>();
+            constexpr std::size_t eval_hash_code = fnv1a_hash(name);
+            constexpr traits traits = implements::eval_for_typeinfo<Ty>();
+            raw.name = name;
+            raw.hash_code = eval_hash_code;
+            raw.type_traits = traits;
+            raw.is_comptaible = &is_compatible_impl<Ty>;
+            raw.modfier = &type_modfier_impl<Ty>;
+            if constexpr (!std::is_void_v<Ty> && helper::is_complete_v<
+                              Ty>) {
+                raw.size_of_the_type = sizeof(Ty);
+                raw.align_of_the_type = alignof(Ty);
+            }
+            if constexpr (template_traits<helper::remove_cvref_t<
+                Ty> >::value) {
+                raw.template_arguemnts = template_argument_generater<
+                    typename template_traits<helper::remove_cvref_t<
+                        Ty> >::types>::value;
+            }
+            return raw;
+        }
+
+        template<typename Ty>
+        static rettr_fn constexpr typehash() -> std::size_t {
+            constexpr std::string_view name = generate_type_name<Ty>();
+            constexpr std::size_t eval_hash_code = fnv1a_hash(name);
+            return eval_hash_code;
+        }
+
+        template<typename Type>
+        static constexpr rettr_fn is_compatible_impl(const typeinfo_component &type) -> bool;
+
+        template<typename Ty>
+        static constexpr rettr_fn type_modfier_impl(type_operation op)
+            -> const typeinfo_component<MainTypeInfo> *; // NOLINT
+
+        static constexpr rettr_fn empty_is_compatible(const typeinfo_component &) -> bool;
+
+        static constexpr rettr_fn empty_type_modfier(const typeinfo_component &) -> bool;
+
+        std::string_view name{};
+        std::size_t hash_code{};
+        traits type_traits{}; // NOLINT
+        is_comptaible_fnptr_t is_comptaible{};
+        type_modifer modfier{};
+        array_range<MainTypeInfo> template_arguemnts{};
+        std::size_t size_of_the_type{0};
+        std::size_t align_of_the_type{0};
+    };
+
+    template<typename MainTypeInfo>
+    constexpr typeinfo_component<MainTypeInfo> empty_component;
+
+    template<typename MainTypeInfo, typename Ty>
+    static constexpr typeinfo_component<MainTypeInfo> typeinfo = typeinfo_component<MainTypeInfo>::template make<Ty>();
+
+    template<typename MainTypeInfo>
+    constexpr rettr_fn typeinfo_component<MainTypeInfo>::empty_is_compatible(
+        const typeinfo_component &) -> bool {
+        return false;
+    }
+
+    template<typename MainTypeInfo>
+    constexpr rettr_fn typeinfo_component<MainTypeInfo>::empty_type_modfier(
+        const typeinfo_component &) -> bool {
+        return false;
+    }
+
+    template<typename MainTypeInfo>
+    template<typename Ty>
+    constexpr rettr_fn typeinfo_component<MainTypeInfo>::type_modfier_impl(type_operation op)
+        -> const typeinfo_component<MainTypeInfo> * { // NOLINT
+        constexpr bool is_reference_ptr = std::is_reference_v<Ty> &&
+                                          std::is_pointer_v<std::remove_reference_t<
+                                              Ty> >;
+        if constexpr (!std::is_void_v<Ty>) {
+            switch (op) {
+                case type_operation::remove_pointer: {
+                    if constexpr (is_reference_ptr) {
+                        using referred_ptr = std::remove_reference_t<Ty>;
+                        using pointer_type = std::remove_pointer_t<referred_ptr>;
+                        if constexpr (std::is_lvalue_reference_v<Ty>) {
+                            return &typeinfo<MainTypeInfo, std::add_lvalue_reference_t<pointer_type> >;
+                        } else {
+                            return &typeinfo<MainTypeInfo, std::add_rvalue_reference_t<pointer_type> >;
+                        }
+                    } else {
+                        return &typeinfo<MainTypeInfo, std::remove_pointer_t<Ty> >;
+                    }
+                }
+                case type_operation::remove_const: {
+                    if constexpr (is_reference_ptr) {
+                        using referred_ptr = std::remove_reference_t<Ty>;
+                        using pointer_type = std::remove_pointer_t<referred_ptr>;
+                        using non_const_pointer = std::remove_const_t<pointer_type>;
+                        using non_const_ptr = std::add_pointer_t<non_const_pointer>;
+                        if constexpr (std::is_lvalue_reference_v<Ty>) {
+                            return &typeinfo<MainTypeInfo, std::add_lvalue_reference_t<non_const_ptr> >;
+                        } else {
+                            return &typeinfo<MainTypeInfo, std::add_rvalue_reference_t<non_const_ptr> >;
+                        }
+                    } else {
+                        return &typeinfo<MainTypeInfo, std::remove_const_t<Ty> >;
+                    }
+                }
+                case type_operation::remove_volatile: {
+                    if constexpr (is_reference_ptr) {
+                        using referred_ptr = std::remove_reference_t<Ty>;
+                        using pointer_type = std::remove_pointer_t<referred_ptr>;
+                        using non_volatile_pointer = std::remove_volatile_t<pointer_type>;
+                        using non_volatile_ptr = std::add_pointer_t<non_volatile_pointer>;
+                        if constexpr (std::is_lvalue_reference_v<Ty>) {
+                            return &typeinfo<MainTypeInfo, std::add_lvalue_reference_t<non_volatile_ptr> >;
+                        } else {
+                            return &typeinfo<MainTypeInfo, std::add_rvalue_reference_t<non_volatile_ptr> >;
+                        }
+                    } else {
+                        return &typeinfo<MainTypeInfo, std::remove_volatile_t<Ty> >;
+                    }
+                }
+                case type_operation::remove_const_volatile: {
+                    if constexpr (is_reference_ptr) {
+                        using referred_ptr = std::remove_reference_t<Ty>;
+                        using pointer_type = std::remove_pointer_t<referred_ptr>;
+                        using non_cv_pointer = std::remove_cv_t<pointer_type>;
+                        using non_cv_ptr = std::add_pointer_t<non_cv_pointer>;
+                        if constexpr (std::is_lvalue_reference_v<Ty>) {
+                            return &typeinfo<MainTypeInfo, std::add_lvalue_reference_t<non_cv_ptr> >;
+                        } else {
+                            return &typeinfo<MainTypeInfo, std::add_rvalue_reference_t<non_cv_ptr> >;
+                        }
+                    } else {
+                        return &typeinfo<MainTypeInfo, std::remove_cv_t<Ty> >;
+                    }
+                }
+                case type_operation::remove_cvref: {
+                    if constexpr (is_reference_ptr) {
+                        using referred_ptr = std::remove_reference_t<Ty>;
+                        using pointer_type = std::remove_pointer_t<referred_ptr>;
+                        using non_cv_pointer = std::remove_cv_t<pointer_type>;
+                        using non_cv_ptr = std::add_pointer_t<non_cv_pointer>;
+                        return &typeinfo<MainTypeInfo, non_cv_ptr>;
+                    } else {
+                        return &typeinfo<MainTypeInfo, helper::remove_cvref_t<Ty> >;
+                    }
+                }
+                case type_operation::remove_reference: {
+                    return &typeinfo<MainTypeInfo, std::remove_reference_t<Ty> >;
+                }
+                case type_operation::decay_type: {
+                    return &typeinfo<MainTypeInfo, std::decay_t<Ty> >;
+                }
+            }
+        }
+        return &empty_component<MainTypeInfo>;
+    }
+
+    template<typename MainTypeInfo>
+    template<typename Type>
+    constexpr rettr_fn typeinfo_component<MainTypeInfo>::is_compatible_impl(
+        const typeinfo_component<MainTypeInfo> &type) -> bool { // NOLINT
+        using match_t = helper::remove_cvref_t<Type>;
+        using real_convert_type =
+                std::conditional_t<std::is_reference_v<Type>, Type,
+                    std::add_lvalue_reference_t<Type> >;
+        if constexpr (std::is_void_v<helper::remove_cvref_t<Type> >) {
+            return false;
+        } else {
+            using ftraits = function_traits<match_t>;
+            if constexpr (ftraits::valid) {
+                return raw_type_id(match_t) == type.hash_code;
+            } else {
+                switch (type.hash_code) {
+                    case raw_type_id(match_t):
+                        return true;
+                    case raw_type_id(match_t &):
+                        return std::is_convertible_v<match_t &, real_convert_type>;
+                    case raw_type_id(match_t &&):
+                        return std::is_convertible_v<match_t &&, real_convert_type>;
+                    case raw_type_id(const match_t):
+                        return true;
+                    case raw_type_id(const match_t &):
+                        return std::is_convertible_v<const match_t &, real_convert_type>;
+                    case raw_type_id(const match_t &&):
+                        return std::is_convertible_v<const match_t &&, real_convert_type>;
+                    case raw_type_id(const volatile match_t):
+                        return true;
+                    case raw_type_id(const volatile match_t &):
+                        return std::is_convertible_v<const volatile match_t &, real_convert_type>;
+                    case raw_type_id(const volatile match_t &&):
+                        return std::is_convertible_v<const volatile match_t &&, real_convert_type>;
+                    default:
+                        return false;
+                }
+            }
+        }
+    }
+#undef raw_type_id
+}
+
+// @NODOCEND
+
+namespace rettr {
+    /**
+     * @brief 通过类型获取一个名称
+     * @tparam Ty 要获取的类型
+     * @returns 一个字符串视图，表示对编译时变量的名称
+     */
+    template<typename Ty>
+    constexpr std::string_view type_name() {
+        return implements::generate_type_name<Ty>();
+    }
+
+    /**
+     * \lang chinese
+     * @brief 获取一个可在编译时确定的变量名
+     * @tparam Variable 一个常量变量值
+     * @returns 一个字符串视图，表示对编译时变量的名称
+     */
+    template<auto Variable>
+    constexpr std::string_view variable_name() noexcept {
+        constexpr auto name = implements::generate_variable_name<Variable>();
+        return name;
+    }
+}
+
+#define RETTR_GENERATE_TYPEINFO_MODIFY_METHOD_HELPER(function_name, operation)                                                        \
+    RETTR_NODISCARD constexpr rettr_fn function_name() const noexcept -> typeinfo {                                                    \
+        typeinfo ret;                                                                                                                 \
+        ret.internal_type = internal_type->modfier(operation);                                                                        \
+        ret.cache_name = ret.internal_type->name;                                                                                     \
+        ret.cache_hash_code = ret.internal_type->hash_code;                                                                           \
+        return ret;                                                                                                                   \
+    }
+
+#define RETTR_GENERATE_TYPEINFO_TYPEINSPECT_METHOD_HELPER(function_name, traits)                                                      \
+    RETTR_NODISCARD constexpr rettr_fn function_name() const noexcept -> bool {                                                        \
+        return has_traits(traits);                                                                                                    \
+    }
+
+namespace rettr {
+    /**
+     * \lang chinese
+     * @brief
+     * 支持编译期计算的类型信息抽象
+     * 可用于查询类型信息
+     */
+    class typeinfo {
+    public:
+        constexpr typeinfo() noexcept = default;
+
+        constexpr typeinfo(const typeinfo &) noexcept = default;
+
+        constexpr typeinfo(typeinfo &&) noexcept = default;
+
+        constexpr typeinfo &operator=(const typeinfo &) noexcept = default;
+
+        constexpr typeinfo &operator=(typeinfo &&) noexcept = default;
+
+        /**
+         * @brief 从Ty类型信息中构造typeinfo对象
+         * @tparam Ty 要获取类型信息的类型
+         * @return 返回Ty对应的类型信息对象
+         */
+        template<typename Ty>
+        static constexpr rettr_fn create() noexcept -> typeinfo {
+            typeinfo type;
+            type.internal_type = &implements::typeinfo<rettr::typeinfo, Ty>;
+            type.cache_name = type.internal_type->name;
+            type.cache_hash_code = type.internal_type->hash_code;
+            return type;
+        }
+
+        template<typename Ty>
+        static constexpr rettr_fn get_type_hash() noexcept -> std::size_t {
+            return implements::fnv1a_hash(type_name<Ty>());
+        }
+
+        /**
+         * @brief 获取Ty类型信息的静态实例的常量引用，通常由rettr_typeid宏使用（推荐）
+         * @tparam Ty 要获取类型信息的类型
+         * @return 一个指向对应类型信息的static只读生命周期对象的引用
+         */
+        template<typename Ty>
+        static rettr_fn of() noexcept -> const typeinfo & {
+            static typeinfo instance = create<Ty>();
+            return instance;
+        }
+
+        /**
+         * @brief 获取类型信息中对应的名称
+         */
+        RETTR_NODISCARD constexpr rettr_fn name() const noexcept -> std::string_view {
+            return cache_name;
+        }
+
+        /**
+         * @brief 获取类型信息中对应的哈希值
+         */
+        RETTR_NODISCARD constexpr rettr_fn hash_code() const noexcept -> std::size_t {
+            return cache_hash_code;
+        }
+
+        /**
+         * @brief 检查两个类型信息是否相同
+         * @param right 另一个类型信息对象
+         * @return 如果类型信息相同，返回true，否则返回false
+         */
+        RETTR_NODISCARD constexpr rettr_fn is_same(const typeinfo &right) const noexcept -> bool {
+            return hash_code() == right.hash_code();
+        }
+
+        /**
+         * @brief 检查两个类型信息是否为void
+         * @return 如果类型信息是void，返回true，否则返回false
+         */
+        RETTR_NODISCARD constexpr rettr_fn is_void() const noexcept -> bool {
+            return hash_code() == get_type_hash<void>();
+        }
+
+        /**
+         * @brief 运算符重载，检查两个类型信息是否相同。等效于is_same()
+         * @param left 要比较的左边的类型信息对象
+         * @param right 要比较的右边的类型信息对象
+         * @return 如果类型信息相同，返回true，否则返回false
+         */
+        constexpr friend rettr_fn operator==(const typeinfo &left,
+                                             const typeinfo &right) noexcept -> bool {
+            return left.is_same(right);
+        }
+
+        /**
+         * @brief 运算符重载，检查两个类型信息是否不同。等效于!is_same()
+         * @param left 要比较的左边的类型信息对象
+         * @param right 要比较的右边的类型信息对象
+         * @return 如果类型信息不同，返回true，否则返回false
+         */
+        constexpr friend rettr_fn operator!=(const typeinfo &left,
+                                             const typeinfo &right) noexcept -> bool {
+            return !left.is_same(right);
+        }
+
+        /**
+         * @brief 对当前类型执行移除const属性操作.
+         * @return 返回被处理后的类型信息
+         */
+        RETTR_GENERATE_TYPEINFO_MODIFY_METHOD_HELPER(remove_const, implements::type_operation::remove_const);
+
+        /**
+         * @brief 对当前类型执行移除volatile属性操作.
+         * @return 返回被处理后的类型信息
+         */
+        RETTR_GENERATE_TYPEINFO_MODIFY_METHOD_HELPER(remove_volatile, implements::type_operation::remove_volatile);
+
+        /**
+         * @brief 对当前类型执行移除const和volatile属性操作.
+         * @return 返回被处理后的类型信息
+         */
+        RETTR_GENERATE_TYPEINFO_MODIFY_METHOD_HELPER(remove_cv, implements::type_operation::remove_const_volatile);
+
+        /**
+         * @brief 对当前类型执行移除reference属性操作.
+         * @return 返回被处理后的类型信息
+         */
+        RETTR_GENERATE_TYPEINFO_MODIFY_METHOD_HELPER(remove_reference, implements::type_operation::remove_reference);
+
+        /**
+         * @brief 对当前类型执行移除const、volatile以及reference属性操作.
+         * @return 返回被处理后的类型信息
+         */
+        RETTR_GENERATE_TYPEINFO_MODIFY_METHOD_HELPER(remove_cvref, implements::type_operation::remove_cvref);
+
+        /**
+         * @brief 对当前类型执行移除指针属性操作.
+         * @return 返回被处理后的类型信息
+         */
+        RETTR_GENERATE_TYPEINFO_MODIFY_METHOD_HELPER(remove_pointer, implements::type_operation::remove_pointer);
+
+        /**
+         * @brief 对当前类型执行decay操作.
+         * @return 返回被处理后的类型信息
+         */
+        RETTR_GENERATE_TYPEINFO_MODIFY_METHOD_HELPER(decay, implements::type_operation::decay_type);
+
+        RETTR_NODISCARD constexpr rettr_fn is_compatible(
+            const typeinfo &right) const noexcept -> bool {
+            return internal_type->is_comptaible(*right.internal_type);
+        }
+
+        /**
+         * @brief 检查此类型信息是否具有特定的traits
+         * @param traits 要检查的traits，从traits枚举中获取
+         * @return 如果类型信息具有traits，返回true，否则返回false
+         */
+        RETTR_NODISCARD constexpr rettr_fn has_traits(const traits &traits) const noexcept -> bool {
+            return static_cast<bool>(internal_type->type_traits & traits);
+        }
+
+        /**
+         * @brief 获取当前类型的sizeof大小
+         * @return 返回当前类型的sizeof大小
+         */
+        RETTR_NODISCARD constexpr rettr_fn sizeof_the_type() const noexcept -> std::size_t {
+            return internal_type->size_of_the_type;
+        }
+
+        /**
+         * @brief 尝试获取当前类型的模板实例化参数
+         * @attention 对于 template <std::size_t> 这类带有NTTP参数的模板，则无法获取，仅支持纯类型的模板
+         * @return 返回模板实例化参数类型的列表视图
+         */
+        RETTR_NODISCARD constexpr rettr_fn
+        template_arguments() const noexcept -> array_range<typeinfo> {
+            return internal_type->template_arguemnts;
+        }
+
+        /**
+         * @brief 用于适配到switch(x)中，实现编译时类型匹配
+         */
+        operator std::size_t() const noexcept { // NOLINT
+            return cache_hash_code;
+        }
+
+        /**
+         * @brief 检查当前是否为算数类型.
+         * @return 如果是返回true，否则false
+         */
+        RETTR_GENERATE_TYPEINFO_TYPEINSPECT_METHOD_HELPER(is_arithmetic, traits::is_arithmetic);
+
+        /**
+         * @brief 检查当前是否为浮点类型.
+         * @return 如果是返回true，否则false
+         */
+        RETTR_GENERATE_TYPEINFO_TYPEINSPECT_METHOD_HELPER(is_floating_point, traits::is_floating_point);
+
+        /**
+         * @brief 检查当前是否为整型类型.
+         * @return 如果是返回true，否则false
+         */
+        RETTR_GENERATE_TYPEINFO_TYPEINSPECT_METHOD_HELPER(is_integer, traits::is_integer);
+
+        /**
+         * @brief 检查当前是否为空指针类型.
+         * @return 如果是返回true，否则false
+         */
+        RETTR_GENERATE_TYPEINFO_TYPEINSPECT_METHOD_HELPER(is_nullptr, traits::is_nullptr_t);
+
+        /**
+         * @brief 检查当前是否为引用类型（包括左或右）.
+         * @return 如果是返回true，否则false
+         */
+        RETTR_GENERATE_TYPEINFO_TYPEINSPECT_METHOD_HELPER(is_reference, traits::is_lref | traits::is_rref);
+
+        /**
+         * @brief 检查当前是否为指针类型.
+         * @return 如果是返回true，否则false
+         */
+        RETTR_GENERATE_TYPEINFO_TYPEINSPECT_METHOD_HELPER(is_pointer, traits::is_pointer);
+
+        /**
+         * @brief 检查当前是否为左引用类型.
+         * @return 如果是返回true，否则false
+         */
+        RETTR_GENERATE_TYPEINFO_TYPEINSPECT_METHOD_HELPER(is_lvalue_reference, traits::is_lref);
+
+        /**
+         * @brief 检查当前是否为右引用类型.
+         * @return 如果是返回true，否则false
+         */
+        RETTR_GENERATE_TYPEINFO_TYPEINSPECT_METHOD_HELPER(is_rvalue_reference, traits::is_rref);
+
+        /**
+         * @brief 检查当前是否为const类型.
+         * @return 如果是返回true，否则false
+         */
+        RETTR_GENERATE_TYPEINFO_TYPEINSPECT_METHOD_HELPER(is_const, traits::is_const);
+
+        /**
+         * @brief 检查当前是否为volatile类型.
+         * @return 如果是返回true，否则false
+         */
+        RETTR_GENERATE_TYPEINFO_TYPEINSPECT_METHOD_HELPER(is_volatile, traits::is_volatile);
+
+        /**
+         * @brief 检查当前是否为const volatile混合的类型.
+         * @return 如果是返回true，否则false
+         */
+        RETTR_GENERATE_TYPEINFO_TYPEINSPECT_METHOD_HELPER(is_const_volatile, traits::is_const &traits::is_volatile);
+
+        /**
+         * @brief 检查当前是否为关联容器类型.
+         * @return 如果是返回true，否则false
+         */
+        RETTR_GENERATE_TYPEINFO_TYPEINSPECT_METHOD_HELPER(is_associative_container, traits::is_associative_container);
+
+        /**
+         *  @brief 检查当前是否为序列容器类型.
+         * @return 如果是返回true，否则false
+         */
+        RETTR_GENERATE_TYPEINFO_TYPEINSPECT_METHOD_HELPER(is_sequential_container, traits::is_sequential_container);
+
+        /**
+         *  @brief 检查当前是否为类类型.
+         * @return 如果是返回true，否则false
+         */
+        RETTR_GENERATE_TYPEINFO_TYPEINSPECT_METHOD_HELPER(is_class, traits::is_class);
+
+    private:
+        std::string_view cache_name{};
+        std::size_t cache_hash_code{};
+        const implements::typeinfo_component<typeinfo> *internal_type{&implements::empty_component<typeinfo>};
+    };
+}
+
+#undef RETTR_GENERATE_TYPEINFO_MODIFY_METHOD_HELPER
+#undef RETTR_GENERATE_TYPEINFO_TYPEINSPECT_METHOD_HELPER
+
+/**
+ * @brief 用于获取类型信息的宏，考虑到使用传统rtti的使用习惯
+ */
+#define rettr_typeid(x) ::rettr::typeinfo::of<x>()
+
+/**
+ * \lang chinese
+ * @brief 用于类型switch匹配
+ * @param x 待匹配的类型分支
+ *
+ * \lang english
+ *
+ */
+#define rettr_typehash(x) ::rettr::typeinfo::get_type_hash<x>()
+
+/**
+ * @brief 为std::hash定义的特化模板
+ * @spec_template rettr::typeinfo
+ */
+template<>
+struct std::hash<rettr::typeinfo> {
+    RETTR_NODISCARD std::size_t operator()(const rettr::typeinfo &val) const noexcept {
+        return val.hash_code();
+    }
+};
+
+namespace rettr::implements {
+    using converter_func = void *(*)(void *);
+
+    struct conversion_key {
+        std::size_t source_hash;
+        std::size_t target_hash;
+
+        bool operator==(const conversion_key &other) const {
+            return source_hash == other.source_hash && target_hash == other.target_hash;
+        }
+    };
+
+    struct conversion_key_hash {
+        std::size_t operator()(const conversion_key &k) const {
+            return k.source_hash ^ (k.target_hash + 0x9e3779b9 + (k.source_hash << 6) + (k.source_hash >> 2));
+        }
+    };
+
+    using conversion_map_t = std::unordered_map<conversion_key, converter_func, conversion_key_hash>;
+
+    RETTR_INLINE conversion_map_t &get_conversion_map() {
+        static conversion_map_t instance;
+        return instance;
+    }
+
+    RETTR_INLINE void register_conversion(const std::size_t src, const std::size_t tgt, converter_func fn) {
+        get_conversion_map().try_emplace(conversion_key{src, tgt}, fn); // NOLINT
+    }
+
+    RETTR_INLINE converter_func find_converter(const std::size_t src, const std::size_t tgt) {
+        auto &map = get_conversion_map();
+        if (const auto it = map.find(conversion_key{src, tgt}); it != map.end()) { // NOLINT
+            return it->second;
+        }
+        return nullptr;
+    }
+}
+
+namespace rettr {
+    template<typename Derived, typename Base>
+    void register_base() {
+        static_assert(std::is_base_of_v<Base, Derived>, "Base must be base of Derived");
+        implements::register_conversion(typeinfo::get_type_hash<Derived>(), typeinfo::get_type_hash<Base>(),
+                                        [](void *ptr) -> void * {
+                                            return static_cast<Base *>(static_cast<Derived *>(ptr));
+                                        });
+        if constexpr (std::is_polymorphic_v<Base>) {
+            implements::register_conversion(typeinfo::get_type_hash<Base>(), typeinfo::get_type_hash<Derived>(),
+                                            [](void *ptr) -> void * {
+                                                return dynamic_cast<Derived *>(static_cast<Base *>(ptr));
+                                            });
+        }
+    }
+
+    RETTR_INLINE void *apply_offset(void *ptr, const typeinfo &source, const typeinfo &target) {
+        if (!ptr) {
+            return nullptr;
+        }
+        if (source.hash_code() == target.hash_code()) {
+            return ptr;
+        }
+        if (const auto converter = implements::find_converter(source.hash_code(), target.hash_code())) {
+            return converter(ptr);
+        }
+        return nullptr;
+    }
+}
+
+namespace rettr::implements {
+    using converter_fn = bool (*)(void *dest, const void *source, const class typeinfo &type);
+
+    /// @hide
+    class RETTR_API dynamic_converter_registry {
+    public:
+        static dynamic_converter_registry &instance();
+
+        void register_converter(const class typeinfo &to_type, converter_fn fn); // NOLINT
+
+        converter_fn find(const class typeinfo &) const; // NOLINT
+
+    private:
+        /// @hide
+        class impl;
+
+        impl *global_ptr{nullptr};
+    };
+}
+
+namespace rettr {
+    template<typename TargetType, typename = void>
+    struct any_converter {
+        static constexpr bool invalid_mark = true;
+
+        static bool is_convertible(const typeinfo &) {
+            return false;
+        }
+    };
+}
+
+namespace rettr::implements {
+    /// @hide
+    template<typename>
+    struct get_any_converter_target_type {
+        using type = void;
+    };
+
+    /// @hide
+    template<typename TargetType, typename Void>
+    struct get_any_converter_target_type<any_converter<TargetType, Void> > {
+        using type = TargetType;
+    };
+}
+
+namespace rettr {
+    /**
+     * @brief !
+     * @tparam ConverterClass 静态类型描述类
+     */
+    template<typename ConverterClass>
+    class enable_for_type_convert {
+    public:
+        virtual ~enable_for_type_convert() = default;
+
+        enable_for_type_convert() = default;
+
+    private:
+        using converter_func = bool (*)(void *dest, const void *source, const typeinfo &type);
+        using target_type = typename implements::get_any_converter_target_type<ConverterClass>::type;
+
+        template<typename TargetType = target_type>
+        static bool get_converter_func_invoker(void *dest, const void *source, const typeinfo &type) {
+            if (!ConverterClass::is_convertible(type)) {
+                return false;
+            }
+            if constexpr (!std::is_reference_v<target_type>) {
+                if (dest && source) {
+                    *static_cast<std::remove_const_t<TargetType> *>(dest) =
+                            ConverterClass::basic_convert(source, type);
+                }
+            }
+            return true;
+        }
+
+        struct inject {
+            inject() {
+                const converter_func func = &get_converter_func_invoker;
+                implements::dynamic_converter_registry::instance().register_converter(
+                    rettr_typeid(target_type),
+                    func);
+            }
+        };
+
+#if RETTR_USING_MSVC
+        virtual void *rettr_toolkit_touch_register() {
+            return &inject_;
+        }
+#endif
+
+#if RETTR_USING_GCC || RETTR_USING_CLANG
+        inline static inject inject_ __attribute__((used));
+#else
+        inline static inject inject_;
+#endif
+    };
+}
+
+namespace rettr {
+    template<typename Target>
+    rettr_fn dynamic_convert(const void *src, const typeinfo &src_type) -> decltype(auto) {
+        if constexpr (std::is_reference_v<std::remove_cv_t<Target> >) {
+            rettr_let ptr = const_cast<void *>(src);
+            if constexpr (std::is_lvalue_reference_v<Target>) {
+                if constexpr (std::is_const_v<std::remove_reference_t
+                    <Target> >) {
+                    return *static_cast<const std::remove_reference_t<Target> *>(ptr);
+                } else {
+                    return *static_cast<std::remove_reference_t<Target> *>(ptr);
+                }
+            } else if constexpr (std::is_rvalue_reference_v<Target>) {
+                if constexpr (std::is_const_v<std::remove_reference_t<Target> >) {
+                    return std::move(
+                        *static_cast<const std::remove_reference_t<Target> *>(ptr));
+                } else {
+                    return std::move(
+                        *static_cast<std::remove_reference_t<Target> *>(ptr));
+                }
+            } else {
+                return *static_cast<Target *>(ptr);
+            }
+        } else {
+            auto fn = implements::dynamic_converter_registry::instance().find(rettr_typeid(Target));
+            if (!fn) {
+                std::terminate();
+            }
+            helper::remove_cvref_t<Target> result{};
+            fn(&result, src, src_type);
+            return result;
+        }
+    }
+
+    RETTR_INLINE bool is_convertible_to(const typeinfo &from, const typeinfo &to) noexcept {
+        const auto &reg = implements::dynamic_converter_registry::instance();
+        if (from.remove_cvref() == to.remove_cvref()) {
+            return true;
+        }
+        if (const auto p = reg.find(to); p != nullptr) {
+            return p(nullptr, nullptr, from);
+        }
+        return false;
+    }
+}
+
+/**
+ * \lang chinese
+ *
+ * @brief 用于快捷注册一个类的继承关系
+ * @param Derived 派生类类型
+ * @param Base 基类类型
+ *
+ * \lang english
+ *
+ * @brief This is brief
+ * @param Derived
+ * @param Base
+ */
+#define RETTR_REGISTER_BASE(Derived, Base) ::rettr::register_base<Derived, Base>()
+
+#if RETTR_USING_CLANG || RETTR_USING_LLVM_GCC
+#pragma GCC diagnostic pop
+#endif
+
+#endif

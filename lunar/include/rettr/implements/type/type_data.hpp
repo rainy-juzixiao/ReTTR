@@ -17,6 +17,7 @@
 #define RETTR_IMPLEMENTS_TYPE_TYPE_DATA_HPP
 #include <rettr/core/prerequisites.hpp>
 #include <rettr/type.hpp>
+#include <rettr/constructor.hpp>
 
 namespace rettr::implements {
     struct type_data;
@@ -32,9 +33,18 @@ namespace rettr::implements {
     static type invalid_type_data() noexcept;
 
     struct RETTR_LOCAL_API class_data {
-        class_data() {
-
+        class_data(derived_info_func_ptr_t func, std::vector<type> nested_types) {
         }
+
+        derived_info_func_ptr_t derived_info_func;
+        std::vector<type> base_types;
+        std::vector<type> derived_types;
+        std::vector<cast_func_ptr_t> conversion_list;
+        std::vector<property> properties;
+        std::vector<method> methods;
+        std::vector<constructor> ctors;
+        std::vector<type> nested_types;
+        std::vector<destructor> dtor;
     };
 }
 
