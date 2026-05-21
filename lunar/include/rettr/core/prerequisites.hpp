@@ -280,8 +280,10 @@ static_assert(false, "Detected invalid architecture,rainy-toolkit is not support
 #endif
 
 #if RETTR_CURRENT_STANDARD_VERSION < 201703L
-static_assert(false, "We detected you are using C++14 and below, and the library only supports C++17 and above, please modify your "
-                     "standard version of C++ to C++17 and above before trying to compile!");
+static_assert(
+    false,
+    "We detected you are using C++14 and below, and the library only supports C++17 and above, please modify your "
+    "standard version of C++ to C++17 and above before trying to compile!");
 #endif
 
 #if RETTR_USING_AVX2 && RETTR_IS_X86_PLATFORM
@@ -361,21 +363,21 @@ static_assert(false, "We detected you are using C++14 and below, and the library
 #if RETTR_USING_WINDOWS
 #if RETTR_USING_DYNAMIC
 #ifdef RETTR_DYNAMIC_EXPORTS
-#define RETTR_TOOLKIT_API __declspec(dllexport)
+#define RETTR_API __declspec(dllexport)
 #else
-#define RETTR_TOOLKIT_API __declspec(dllimport)
+#define RETTR_API __declspec(dllimport)
 #endif
 #else
-#define RETTR_TOOLKIT_API
+#define RETTR_API
 #endif
 #else
-#define RETTR_TOOLKIT_API __attribute__((visibility("default")))
+#define RETTR_API __attribute__((visibility("default")))
 #endif
 
 #if RETTR_USING_MSVC
-#define RETTR_TOOLKIT_LOCAL_API
+#define RETTR_LOCAL_API
 #else
-#define RETTR_TOOLKIT_LOCAL_API __attribute__((visibility("hidden")))
+#define RETTR_LOCAL_API __attribute__((visibility("hidden")))
 #endif
 
 #if RETTR_USING_MSVC
@@ -458,9 +460,9 @@ static_assert(false, "We detected you are using C++14 and below, and the library
 #define rettr_fn auto
 #define rettr_loop for (;;)
 
-#define RETTR_TOOLKIT_VERSION                                                                                                         \
-    "ReTTR:" RETTR_STRINGIFY(RETTR_TOOLKIT_PROJECT_MAJOR) "." RETTR_STRINGIFY(                                                \
-        RETTR_TOOLKIT_PROJECT_MINOR) "." RETTR_STRINGIFY(RETTR_TOOLKIT_PROJECT_PATCH) ".xaga"
+#define RETTR_VERSION                                                                                                         \
+    "ReTTR:" RETTR_STRINGIFY(RETTR_PROJECT_MAJOR) "." RETTR_STRINGIFY(                                                \
+        RETTR_PROJECT_MINOR) "." RETTR_STRINGIFY(RETTR_PROJECT_PATCH) ".xaga"
 
 #ifdef __MUZIYAN_IS_HERE__
 #define RETTR_HAS_MUZIYAN_REACH_FOR_THE_MOON 1

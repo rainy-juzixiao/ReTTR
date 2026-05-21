@@ -1,2 +1,3 @@
 #include <rettr/core/prerequisites.hpp>
-#include <rettr/core/string_view.hpp>
+#include <../include/rettr/string_view.hpp>
+#include <rettr/type.hpp>
