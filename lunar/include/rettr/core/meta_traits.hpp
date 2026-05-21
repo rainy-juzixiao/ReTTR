@@ -2200,6 +2200,86 @@ namespace rettr::helper {
     template<typename Ty>
     struct is_complete : std::bool_constant<is_complete_v<Ty> > {
     };
+
+    template<typename Ty, typename... Types>
+    RETTR_CONSTEXPR_BOOL is_any_of_v = (std::is_same_v<Ty, Types> || ...);
+
+    template<typename Ty, typename... Types>
+    struct is_any_of : std::bool_constant<is_any_of_v<Ty, Types...> > {
+    };
+
+    /**
+     * @brief Wrapper template for holding a static value of type Ty.
+     *        用于持有类型Ty的静态值的包装器模板。
+     *
+     * @tparam Ty The type to wrap
+     *            要包装的类型
+     */
+    template<typename Ty>
+    struct wrapper {
+        inline static remove_cvref_t<Ty> value;
+    };
+
+    /**
+     * @brief Returns a reference to a fake object of type Ty.
+     *        返回类型Ty的伪对象的引用。
+     *
+     * This function is useful in unevaluated contexts where a reference to an object
+     * of type Ty is needed without actually constructing one.
+     *
+     * 此函数在未求值上下文中很有用，当需要类型Ty的对象的引用而不实际构造一个时。
+     *
+     * @tparam Ty The type of the fake object
+     *            伪对象的类型
+     * @return Reference to a static fake object
+     *         静态伪对象的引用
+     */
+    template<typename Ty>
+    constexpr remove_cvref_t<Ty> &get_fake_object() noexcept {
+        return wrapper<helper::remove_cvref_t<Ty> >::value;
+    }
+
+    /**
+     * @brief Variable template for retrieving array size (primary template).
+     *        Returns 0 for non-array types.
+     *
+     *        获取数组大小的变量模板（主模板）。
+     *        对于非数组类型返回 0。
+     *
+     * @tparam Ty Type (array or non-array)
+     *            类型（数组或非数组）
+     */
+    template <typename Ty>
+    static RETTR_INLINE_CONSTEXPR std::size_t array_size_v = 0;
+
+    /**
+     * @brief Variable template for retrieving array size (array specialization).
+     *        Returns the size of the array.
+     *
+     *        获取数组大小的变量模板（数组特化）。
+     *        返回数组的大小。
+     *
+     * @tparam Ty Array element type
+     *            数组元素类型
+     * @tparam N Array size
+     *            数组大小
+     */
+    template <typename Ty, std::size_t N>
+    static RETTR_INLINE_CONSTEXPR std::size_t array_size_v<Ty[N]> = N;
+
+    /**
+     * @brief Type template for retrieving array size.
+     *        Provides ::value member constant with array size (0 for non-arrays).
+     *
+     *        获取数组大小的类型模板。
+     *        通过 ::value 成员常量获取数组的大小，非数组类型返回 0。
+     *
+     * @tparam Ty Type (array or non-array)
+     *            类型（可以是数组或非数组）
+     */
+    template <typename Ty>
+    struct array_size : std::integral_constant<std::size_t, array_size_v<Ty>> {};
+
 }
 
 #endif
