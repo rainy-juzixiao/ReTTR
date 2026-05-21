@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef RETTR_CORE_STRING_VIEW_HPP
-#define RETTR_CORE_STRING_VIEW_HPP
+#ifndef RETTR_STRING_VIEW_HPP
+#define RETTR_STRING_VIEW_HPP
 #include <rettr/core/prerequisites.hpp>
 #include <rettr/core/meta_traits.hpp>
 
