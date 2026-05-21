@@ -27,9 +27,9 @@ endif ()
 rettr_load_flodar_files("${PROJECT_SOURCE_DIR}/lunar/sources" ".cpp" RETTR_FILES_LIST)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(rettr_libraryname "rettr-debug-package")
+    set(rettr_libraryname "rettr-debug-package-${VERSION}")
 else ()
-    set(rettr_libraryname "rettr-release-package")
+    set(rettr_libraryname "rettr-release-package-${VERSION}")
 endif ()
 
 if (RETTR_BUILD_WITH_DYNAMIC AND NOT RETTR_USE_CROSSCOMPILE)

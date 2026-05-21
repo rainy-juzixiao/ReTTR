@@ -29,6 +29,7 @@
 #include <memory>
 #include <limits>
 #include <stdexcept>
+#include <vector>
 
 #ifdef __linux__
 #include <csignal>
