@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef RETTR_CORE_ARRAY_RANGE_HPP
-#define RETTR_CORE_ARRAY_RANGE_HPP
+#ifndef RETTR_ARRAY_RANGE_HPP
+#define RETTR_ARRAY_RANGE_HPP
 #include <rettr/core/prerequisites.hpp>
 
 namespace rettr {
