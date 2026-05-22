@@ -528,7 +528,7 @@ namespace rettr {
         /**
          * @brief 获取any存储的当前类型变量对应的哈希值
          * @attention 需当前类型支持计算哈希
-         * @attention 优先通过std::hash求值，如果std::hash不可用，则使用rettr::utility::hash作为哈希支持
+         * @attention 优先通过std::hash求值，如果std::hash不可用，则使用rettr::hash作为哈希支持
          */
         RETTR_NODISCARD std::size_t hash_code() const noexcept {
             std::size_t ret{};
@@ -817,7 +817,7 @@ namespace rettr {
     };
 }
 
-namespace rettr::utility {
+namespace rettr {
     template <typename Ty, typename... Args,
               std::enable_if_t<
                   std::is_constructible_v<any, std::in_place_type_t<Ty>, Args...>, int> = 0>

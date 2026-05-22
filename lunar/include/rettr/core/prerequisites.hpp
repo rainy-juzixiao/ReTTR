@@ -478,4 +478,19 @@ namespace rettr {
     using byte_t = unsigned char;
 }
 
+namespace rettr::implements {
+    /**
+     * @brief Tag type for internal constructor dispatching.
+     *        用于内部构造函数分发的标签类型。
+     */
+    struct internal_construct_tag_t {
+    };
+
+    /**
+     * @brief Instance of internal_construct_tag_t for constructor tagging.
+     *        internal_construct_tag_t 的实例，用于构造函数标记。
+     */
+    RETTR_INLINE_CONSTEXPR internal_construct_tag_t internal_construct_tag{};
+}
+
 #endif
