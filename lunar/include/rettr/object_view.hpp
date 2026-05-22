@@ -23,11 +23,6 @@ namespace rettr {
     class type;
 }
 
-namespace rettr::implements {
-    class register_table;
-    struct type_accessor;
-}
-
 namespace rettr {
     class object_view;
 }
@@ -444,31 +439,6 @@ namespace rettr {
             }
             return static_cast<const TargetType *>(
                 apply_offset(const_cast<void *>(object_), type().remove_cvref(), target_type));
-        }
-
-        template<typename... Args, typename Type = class type, typename RegTable = implements::register_table>
-        any invoke(std::string_view name, Args &&... args) {
-            if (!impl_) {
-                impl_ = RegTable::get_accessor(this->type());
-                if (!impl_) {
-                    return {}; // 未注册
-                }
-            }
-            auto mytype = Type(implements::internal_construct_tag, static_cast<implements::type_accessor *>(impl_));
-            return mytype.invoke_method(name, *this, std::forward<Args>(args)...);
-        }
-
-        template<typename SharedObject = shared_object, typename Type = class type, typename RegTable =
-            implements::register_table>
-        SharedObject create_shared() {
-            if (!impl_) {
-                impl_ = RegTable::get_accessor(this->type());
-                if (!impl_) {
-                    return {}; // 未注册
-                }
-            }
-            auto mytype = Type(implements::internal_construct_tag, static_cast<implements::type_accessor *>(impl_));
-            return mytype.create(*this);
         }
 
     private:

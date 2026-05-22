@@ -9,7 +9,6 @@ ReTTR全称Rewrit Technology Type Reflection（重写的技术类型反射），
 - [ ] method (rttr)
 - [ ] policy::ctor (rttr)
 - [ ] visitor::method_info (rttr)
-- [ ] argument (rttr)
 - [ ] type (rttr)
 - [x] array_range (rttr)
 - [ ] visitor::type_info (rttr)

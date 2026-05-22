@@ -19,17 +19,16 @@
 #include <rettr/string_view.hpp>
 #include <rettr/array_range.hpp>
 #include <rettr/filter_item.hpp>
+#include <rettr/any.hpp>
+#include <rettr/object_view.hpp>
 
 namespace rettr {
-    class variant;
     class constructor;
     class destructor;
     class method;
     class property;
     class enumeration;
     class type;
-    class instance;
-    class argument;
     class visitor;
 }
 
@@ -49,13 +48,14 @@ namespace rettr::implements {
     struct class_data;
     class destructor_wrapper_base;
     class property_wrapper_base;
+    
     RETTR_LOCAL_API RETTR_INLINE type create_type(type_data *) noexcept;
 
     template<typename T>
     RETTR_LOCAL_API std::unique_ptr<type_data> make_type_data();
 
     template<typename T, typename Tp, typename Converter>
-    struct variant_data_base_policy;
+    struct any_data_base_policy;
 
     struct type_comparator_base;
 
@@ -121,7 +121,7 @@ namespace rettr {
 
         RETTR_INLINE bool is_template_instantiation() const noexcept;
 
-        array_range<type> template_arguments() const noexcept;
+        array_range<type> template_anys() const noexcept;
 
         RETTR_INLINE bool is_enumeration() const noexcept;
 
@@ -159,7 +159,7 @@ namespace rettr {
 
         array_range<type> derived_classes() const noexcept;
 
-        variant metadata(const variant &key) const;
+        any metadata(const any &key) const;
 
         constructor constructor(const std::vector<type> &params = std::vector<type>()) const noexcept;
 
@@ -167,11 +167,17 @@ namespace rettr {
 
         array_range<rettr::constructor> constructors(filter_items filter) const noexcept;
 
-        variant create(std::vector<argument> args) const;
+        template <typename... Args>
+        any create(Args&&... args) const {
+            if (!this->type_data_) {
+                return {};
+            }
+            return create_impl();
+        }
 
         destructor destructor() const noexcept;
 
-        bool destroy(variant &obj) const noexcept;
+        bool destroy(any &obj) const noexcept;
 
         property property(string_view name) const noexcept;
 
@@ -183,13 +189,13 @@ namespace rettr {
 
         static array_range<rettr::property> global_properties() noexcept;
 
-        variant property_value(string_view name, instance obj) const;
+        any property_value(string_view name, instance obj) const;
 
-        static variant property_value(string_view name);
+        static any property_value(string_view name);
 
-        bool set_property_value(string_view name, instance obj, argument arg) const;
+        bool set_property_value(string_view name, instance obj, any arg) const;
 
-        static bool set_property_value(string_view name, argument arg);
+        static bool set_property_value(string_view name, any arg);
 
         method method(string_view name) const noexcept;
 
@@ -205,9 +211,9 @@ namespace rettr {
 
         static array_range<rettr::method> global_methods() noexcept;
 
-        variant invoke(string_view name, instance obj, std::vector<argument> args) const;
+        any invoke(string_view name, instance obj, std::vector<any> args) const;
 
-        static variant invoke(string_view name, std::vector<argument> args);
+        static any invoke(string_view name, std::vector<any> args);
 
         template<typename F>
         static void register_converter_func(F func);
@@ -245,13 +251,15 @@ namespace rettr {
 
         RETTR_INLINE string_view full_name() const noexcept;
 
-        void create_wrapped_value(const argument &arg, variant &var) const;
+        void create_wrapped_value(const any &arg, any &var) const;
 
         void visit(visitor &visitor, implements::type_of_visit visit_type) const noexcept;
 
-        RETTR_INLINE variant create_variant(const argument &data) const;
+        any create_impl(array_range<object_view> args) const;
 
-        friend class variant;
+        RETTR_INLINE any create_any(const any &data) const;
+
+        friend class any;
 
         template<typename Target_Type, typename Source_Type>
         friend Target_Type rettr_cast(Source_Type object) noexcept;
@@ -268,7 +276,7 @@ namespace rettr {
         friend std::unique_ptr<implements::type_data> implements::make_type_data();
 
         template<typename T, typename Tp, typename Converter>
-        friend struct implements::variant_data_base_policy;
+        friend struct implements::any_data_base_policy;
 
         friend RETTR_API bool implements::compare_types_less_than(const void *, const void *, const type &, int &);
 
@@ -343,7 +351,7 @@ namespace rettr {
 // TODO: 元数据系统
 // ============================================================================
 // TODO: 实现键值对元数据存储
-//       - 基于 variant 作为 key/value
+//       - 基于 any 作为 key/value
 // TODO: 实现元数据查询接口
 // TODO: 实现元数据遍历接口
 
@@ -374,7 +382,7 @@ namespace rettr {
 // ============================================================================
 // TODO: 变体类型系统
 // ============================================================================
-// TODO: 实现 variant_data_base_policy 策略类
+// TODO: 实现 any_data_base_policy 策略类
 // TODO: 实现类型擦除机制
 // TODO: 实现类型安全存储
 // TODO: 支持值语义与移动语义
