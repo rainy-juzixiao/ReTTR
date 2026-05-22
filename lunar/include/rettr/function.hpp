@@ -18,6 +18,8 @@
 
 #include <rettr/core/prerequisites.hpp>
 #include <rettr/implements/invocable/invoker_accessor.hpp>
+#include <rettr/implements/parameter_info/parameter_info_base.hpp>
+#include <rettr/type.hpp>
 
 namespace rettr::implements {
     template<typename Fx, typename ParamList>
@@ -35,6 +37,9 @@ namespace rettr::implements {
 
         std::function<Fx> object;
     };
+
+    template<typename T, typename... CtorArgs>
+    class constructor_bind;
 }
 
 namespace rettr {
@@ -458,11 +463,14 @@ namespace rettr {
         }
 
     private:
-        RETTR_NODISCARD bool is_local() const noexcept;
+        template<typename T, typename... CtorArgs>
+        friend class implements::constructor_bind;
 
         RETTR_NODISCARD RETTR_INLINE implements::invoker_accessor *invoke_accessor() const noexcept {
             return invoke_accessor_;
         }
+
+        RETTR_NODISCARD bool is_local() const noexcept;
 
         alignas(std::max_align_t) byte_t
         invoker_storage[implements::fn_obj_soo_buffer_size]{}; // 不使用std::array/std::aligned_storage
