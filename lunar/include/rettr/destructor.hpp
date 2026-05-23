@@ -86,12 +86,12 @@ namespace rettr {
             return is_valid();
         }
 
-        bool operator==(const destructor &rhs) const noexcept {
-            return vtable_ == rhs.vtable_;
+        bool operator==(const destructor &right) const noexcept {
+            return vtable_ == right.vtable_;
         }
 
-        bool operator!=(const destructor &rhs) const noexcept {
-            return vtable_ != rhs.vtable_;
+        bool operator!=(const destructor &right) const noexcept {
+            return vtable_ != right.vtable_;
         }
 
     private:
