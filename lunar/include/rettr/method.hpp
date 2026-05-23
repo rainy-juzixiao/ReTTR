@@ -18,14 +18,16 @@
 
 #include <rettr/function.hpp>
 #include <rettr/parameter_info.hpp>
+#include <rettr/access_levels.hpp>
+#include <rettr/implements/metadata.hpp>
+#include <unordered_map>
 #include <vector>
 
 namespace rettr {
-    class RETTR_API method : private function {
+    class RETTR_API method : function {
     public:
         using function::empty;
         using function::arity;
-        using function::return_type;
         using function::paramlists;
         using function::arg;
         using function::operator bool;
@@ -43,6 +45,7 @@ namespace rettr {
         using function::invoke_variadic;
         using function::operator();
         using function::static_invoke;
+        using function::return_type;
 
         method() noexcept = default;
         method(const method &) noexcept = default;
@@ -51,13 +54,30 @@ namespace rettr {
         method &operator=(method &&) noexcept = default;
         ~method() = default;
 
-        void swap(method &other) noexcept {
-            function::swap(other);
-            params_.swap(other.params_);
-            std::swap(name_, other.name_);
+        void swap(method &right) noexcept {
+            function::swap(right);
+            params_.swap(right.params_);
+            metadata_.swap(right.metadata_);
+            std::swap(name_,         right.name_);
+            std::swap(access_level_, right.access_level_);
         }
 
-        string_view name() const noexcept { return name_; }
+        string_view name() const noexcept {
+            return name_;
+        }
+
+        rettr::type declaring_type() const noexcept {
+            return rettr::type::from_typeid(
+                function::which_belongs().remove_cvref());
+        }
+
+        access_levels access_level() const noexcept {
+            return access_level_;
+        }
+
+        array_range<parameter_info> parameter_infos() const noexcept {
+            return { params_.data(), params_.size() };
+        }
 
         parameter_info parameter(std::size_t idx) const noexcept {
             if (idx >= params_.size()) return {};
@@ -68,25 +88,38 @@ namespace rettr {
             return params_.size();
         }
 
-        bool operator==(const method &rhs) const noexcept {
-            return function::equal_with(rhs);
+        const any &metadata(const any &key) const noexcept {
+            static const any empty{};
+            const auto it = metadata_.find(key);
+            return it != metadata_.end() ? it->second : empty; // NOLINT
         }
-        bool operator!=(const method &rhs) const noexcept {
-            return function::not_equal_with(rhs);
+
+        bool operator==(const method &right) const noexcept {
+            return function::equal_with(right);
+        }
+
+        bool operator!=(const method &right) const noexcept {
+            return function::not_equal_with(right);
         }
 
     private:
         explicit method(function &&fn,
                         string_view name,
-                        std::vector<parameter_info> &&params) noexcept
+                        access_levels access_level,
+                        std::vector<parameter_info> &&params,
+                        std::unordered_map<any, rettr::metadata> &&metadata) noexcept
             : function(std::move(fn))
             , name_(name)
-            , params_(std::move(params)) {}
+            , access_level_(access_level)
+            , params_(std::move(params))
+            , metadata_(std::move(metadata)) {}
 
-        string_view                 name_;
-        std::vector<parameter_info> params_;
+        string_view                      name_;
+        access_levels                    access_level_{ access_levels::public_access };
+        std::vector<parameter_info>      params_;
+        std::unordered_map<any, rettr::metadata> metadata_;
 
-        template<typename Ty>
+        template<typename>
         friend class implements::method_bind;
     };
 

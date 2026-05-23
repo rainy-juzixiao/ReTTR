@@ -18,6 +18,8 @@
 
 #include <rettr/constructor.hpp>
 #include <rettr/implements/parameter_info/wrapper.hpp>
+#include <rettr/implements/binder/parameter.hpp>
+#include <rettr/implements/binder/access_levels.hpp>
 
 namespace rettr::implements {
     template<typename Type, typename... CtorArgs>
@@ -33,12 +35,7 @@ namespace rettr::implements {
             using type = std::tuple<
                 parameter_info_wrapper<
                     std::tuple_element_t<Is, std::tuple<CtorArgs...> >,
-                    Is,
-                    true
-                    ,
-                    void>
-                ...
-            >;
+                    Is, true, void>...>;
         };
 
         // NOLINTBEGIN
@@ -103,18 +100,26 @@ namespace rettr::implements {
             };
         }
 
+        void apply_(access_level_tag &&tag) {
+            access_level_ = tag.value;
+        }
+
+        void apply_(rettr::metadata &&meta) {
+            auto key = meta.key();
+            metadata_.insert_or_assign(std::move(key), std::move(meta));
+        }
+
         template<typename Impl, typename DefaultsTuple,
             std::size_t... Is, std::size_t Offset>
         void apply_defaults_(Impl *impl, DefaultsTuple &vals,
                              std::index_sequence<Is...>,
                              std::integral_constant<std::size_t, Offset>) {
-            (static_cast<parameter_info_wrapper<std::tuple_element_t<Offset + Is, std::tuple<CtorArgs...> >,
+            (static_cast<parameter_info_wrapper<
+                    std::tuple_element_t<Offset + Is, std::tuple<CtorArgs...> >,
                     Offset + Is, true,
                     std::tuple_element_t<Is, DefaultsTuple>
                 > *>(&std::get<Offset + Is>(wrappers_))
-                ->set_default_value(impl->storage.template get<Is>()),
-                ...
-            );
+                ->set_default_value(impl->storage.template get<Is>()), ...);
         }
 
         template<std::size_t... Is>
@@ -130,12 +135,17 @@ namespace rettr::implements {
             params.reserve(arity);
             for (auto *p: ptrs) params.emplace_back(p);
 
-            commit_(constructor{std::move(fn), std::move(params)});
+            commit_(constructor{
+                std::move(fn), access_level_,
+                std::move(params), std::move(metadata_)
+            });
         }
 
         std::function<void(constructor)> commit_;
         std::function<void(function &)> defaults_applier_;
         wrapper_tuple_t wrappers_;
+        access_levels access_level_{access_levels::public_access};
+        std::unordered_map<any, rettr::metadata> metadata_;
         bool committed_{false};
     };
 }

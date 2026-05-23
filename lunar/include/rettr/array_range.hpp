@@ -169,10 +169,10 @@ namespace rettr {
             return pred_;
         }
 
-        void swap(array_range &other) noexcept {
-            std::swap(data_, other.data_);
-            std::swap(size_, other.size_);
-            std::swap(pred_, other.pred_);
+        void swap(array_range &right) noexcept {
+            std::swap(data_, right.data_);
+            std::swap(size_, right.size_);
+            std::swap(pred_, right.pred_);
         }
 
     private:
@@ -235,12 +235,12 @@ namespace rettr {
             return tmp;
         }
 
-        bool operator==(const iterator &other) const {
-            return ptr_ == other.ptr_;
+        bool operator==(const iterator &right) const {
+            return ptr_ == right.ptr_;
         }
 
-        bool operator!=(const iterator &other) const {
-            return ptr_ != other.ptr_;
+        bool operator!=(const iterator &right) const {
+            return ptr_ != right.ptr_;
         }
 
     private:
@@ -267,8 +267,8 @@ namespace rettr {
             }
         }
 
-        const_iterator(const iterator &other)
-            : ptr_(other.ptr_), range_(other.range_) {
+        const_iterator(const iterator &right)
+            : ptr_(right.ptr_), range_(right.range_) {
         }
 
         reference operator*() const {
@@ -292,12 +292,12 @@ namespace rettr {
             return tmp;
         }
 
-        bool operator==(const const_iterator &other) const {
-            return ptr_ == other.ptr_;
+        bool operator==(const const_iterator &right) const {
+            return ptr_ == right.ptr_;
         }
 
-        bool operator!=(const const_iterator &other) const {
-            return ptr_ != other.ptr_;
+        bool operator!=(const const_iterator &right) const {
+            return ptr_ != right.ptr_;
         }
 
     private:
@@ -345,12 +345,12 @@ namespace rettr {
             return tmp;
         }
 
-        bool operator==(const reverse_iterator &other) const {
-            return ptr_ == other.ptr_;
+        bool operator==(const reverse_iterator &right) const {
+            return ptr_ == right.ptr_;
         }
 
-        bool operator!=(const reverse_iterator &other) const {
-            return ptr_ != other.ptr_;
+        bool operator!=(const reverse_iterator &right) const {
+            return ptr_ != right.ptr_;
         }
 
     private:
@@ -377,8 +377,8 @@ namespace rettr {
             }
         }
 
-        const_reverse_iterator(const reverse_iterator &other)
-            : ptr_(other.ptr_), range_(other.range_) {
+        const_reverse_iterator(const reverse_iterator &right)
+            : ptr_(right.ptr_), range_(right.range_) {
         }
 
         reference operator*() const {
@@ -402,12 +402,12 @@ namespace rettr {
             return tmp;
         }
 
-        bool operator==(const const_reverse_iterator &other) const {
-            return ptr_ == other.ptr_;
+        bool operator==(const const_reverse_iterator &right) const {
+            return ptr_ == right.ptr_;
         }
 
-        bool operator!=(const const_reverse_iterator &other) const {
-            return ptr_ != other.ptr_;
+        bool operator!=(const const_reverse_iterator &right) const {
+            return ptr_ != right.ptr_;
         }
 
     private:

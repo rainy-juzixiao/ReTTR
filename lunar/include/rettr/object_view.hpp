@@ -179,14 +179,14 @@ namespace rettr::implements {
 
     private:
         template<typename Ty>
-        static typeinfo make_paramlist_helper(Ty &&arg) noexcept {
+        static class typeinfo make_paramlist_helper(Ty &&arg) noexcept {
             if constexpr (std::is_array_v<std::remove_reference_t<Ty> >) {
                 return typeinfo::of<std::decay_t<Ty> >();
             } else if constexpr (helper::is_pointer_reference_v<Ty>) { // NOLINT
                 return typeinfo::of<Ty>();
             } else if constexpr (std::is_pointer_v<Ty>) {
                 return typeinfo::of<Ty>();
-            } else if constexpr (type_relations::is_same_v<std::decay_t<Ty>, utility::any>) {
+            } else if constexpr (std::is_same_v<std::decay_t<Ty>, any>) {
                 return arg.type();
             } else if constexpr (implements::is_dynamic_object<Ty>) {
                 return arg.type();
@@ -225,7 +225,7 @@ namespace rettr::implements {
             }
         }
 
-        std::array<typeinfo, sizeof...(Args)> types;
+        std::array<class typeinfo, sizeof...(Args)> types;
     };
 
     template<typename... Types>
@@ -340,35 +340,35 @@ namespace rettr {
         object_view(non_exists_instance_t) noexcept : object_(nullptr), ctti_(&rettr_typeid(void)) {
         }
 
-        object_view(object_view &&other) noexcept : object_(other.object_), ctti_(other.ctti_),
-                                                    object_holder_(other.object_holder_) {
-            if (other.object_ == &other.object_holder_) {
+        object_view(object_view &&right) noexcept : object_(right.object_), ctti_(right.ctti_),
+                                                    object_holder_(right.object_holder_) {
+            if (right.object_ == &right.object_holder_) {
                 object_ = &object_holder_;
             }
         }
 
-        object_view &operator=(object_view &&other) noexcept {
-            object_ = other.object_;
-            ctti_ = other.ctti_;
-            object_holder_ = other.object_holder_;
-            if (other.object_ == &other.object_holder_) {
+        object_view &operator=(object_view &&right) noexcept {
+            object_ = right.object_;
+            ctti_ = right.ctti_;
+            object_holder_ = right.object_holder_;
+            if (right.object_ == &right.object_holder_) {
                 object_ = &object_holder_;
             }
             return *this;
         }
 
-        object_view(const object_view &other) : object_(other.object_), ctti_(other.ctti_),
-                                                object_holder_(other.object_holder_) {
-            if (other.object_ == &other.object_holder_) {
+        object_view(const object_view &right) : object_(right.object_), ctti_(right.ctti_),
+                                                object_holder_(right.object_holder_) {
+            if (right.object_ == &right.object_holder_) {
                 object_ = &object_holder_;
             }
         }
 
-        object_view &operator=(const object_view &other) {
-            object_ = other.object_;
-            ctti_ = other.ctti_;
-            object_holder_ = other.object_holder_;
-            if (other.object_ == &other.object_holder_) {
+        object_view &operator=(const object_view &right) {
+            object_ = right.object_;
+            ctti_ = right.ctti_;
+            object_holder_ = right.object_holder_;
+            if (right.object_ == &right.object_holder_) {
                 object_ = &object_holder_;
             }
             return *this;

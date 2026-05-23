@@ -19,6 +19,7 @@
 #include <rettr/method.hpp>
 #include <rettr/implements/parameter_info/wrapper.hpp>
 #include <rettr/implements/binder/parameter.hpp>
+#include <rettr/implements/binder/access_levels.hpp>
 #include <array>
 #include <tuple>
 
@@ -105,17 +106,27 @@ namespace rettr::implements {
             };
         }
 
+        void apply_(access_level_tag &&tag) {
+            access_level_ = tag.value;
+        }
+
+        void apply_(rettr::metadata &&meta) {
+            auto key = meta.key();
+            metadata_.insert_or_assign(std::move(key), std::move(meta));
+        }
+
         template<typename Impl, typename DefaultsTuple,
             std::size_t... Is, std::size_t Offset>
         void apply_defaults_(Impl *impl, DefaultsTuple &vals,
                              std::index_sequence<Is...>,
                              std::integral_constant<std::size_t, Offset>) {
-            (static_cast<parameter_info_wrapper<
-                    helper::type_at_t<Offset + Is, param_list>,
+            (static_cast<parameter_info_wrapper<helper::type_at_t<Offset + Is, param_list>,
                     Offset + Is, true,
                     std::tuple_element_t<Is, DefaultsTuple>
                 > *>(&std::get<Offset + Is>(wrappers_))
-                ->set_default_value(impl->storage.template get<Is>()), ...);
+                ->set_default_value(impl->storage.template get<Is>()),
+                ...
+            );
         }
 
         template<std::size_t... Is>
@@ -131,7 +142,10 @@ namespace rettr::implements {
             params.reserve(arity);
             for (auto *p: ptrs) params.emplace_back(p);
 
-            commit_(method{std::move(fn), name_, std::move(params)});
+            commit_(method{
+                std::move(fn), name_, access_level_,
+                std::move(params), std::move(metadata_)
+            });
         }
 
         string_view name_;
@@ -139,6 +153,8 @@ namespace rettr::implements {
         std::function<void(method)> commit_;
         std::function<void(function &)> defaults_applier_;
         wrapper_tuple_t wrappers_;
+        access_levels access_level_{access_levels::public_access};
+        std::unordered_map<any, rettr::metadata> metadata_;
         bool committed_{false};
     };
 }

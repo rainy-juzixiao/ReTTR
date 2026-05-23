@@ -18,6 +18,10 @@
 
 #include <rettr/function.hpp>
 #include <rettr/parameter_info.hpp>
+#include <rettr/access_levels.hpp>
+#include <rettr/implements/metadata.hpp>
+#include <unordered_map>
+#include <vector>
 
 namespace rettr::implements {
     template<typename T, typename... Args>
@@ -32,7 +36,7 @@ namespace rettr::implements {
 }
 
 namespace rettr {
-    class RETTR_API constructor : function {
+    class RETTR_API constructor : private function {
     public:
         using function::empty;
         using function::arity;
@@ -45,20 +49,17 @@ namespace rettr {
         using function::is_variadic_invocable_with;
 
         constructor() noexcept = default;
-
         constructor(const constructor &) noexcept = default;
-
         constructor(constructor &&) noexcept = default;
-
         constructor &operator=(const constructor &) noexcept = default;
-
         constructor &operator=(constructor &&) noexcept = default;
-
         ~constructor() = default;
 
-        void swap(constructor &other) noexcept {
-            function::swap(other);
-            params_.swap(other.params_);
+        void swap(constructor &right) noexcept {
+            function::swap(right);
+            params_.swap(right.params_);
+            metadata_.swap(right.metadata_);
+            std::swap(access_level_, right.access_level_);
         }
 
         RETTR_NODISCARD parameter_info parameter(std::size_t idx) const noexcept {
@@ -66,8 +67,22 @@ namespace rettr {
             return params_[idx];
         }
 
+        RETTR_NODISCARD array_range<parameter_info> parameter_infos() const noexcept {
+            return { params_.data(), params_.size() };
+        }
+
         RETTR_NODISCARD std::size_t parameter_count() const noexcept {
             return params_.size();
+        }
+
+        RETTR_NODISCARD access_levels access_level() const noexcept {
+            return access_level_;
+        }
+
+        RETTR_NODISCARD const rettr::metadata &metadata(const any &key) const noexcept {
+            static const rettr::metadata empty{};
+            const auto it = metadata_.find(key);
+            return it != metadata_.end() ? it->second : empty;
         }
 
         template<typename... Args>
@@ -80,24 +95,29 @@ namespace rettr {
             return function::invoke_variadic(non_exists_instance, args);
         }
 
-        bool operator==(const constructor &rhs) const noexcept {
-            return function::equal_with(rhs);
+        bool operator==(const constructor &right) const noexcept {
+            return function::equal_with(right);
         }
 
-        bool operator!=(const constructor &rhs) const noexcept {
-            return function::not_equal_with(rhs);
+        bool operator!=(const constructor &right) const noexcept {
+            return function::not_equal_with(right);
         }
 
     private:
         explicit constructor(function &&fn,
-                             std::vector<parameter_info> &&params) noexcept
+                             access_levels access_level,
+                             std::vector<parameter_info> &&params,
+                             std::unordered_map<any, rettr::metadata> &&metadata) noexcept
             : function(std::move(fn))
-              , params_(std::move(params)) {
-        }
+            , access_level_(access_level)
+            , params_(std::move(params))
+            , metadata_(std::move(metadata)) {}
 
-        std::vector<parameter_info> params_;
+        access_levels                          access_level_{ access_levels::public_access };
+        std::vector<parameter_info>            params_;
+        std::unordered_map<any, rettr::metadata> metadata_;
 
-        template<typename T, typename... CtorArgs>
+        template<typename, typename...>
         friend class implements::constructor_bind;
     };
 }

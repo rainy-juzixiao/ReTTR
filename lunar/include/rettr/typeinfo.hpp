@@ -1102,8 +1102,8 @@ namespace rettr::implements {
         std::size_t source_hash;
         std::size_t target_hash;
 
-        bool operator==(const conversion_key &other) const {
-            return source_hash == other.source_hash && target_hash == other.target_hash;
+        bool operator==(const conversion_key &right) const {
+            return source_hash == right.source_hash && target_hash == right.target_hash;
         }
     };
 

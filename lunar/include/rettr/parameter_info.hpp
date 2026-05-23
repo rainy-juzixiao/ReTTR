@@ -41,12 +41,12 @@ namespace rettr {
 
         explicit operator bool() const noexcept { return !empty(); }
 
-        bool operator==(const parameter_info &other) const noexcept {
-            return base_ == other.base_;
+        bool operator==(const parameter_info &right) const noexcept {
+            return base_ == right.base_;
         }
 
-        bool operator!=(const parameter_info &other) const noexcept {
-            return base_ != other.base_;
+        bool operator!=(const parameter_info &right) const noexcept {
+            return base_ != right.base_;
         }
 
     private:

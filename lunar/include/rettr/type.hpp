@@ -77,21 +77,21 @@ namespace rettr {
     public:
         using type_id = uintptr_t;
 
-        RETTR_INLINE type(const type &other) noexcept;
+        RETTR_INLINE type(const type &right) noexcept;
 
-        RETTR_INLINE type &operator=(const type &other) noexcept;
+        RETTR_INLINE type &operator=(const type &right) noexcept;
 
-        RETTR_INLINE bool operator<(const type &other) const noexcept;
+        RETTR_INLINE bool operator<(const type &right) const noexcept;
 
-        RETTR_INLINE bool operator>(const type &other) const noexcept;
+        RETTR_INLINE bool operator>(const type &right) const noexcept;
 
-        RETTR_INLINE bool operator>=(const type &other) const noexcept;
+        RETTR_INLINE bool operator>=(const type &right) const noexcept;
 
-        RETTR_INLINE bool operator<=(const type &other) const noexcept;
+        RETTR_INLINE bool operator<=(const type &right) const noexcept;
 
-        RETTR_INLINE bool operator==(const type &other) const noexcept;
+        RETTR_INLINE bool operator==(const type &right) const noexcept;
 
-        RETTR_INLINE bool operator!=(const type &other) const noexcept;
+        RETTR_INLINE bool operator!=(const type &right) const noexcept;
 
         RETTR_INLINE type_id id() const noexcept;
 
@@ -112,6 +112,8 @@ namespace rettr {
         RETTR_LOCAL_API static type from(T &&object) noexcept;
 
         static type from_name(string_view name) noexcept;
+
+        static type from_typeid(typeinfo const &type) noexcept;
 
         static array_range<type> types() noexcept;
 
@@ -145,12 +147,12 @@ namespace rettr {
 
         RETTR_INLINE bool is_member_function_pointer() const noexcept;
 
-        bool is_derived_from(const type &other) const noexcept;
+        bool is_derived_from(const type &right) const noexcept;
 
         template<typename T>
         bool is_derived_from() const noexcept;
 
-        bool is_base_of(const type &other) const noexcept;
+        bool is_base_of(const type &right) const noexcept;
 
         template<typename T>
         bool is_base_of() const noexcept;
