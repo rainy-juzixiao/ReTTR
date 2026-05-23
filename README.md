@@ -17,7 +17,7 @@ ReTTR并非RTTR的衍生作品，其发行许可证采用Apache 2.0，而RTTR使
 # TODO List
 
 - [ ] visitor::constructor_info (rttr)
-- [ ] method (rttr)
+- [x] method (rttr)
 - [ ] visitor::method_info (rttr)
 - [ ] type (rttr)
 - [x] array_range (rttr)
