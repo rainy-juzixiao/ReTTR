@@ -22,8 +22,10 @@
 namespace rettr::implements {
     struct destructor_vtable {
         bool (*invoke)(void *ptr) noexcept;
+
         const class typeinfo &(*destructed_type)() noexcept;
-        bool (*is_valid_type)(const class typeinfo &) noexcept;
+
+        bool (*is_valid)(const class typeinfo &) noexcept;
     };
 
     template<typename Ty>
@@ -37,38 +39,36 @@ namespace rettr::implements {
             return typeinfo::create<Ty>();
         }
 
-        static bool is_valid_type(const class typeinfo &t) noexcept {
-            return t.remove_cvref() == typeinfo::create<Ty>() || t.remove_cvref() == typeinfo::create<Ty*>();
+        static bool is_valid(const class typeinfo &t) noexcept {
+            return t.remove_cvref() == typeinfo::create<Ty>() || t.remove_cvref() == typeinfo::create<Ty *>();
         }
 
-        static constexpr destructor_vtable vtable {
+        static constexpr destructor_vtable vtable{
             &invoke,
             &destructed_type,
-            &is_valid_type
+            &is_valid
         };
     };
-
 }
 
 namespace rettr {
-
     class RETTR_API destructor {
     public:
         destructor() noexcept = default;
 
         template<typename Ty>
         static destructor make() noexcept {
-            return destructor{ &implements::destructor_vtable_impl<Ty>::vtable };
+            return destructor{&implements::destructor_vtable_impl<Ty>::vtable};
         }
 
         bool invoke(object_view obj) const noexcept {
-            if (!is_valid()) return false;
-            if (!vtable_->is_valid_type(obj.type())) return false;
+            if (!empty()) return false;
+            if (!vtable_->is_valid(obj.type())) return false;
             return vtable_->invoke(obj.target_as_void_ptr());
         }
 
         rettr::type declaring_type() const noexcept {
-            if (!is_valid()) {
+            if (!empty()) {
                 return implements::invalid_type();
             }
             return rettr::type::from_typeid(vtable_->destructed_type().remove_cvref());
@@ -78,12 +78,12 @@ namespace rettr {
             return declaring_type();
         }
 
-        bool is_valid() const noexcept {
-            return vtable_ != nullptr;
+        bool empty() const noexcept {
+            return vtable_ == nullptr;
         }
 
         explicit operator bool() const noexcept {
-            return is_valid();
+            return empty();
         }
 
         bool operator==(const destructor &right) const noexcept {
@@ -96,11 +96,11 @@ namespace rettr {
 
     private:
         explicit destructor(const implements::destructor_vtable *vtable) noexcept
-            : vtable_(vtable) {}
+            : vtable_(vtable) {
+        }
 
         const implements::destructor_vtable *vtable_{nullptr};
     };
-
 }
 
 #endif

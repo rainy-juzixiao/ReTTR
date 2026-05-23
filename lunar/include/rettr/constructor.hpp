@@ -95,6 +95,11 @@ namespace rettr {
             return function::invoke_variadic(non_exists_instance, args);
         }
 
+        rettr::type declaring_type() const noexcept {
+            return rettr::type::from_typeid(
+                function::which_belongs().remove_cvref());
+        }
+
         bool operator==(const constructor &right) const noexcept {
             return function::equal_with(right);
         }
