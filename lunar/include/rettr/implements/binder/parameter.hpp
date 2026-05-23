@@ -1,0 +1,44 @@
+/*
+* Copyright 2026 rainy-juzixiao
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#ifndef RETTR_IMPLEMENTS_BINDER_PARAMETER_HPP
+#define RETTR_IMPLEMENTS_BINDER_PARAMETER_HPP
+#include <array>
+#include <tuple>
+#include <rettr/string_view.hpp>
+
+namespace rettr::implements {
+    template<typename... Args>
+    struct default_arguments_tag {
+        std::tuple<Args...> values;
+    };
+
+    template<std::size_t N>
+    struct parameter_names_tag {
+        std::array<string_view, N> names;
+    };
+
+    template<typename... Args>
+    default_arguments_tag<std::decay_t<Args>...> default_arguments(Args &&... args) {
+        return {std::tuple<std::decay_t<Args>...>{std::forward<Args>(args)...}};
+    }
+
+    template<typename... Args>
+    parameter_names_tag<sizeof...(Args)> parameter_names(Args &&... args) {
+        return {std::array<string_view, sizeof...(Args)>{std::forward<Args>(args)...}};
+    }
+}
+
+#endif

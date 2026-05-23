@@ -13,33 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef RETTR_IMPLEMENTS_BINDER_CONSTRUCTOR_HPP
-#define RETTR_IMPLEMENTS_BINDER_CONSTRUCTOR_HPP
+#ifndef RETTR_IMPLEMENTS_BINDER_METHOD_BIND_HPP
+#define RETTR_IMPLEMENTS_BINDER_METHOD_BIND_HPP
 
-#include <rettr/constructor.hpp>
+#include <rettr/method.hpp>
 #include <rettr/implements/parameter_info/wrapper.hpp>
+#include <rettr/implements/binder/parameter.hpp>
+#include <array>
+#include <tuple>
 
 namespace rettr::implements {
-    template<typename Type, typename... CtorArgs>
-    class constructor_bind {
+    template<typename Fx>
+    class method_bind {
     public:
-        static constexpr std::size_t arity = sizeof...(CtorArgs);
-
-        using invoker = constructor_invoker<Type, CtorArgs...>;
-        using traits = function_traits<invoker>;
+        using traits = function_traits<Fx>;
+        using param_list = typename traits::argument_list;
+        static constexpr std::size_t arity = traits::arity;
 
         template<std::size_t... Is>
         struct wrapper_tuple_impl {
             using type = std::tuple<
                 parameter_info_wrapper<
-                    std::tuple_element_t<Is, std::tuple<CtorArgs...> >,
-                    Is,
-                    true
-                    ,
-                    void>
-                ...
-            >;
+                    helper::type_at_t<Is, param_list>,
+                    Is, true, void>...>;
         };
+
 
         // NOLINTBEGIN
 
@@ -52,17 +50,21 @@ namespace rettr::implements {
         using wrapper_tuple_t = typename decltype(
             make_wrapper_tuple_type(std::make_index_sequence<arity>{}))::type;
 
-        explicit constructor_bind(std::function<void(constructor)> commit) noexcept
-            : commit_(std::move(commit))
+        explicit method_bind(string_view name,
+                             Fx &&fx,
+                             std::function<void(method)> commit) noexcept
+            : name_(name)
+              , fn_(std::forward<Fx>(fx))
+              , commit_(std::move(commit))
               , wrappers_(init_wrappers_(std::make_index_sequence<arity>{})) {
         }
 
-        ~constructor_bind() {
+        ~method_bind() {
             if (!committed_) commit_impl_(std::make_index_sequence<arity>{});
         }
 
         template<typename... Modifiers>
-        constructor_bind &operator()(Modifiers &&... mods) {
+        method_bind &operator()(Modifiers &&... mods) {
             int dummy[] = {0, (apply_(std::forward<Modifiers>(mods)), 0)...};
             (void) dummy;
             commit_impl_(std::make_index_sequence<arity>{});
@@ -93,7 +95,7 @@ namespace rettr::implements {
             static_assert(sizeof...(Defaults) <= arity);
             defaults_applier_ = [this, vals = std::move(tag.values)](function &fn) mutable {
                 using implemented_type = typename get_ia_implement_type<
-                    invoker,
+                    Fx,
                     default_arguments_store<Defaults...>,
                     traits>::type;
                 auto *impl = static_cast<implemented_type *>(fn.invoke_accessor());
@@ -108,13 +110,12 @@ namespace rettr::implements {
         void apply_defaults_(Impl *impl, DefaultsTuple &vals,
                              std::index_sequence<Is...>,
                              std::integral_constant<std::size_t, Offset>) {
-            (static_cast<parameter_info_wrapper<std::tuple_element_t<Offset + Is, std::tuple<CtorArgs...> >,
+            (static_cast<parameter_info_wrapper<
+                    helper::type_at_t<Offset + Is, param_list>,
                     Offset + Is, true,
                     std::tuple_element_t<Is, DefaultsTuple>
                 > *>(&std::get<Offset + Is>(wrappers_))
-                ->set_default_value(impl->storage.template get<Is>()),
-                ...
-            );
+                ->set_default_value(impl->storage.template get<Is>()), ...);
         }
 
         template<std::size_t... Is>
@@ -123,21 +124,22 @@ namespace rettr::implements {
                 &std::get<Is>(wrappers_)...
             };
 
-            function fn{invoker{}};
+            function fn{fn_};
             if (defaults_applier_) defaults_applier_(fn);
 
             std::vector<parameter_info> params;
             params.reserve(arity);
             for (auto *p: ptrs) params.emplace_back(p);
 
-            commit_(constructor{std::move(fn), std::move(params)});
+            commit_(method{std::move(fn), name_, std::move(params)});
         }
 
-        std::function<void(constructor)> commit_;
+        string_view name_;
+        Fx fn_;
+        std::function<void(method)> commit_;
         std::function<void(function &)> defaults_applier_;
         wrapper_tuple_t wrappers_;
         bool committed_{false};
     };
 }
-
 #endif

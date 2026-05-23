@@ -38,8 +38,11 @@ namespace rettr::implements {
         std::function<Fx> object;
     };
 
-    template<typename T, typename... CtorArgs>
+    template<typename Ty, typename... CtorArgs>
     class constructor_bind;
+
+    template<typename Fx>
+    class method_bind;
 }
 
 namespace rettr {
@@ -463,8 +466,11 @@ namespace rettr {
         }
 
     private:
-        template<typename T, typename... CtorArgs>
+        template<typename Ty, typename... CtorArgs>
         friend class implements::constructor_bind;
+
+        template<typename Ty>
+        friend class implements::method_bind;
 
         RETTR_NODISCARD RETTR_INLINE implements::invoker_accessor *invoke_accessor() const noexcept {
             return invoke_accessor_;
