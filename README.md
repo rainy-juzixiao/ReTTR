@@ -11,6 +11,8 @@ ReTTR并非RTTR的衍生作品，其发行许可证采用Apache 2.0，而RTTR使
 
 - policy （由明确的shared_object、object_view、object取代）
 - variant_sequential_view, variant_associative_view, variant... （由any取代）
+- sequential_container_mapper, associative_container_mapper（由any提供更明确的约束）
+- instance （由object_view取代）
 
 根据情况再进行删减
 
