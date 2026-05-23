@@ -112,7 +112,7 @@ namespace rettr::implements {
 
         void apply_(rettr::metadata &&meta) {
             auto key = meta.key();
-            metadata_.insert_or_assign(std::move(key), std::move(meta));
+            metadatas_.insert_or_assign(std::move(key), std::move(meta));
         }
 
         template<typename Impl, typename DefaultsTuple,
@@ -144,7 +144,7 @@ namespace rettr::implements {
 
             commit_(method{
                 std::move(fn), name_, access_level_,
-                std::move(params), std::move(metadata_)
+                std::move(params), std::move(metadatas_)
             });
         }
 
@@ -154,7 +154,7 @@ namespace rettr::implements {
         std::function<void(function &)> defaults_applier_;
         wrapper_tuple_t wrappers_;
         access_levels access_level_{access_levels::public_access};
-        std::unordered_map<any, rettr::metadata> metadata_;
+        std::vector<rettr::metadata> metadatas_;
         bool committed_{false};
     };
 }

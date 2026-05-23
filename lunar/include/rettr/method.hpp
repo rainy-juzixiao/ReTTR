@@ -115,7 +115,7 @@ namespace rettr {
 
     private:
         explicit method(function &&fn, string_view name, access_levels access_level, std::vector<parameter_info> &&params,
-                        std::unordered_map<any, rettr::metadata> &&metadata) noexcept :
+                        std::vector<rettr::metadata> &&metadata) noexcept :
             function(std::move(fn)), name_(name), access_level_(access_level), params_(std::move(params)),
             metadatas_(std::move(metadata)) {
         }
@@ -123,7 +123,7 @@ namespace rettr {
         string_view name_;
         access_levels access_level_{access_levels::public_access};
         std::vector<parameter_info> params_;
-        std::unordered_map<any, rettr::metadata> metadatas_;
+        std::vector<rettr::metadata> metadatas_;
 
         template <typename>
         friend class implements::method_bind;
