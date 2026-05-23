@@ -23,7 +23,7 @@ ReTTR并非RTTR的衍生作品，其发行许可证采用Apache 2.0，而RTTR使
 - [x] array_range (rttr)
 - [ ] visitor::type_info (rttr)
 - [ ] associative_container_mapper (rttr)
-- [] destructor (rttr)
+- [x] destructor (rttr)
 - [x] parameter_info (rttr)
 - [x] type_list (rttr)
 - [x] basic_string_view (rttr)
