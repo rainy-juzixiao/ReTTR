@@ -20,6 +20,7 @@
 #include <rettr/parameter_info.hpp>
 #include <rettr/access_levels.hpp>
 #include <rettr/implements/metadata.hpp>
+#include <rettr/implements/iterator.hpp>
 #include <unordered_map>
 #include <vector>
 
@@ -58,7 +59,7 @@ namespace rettr {
         void swap(constructor &right) noexcept {
             function::swap(right);
             params_.swap(right.params_);
-            metadata_.swap(right.metadata_);
+            metadatas_.swap(right.metadatas_);
             std::swap(access_level_, right.access_level_);
         }
 
@@ -81,8 +82,12 @@ namespace rettr {
 
         RETTR_NODISCARD const rettr::metadata &metadata(const any &key) const noexcept {
             static const rettr::metadata empty{};
-            const auto it = metadata_.find(key);
-            return it != metadata_.end() ? it->second : empty;
+            const auto it = metadatas_.find(key);
+            return it != metadatas_.end() ? it->second : empty;
+        }
+        
+        rettr_fn metadatas() const noexcept -> auto {
+            return implements::mapped_range(metadatas_);
         }
 
         template<typename... Args>
@@ -116,11 +121,11 @@ namespace rettr {
             : function(std::move(fn))
             , access_level_(access_level)
             , params_(std::move(params))
-            , metadata_(std::move(metadata)) {}
+            , metadatas_(std::move(metadata)) {}
 
         access_levels                          access_level_{ access_levels::public_access };
         std::vector<parameter_info>            params_;
-        std::unordered_map<any, rettr::metadata> metadata_;
+        std::unordered_map<any, rettr::metadata> metadatas_;
 
         template<typename, typename...>
         friend class implements::constructor_bind;

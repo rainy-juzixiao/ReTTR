@@ -20,6 +20,7 @@
 #include <rettr/parameter_info.hpp>
 #include <rettr/access_levels.hpp>
 #include <rettr/implements/metadata.hpp>
+#include <rettr/implements/iterator.hpp>
 #include <unordered_map>
 #include <vector>
 
@@ -57,7 +58,7 @@ namespace rettr {
         void swap(method &right) noexcept {
             function::swap(right);
             params_.swap(right.params_);
-            metadata_.swap(right.metadata_);
+            metadatas_.swap(right.metadatas_);
             std::swap(name_,         right.name_);
             std::swap(access_level_, right.access_level_);
         }
@@ -90,8 +91,12 @@ namespace rettr {
 
         const any &metadata(const any &key) const noexcept {
             static const any empty{};
-            const auto it = metadata_.find(key);
-            return it != metadata_.end() ? it->second : empty; // NOLINT
+            const auto it = metadatas_.find(key);
+            return it != metadatas_.end() ? it->second : empty; // NOLINT
+        }
+
+        rettr_fn metadatas() const noexcept -> auto {
+            return implements::mapped_range(metadatas_);
         }
 
         bool operator==(const method &right) const noexcept {
@@ -112,12 +117,12 @@ namespace rettr {
             , name_(name)
             , access_level_(access_level)
             , params_(std::move(params))
-            , metadata_(std::move(metadata)) {}
+            , metadatas_(std::move(metadata)) {}
 
         string_view                      name_;
         access_levels                    access_level_{ access_levels::public_access };
         std::vector<parameter_info>      params_;
-        std::unordered_map<any, rettr::metadata> metadata_;
+        std::unordered_map<any, rettr::metadata> metadatas_;
 
         template<typename>
         friend class implements::method_bind;
