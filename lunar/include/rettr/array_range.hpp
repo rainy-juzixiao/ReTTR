@@ -1,5 +1,5 @@
 /*
-* Copyright 2026 rainy-juzixiao
+ * Copyright 2026 rainy-juzixiao
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,26 @@
  */
 #ifndef RETTR_ARRAY_RANGE_HPP
 #define RETTR_ARRAY_RANGE_HPP
+#include <functional>
 #include <rettr/core/prerequisites.hpp>
 
 namespace rettr {
-    template<typename T>
+    template <typename Ty>
     struct default_predicate {
-        constexpr bool operator()(const T &) const noexcept {
-            return true;
+        default_predicate() {
         }
+
+        default_predicate(std::function<bool(const Ty &)> func) : func(std::move(func)) {
+        }
+
+        bool operator()(const Ty &obj) const {
+            return (func ? func(obj) : true);
+        }
+
+        std::function<bool(const Ty &)> func;
     };
 
-    template<typename Ty, typename Predicate = default_predicate<Ty> >
+    template <typename Ty, typename Predicate = default_predicate<Ty>>
     class array_range {
     public:
         using value_type = Ty;
@@ -42,51 +51,50 @@ namespace rettr {
 
         constexpr array_range() noexcept = default;
 
-        constexpr array_range(pointer data, size_type size, const Predicate &pred = Predicate()) noexcept
-            : data_(data), size_(size), pred_(pred) {
+        constexpr array_range(pointer data, size_type size, const Predicate &pred = Predicate()) noexcept :
+            data_(data), size_(size), pred_(pred) {
         }
 
-        constexpr array_range(const_pointer data, size_type size, const Predicate &pred = Predicate()) noexcept
-            : data_(const_cast<pointer>(data)), size_(size), pred_(pred) {
+        constexpr array_range(const_pointer data, size_type size, const Predicate &pred = Predicate()) noexcept :
+            data_(const_cast<pointer>(data)), size_(size), pred_(pred) {
         }
 
-        constexpr array_range(const_pointer first, const_pointer last, const Predicate &pred = Predicate()) noexcept
-            : data_(const_cast<pointer>(first)), size_(static_cast<size_type>(last - first)), pred_(pred) {
+        constexpr array_range(const_pointer first, const_pointer last, const Predicate &pred = Predicate()) noexcept :
+            data_(const_cast<pointer>(first)), size_(static_cast<size_type>(last - first)), pred_(pred) {
         }
 
-        constexpr array_range(std::initializer_list<value_type> value, const Predicate &pred = Predicate()) noexcept
-            : data_(const_cast<pointer>(value.begin())), size_(value.size()), pred_(pred) {
+        constexpr array_range(std::initializer_list<value_type> value, const Predicate &pred = Predicate()) noexcept :
+            data_(const_cast<pointer>(value.begin())), size_(value.size()), pred_(pred) {
         }
 
-        template<typename C, size_type N>
-        constexpr array_range(C (&value)[N], const Predicate &pred = Predicate()) noexcept
-            : array_range(value, N, pred) {
+        template <typename C, size_type N>
+        constexpr array_range(C (&value)[N], const Predicate &pred = Predicate()) noexcept : array_range(value, N, pred) {
         }
 
-        template<typename C>
-        RETTR_CONSTEXPR20 array_range(std::vector<C> &value, const Predicate &pred = Predicate()) noexcept
-            : array_range(data(value), value.size(), pred) {
+        template <typename C>
+        RETTR_CONSTEXPR20 array_range(std::vector<C> &value, const Predicate &pred = Predicate()) noexcept :
+            array_range(data(value), value.size(), pred) {
         }
 
-        template<typename C>
-        RETTR_CONSTEXPR20 array_range(const std::vector<C> &value, const Predicate &pred = Predicate()) noexcept
-            : array_range(data(value), value.size(), pred) {
+        template <typename C>
+        RETTR_CONSTEXPR20 array_range(const std::vector<C> &value, const Predicate &pred = Predicate()) noexcept :
+            array_range(data(value), value.size(), pred) {
         }
 
-        template<typename C, std::size_t N>
-        constexpr array_range(std::array<C, N> &value, const Predicate &pred = Predicate()) noexcept
-            : array_range(value.data(), value.size(), pred) {
+        template <typename C, std::size_t N>
+        constexpr array_range(std::array<C, N> &value, const Predicate &pred = Predicate()) noexcept :
+            array_range(value.data(), value.size(), pred) {
         }
 
-        template<typename C, std::size_t N>
-        constexpr array_range(const std::array<C, N> &value, const Predicate &pred = Predicate()) noexcept
-            : array_range(value.data(), value.size(), pred) {
+        template <typename C, std::size_t N>
+        constexpr array_range(const std::array<C, N> &value, const Predicate &pred = Predicate()) noexcept :
+            array_range(value.data(), value.size(), pred) {
         }
 
-        template<typename OtherType, typename OtherPredicate,
-            std::enable_if_t<std::is_convertible_v<OtherType (*)[], Ty (*)[]>, int> = 0>
-        constexpr array_range(const array_range<OtherType, OtherPredicate> &other) noexcept
-            : array_range(other.data(), other.size(), Predicate()) {
+        template <typename OtherType, typename OtherPredicate,
+                  std::enable_if_t<std::is_convertible_v<OtherType (*)[], Ty (*)[]>, int> = 0>
+        constexpr array_range(const array_range<OtherType, OtherPredicate> &other) noexcept :
+            array_range(other.data(), other.size(), Predicate()) {
         }
 
         constexpr reference operator[](size_type pos) noexcept {
@@ -176,17 +184,15 @@ namespace rettr {
         }
 
     private:
-        template<typename C>
+        template <typename C>
         RETTR_CONSTEXPR20 static auto data(std::vector<C> &value) noexcept {
-            static_assert(!std::is_same_v<C, bool>,
-                          "Cannot use std::vector<bool> as an array_range.");
+            static_assert(!std::is_same_v<C, bool>, "Cannot use std::vector<bool> as an array_range.");
             return value.data();
         }
 
-        template<typename C>
+        template <typename C>
         RETTR_CONSTEXPR20 static auto data(const std::vector<C> &value) noexcept {
-            static_assert(!std::is_same_v<C, bool>,
-                          "Cannot use std::vector<bool> as an array_range.");
+            static_assert(!std::is_same_v<C, bool>, "Cannot use std::vector<bool> as an array_range.");
             return value.data();
         }
 
@@ -195,7 +201,7 @@ namespace rettr {
         Predicate pred_{};
     };
 
-    template<typename Ty, typename Predicate>
+    template <typename Ty, typename Predicate>
     class array_range<Ty, Predicate>::iterator {
     public:
         using iterator_category = std::forward_iterator_tag;
@@ -207,8 +213,7 @@ namespace rettr {
         iterator() : ptr_(nullptr), range_(nullptr) {
         }
 
-        iterator(pointer ptr, const array_range<Ty, Predicate> *range)
-            : ptr_(ptr), range_(range) {
+        iterator(pointer ptr, const array_range<Ty, Predicate> *range) : ptr_(ptr), range_(range) {
             while (ptr_ != range_->data_ + range_->size_ && !range_->pred_(*ptr_)) {
                 ++ptr_;
             }
@@ -248,7 +253,7 @@ namespace rettr {
         const array_range<Ty, Predicate> *range_;
     };
 
-    template<typename Ty, typename Predicate>
+    template <typename Ty, typename Predicate>
     class array_range<Ty, Predicate>::const_iterator {
     public:
         using iterator_category = std::forward_iterator_tag;
@@ -260,15 +265,13 @@ namespace rettr {
         const_iterator() : ptr_(nullptr), range_(nullptr) {
         }
 
-        const_iterator(pointer ptr, const array_range<Ty, Predicate> *range)
-            : ptr_(ptr), range_(range) {
+        const_iterator(pointer ptr, const array_range<Ty, Predicate> *range) : ptr_(ptr), range_(range) {
             while (ptr_ != range_->data_ + range_->size_ && !range_->pred_(*ptr_)) {
                 ++ptr_;
             }
         }
 
-        const_iterator(const iterator &right)
-            : ptr_(right.ptr_), range_(right.range_) {
+        const_iterator(const iterator &right) : ptr_(right.ptr_), range_(right.range_) {
         }
 
         reference operator*() const {
@@ -305,7 +308,7 @@ namespace rettr {
         const array_range<Ty, Predicate> *range_;
     };
 
-    template<typename Ty, typename Predicate>
+    template <typename Ty, typename Predicate>
     class array_range<Ty, Predicate>::reverse_iterator {
     public:
         using iterator_category = std::forward_iterator_tag;
@@ -317,8 +320,7 @@ namespace rettr {
         reverse_iterator() : ptr_(nullptr), range_(nullptr) {
         }
 
-        reverse_iterator(pointer ptr, const array_range<Ty, Predicate> *range)
-            : ptr_(ptr), range_(range) {
+        reverse_iterator(pointer ptr, const array_range<Ty, Predicate> *range) : ptr_(ptr), range_(range) {
             while (ptr_ >= range_->data_ && !range_->pred_(*ptr_)) {
                 --ptr_;
             }
@@ -358,7 +360,7 @@ namespace rettr {
         const array_range<Ty, Predicate> *range_;
     };
 
-    template<typename Ty, typename Predicate>
+    template <typename Ty, typename Predicate>
     class array_range<Ty, Predicate>::const_reverse_iterator {
     public:
         using iterator_category = std::forward_iterator_tag;
@@ -370,15 +372,13 @@ namespace rettr {
         const_reverse_iterator() : ptr_(nullptr), range_(nullptr) {
         }
 
-        const_reverse_iterator(pointer ptr, const array_range<Ty, Predicate> *range)
-            : ptr_(ptr), range_(range) {
+        const_reverse_iterator(pointer ptr, const array_range<Ty, Predicate> *range) : ptr_(ptr), range_(range) {
             while (ptr_ >= range_->data_ && !range_->pred_(*ptr_)) {
                 --ptr_;
             }
         }
 
-        const_reverse_iterator(const reverse_iterator &right)
-            : ptr_(right.ptr_), range_(right.range_) {
+        const_reverse_iterator(const reverse_iterator &right) : ptr_(right.ptr_), range_(right.range_) {
         }
 
         reference operator*() const {
@@ -415,81 +415,68 @@ namespace rettr {
         const array_range<Ty, Predicate> *range_;
     };
 
-    template<typename Ty, typename Predicate>
-    inline typename array_range<Ty, Predicate>::iterator
-    array_range<Ty, Predicate>::begin() noexcept {
+    template <typename Ty, typename Predicate>
+    inline typename array_range<Ty, Predicate>::iterator array_range<Ty, Predicate>::begin() noexcept {
         return iterator(data_, this);
     }
 
-    template<typename Ty, typename Predicate>
-    inline typename array_range<Ty, Predicate>::const_iterator
-    array_range<Ty, Predicate>::begin() const noexcept {
+    template <typename Ty, typename Predicate>
+    inline typename array_range<Ty, Predicate>::const_iterator array_range<Ty, Predicate>::begin() const noexcept {
         return const_iterator(data_, this);
     }
 
-    template<typename Ty, typename Predicate>
-    inline typename array_range<Ty, Predicate>::const_iterator
-    array_range<Ty, Predicate>::cbegin() const noexcept {
+    template <typename Ty, typename Predicate>
+    inline typename array_range<Ty, Predicate>::const_iterator array_range<Ty, Predicate>::cbegin() const noexcept {
         return const_iterator(data_, this);
     }
 
-    template<typename Ty, typename Predicate>
-    inline typename array_range<Ty, Predicate>::iterator
-    array_range<Ty, Predicate>::end() noexcept {
+    template <typename Ty, typename Predicate>
+    inline typename array_range<Ty, Predicate>::iterator array_range<Ty, Predicate>::end() noexcept {
         return iterator(data_ + size_, this);
     }
 
-    template<typename Ty, typename Predicate>
-    inline typename array_range<Ty, Predicate>::const_iterator
-    array_range<Ty, Predicate>::end() const noexcept {
+    template <typename Ty, typename Predicate>
+    inline typename array_range<Ty, Predicate>::const_iterator array_range<Ty, Predicate>::end() const noexcept {
         return const_iterator(data_ + size_, this);
     }
 
-    template<typename Ty, typename Predicate>
-    inline typename array_range<Ty, Predicate>::const_iterator
-    array_range<Ty, Predicate>::cend() const noexcept {
+    template <typename Ty, typename Predicate>
+    inline typename array_range<Ty, Predicate>::const_iterator array_range<Ty, Predicate>::cend() const noexcept {
         return const_iterator(data_ + size_, this);
     }
 
-    template<typename Ty, typename Predicate>
-    inline typename array_range<Ty, Predicate>::reverse_iterator
-    array_range<Ty, Predicate>::rbegin() noexcept {
+    template <typename Ty, typename Predicate>
+    inline typename array_range<Ty, Predicate>::reverse_iterator array_range<Ty, Predicate>::rbegin() noexcept {
         return reverse_iterator(data_ + size_ - 1, this);
     }
 
-    template<typename Ty, typename Predicate>
-    inline typename array_range<Ty, Predicate>::const_reverse_iterator
-    array_range<Ty, Predicate>::rbegin() const noexcept {
+    template <typename Ty, typename Predicate>
+    inline typename array_range<Ty, Predicate>::const_reverse_iterator array_range<Ty, Predicate>::rbegin() const noexcept {
         return const_reverse_iterator(data_ + size_ - 1, this);
     }
 
-    template<typename Ty, typename Predicate>
-    inline typename array_range<Ty, Predicate>::const_reverse_iterator
-    array_range<Ty, Predicate>::crbegin() const noexcept {
+    template <typename Ty, typename Predicate>
+    inline typename array_range<Ty, Predicate>::const_reverse_iterator array_range<Ty, Predicate>::crbegin() const noexcept {
         return const_reverse_iterator(data_ + size_ - 1, this);
     }
 
-    template<typename Ty, typename Predicate>
-    inline typename array_range<Ty, Predicate>::reverse_iterator
-    array_range<Ty, Predicate>::rend() noexcept {
+    template <typename Ty, typename Predicate>
+    inline typename array_range<Ty, Predicate>::reverse_iterator array_range<Ty, Predicate>::rend() noexcept {
         return reverse_iterator(data_ - 1, this);
     }
 
-    template<typename Ty, typename Predicate>
-    inline typename array_range<Ty, Predicate>::const_reverse_iterator
-    array_range<Ty, Predicate>::rend() const noexcept {
+    template <typename Ty, typename Predicate>
+    inline typename array_range<Ty, Predicate>::const_reverse_iterator array_range<Ty, Predicate>::rend() const noexcept {
         return const_reverse_iterator(data_ - 1, this);
     }
 
-    template<typename Ty, typename Predicate>
-    inline typename array_range<Ty, Predicate>::const_reverse_iterator
-    array_range<Ty, Predicate>::crend() const noexcept {
+    template <typename Ty, typename Predicate>
+    inline typename array_range<Ty, Predicate>::const_reverse_iterator array_range<Ty, Predicate>::crend() const noexcept {
         return const_reverse_iterator(data_ - 1, this);
     }
 
-    template<typename Ty, typename Predicate>
-    inline typename array_range<Ty, Predicate>::size_type
-    array_range<Ty, Predicate>::size() const noexcept {
+    template <typename Ty, typename Predicate>
+    inline typename array_range<Ty, Predicate>::size_type array_range<Ty, Predicate>::size() const noexcept {
         size_type count = 0;
         for (auto it = data_; it != data_ + size_; ++it) {
             if (pred_(*it)) {
@@ -499,7 +486,7 @@ namespace rettr {
         return count;
     }
 
-    template<typename Ty, typename Predicate>
+    template <typename Ty, typename Predicate>
     inline bool array_range<Ty, Predicate>::empty() const noexcept {
         for (auto it = data_; it != data_ + size_; ++it) {
             if (pred_(*it)) {
@@ -509,52 +496,52 @@ namespace rettr {
         return true;
     }
 
-    template<typename C, std::size_t N>
+    template <typename C, std::size_t N>
     array_range(C (&value)[N]) -> array_range<C>;
 
-    template<typename C>
+    template <typename C>
     array_range(std::vector<C> &value) -> array_range<C>;
 
-    template<typename C>
+    template <typename C>
     array_range(const std::vector<C> &value) -> array_range<const C>;
 
-    template<typename C, std::size_t N>
+    template <typename C, std::size_t N>
     array_range(std::array<C, N> &value) -> array_range<C>;
 
-    template<typename C, std::size_t N>
+    template <typename C, std::size_t N>
     array_range(const std::array<C, N> &value) -> array_range<const C>;
 
-    template<typename Ty>
+    template <typename Ty>
     RETTR_CONSTEXPR20 rettr_fn make_array_range(Ty *first, Ty *last) -> array_range<Ty> {
         return array_range<Ty>(first, last);
     }
 
-    template<typename Ty>
+    template <typename Ty>
     RETTR_CONSTEXPR20 rettr_fn make_array_range(const Ty *first, const Ty *last) -> array_range<Ty> {
         return array_range<Ty>(first, last);
     }
 
-    template<typename Ty, std::size_t N>
+    template <typename Ty, std::size_t N>
     RETTR_CONSTEXPR20 rettr_fn make_array_range(Ty (&array)[N]) -> array_range<Ty> {
         return array_range<Ty>(array);
     }
 
-    template<typename Ty>
+    template <typename Ty>
     RETTR_CONSTEXPR20 rettr_fn make_array_range(std::vector<Ty> &vector) -> array_range<Ty> {
         return array_range<Ty>(vector);
     }
 
-    template<typename Ty>
+    template <typename Ty>
     RETTR_CONSTEXPR20 rettr_fn make_array_range(const std::vector<Ty> &vector) -> array_range<const Ty> {
         return array_range<const Ty>(vector);
     }
 
-    template<typename Ty, std::size_t N>
+    template <typename Ty, std::size_t N>
     RETTR_CONSTEXPR20 rettr_fn make_array_range(std::array<Ty, N> &array) -> array_range<Ty> {
         return array_range<Ty>(array);
     }
 
-    template<typename Ty, std::size_t N>
+    template <typename Ty, std::size_t N>
     RETTR_CONSTEXPR20 rettr_fn make_array_range(const std::array<Ty, N> &array) -> array_range<const Ty> {
         return array_range<const Ty>(array);
     }

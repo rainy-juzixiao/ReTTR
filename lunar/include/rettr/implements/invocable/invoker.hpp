@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef RETTR_META_REFL_IMPL_INVOKER_HPP
-#define RETTR_META_REFL_IMPL_INVOKER_HPP
+#ifndef RETTR_IMPLEMENTS_INVOCABLE_INVOKER_HPP
+#define RETTR_IMPLEMENTS_INVOCABLE_INVOKER_HPP
 #include <rettr/core/prerequisites.hpp>
 #include <rettr/core/member_pointer_traits.hpp>
 #include <rettr/object_view.hpp>
 #include <rettr/any.hpp>
+#include <rettr/implements/invocable/method_flags.hpp>
 
 #if RETTR_USING_MSVC
 #pragma warning(push)
@@ -27,19 +28,6 @@
 
 namespace rettr {
     class function;
-
-    enum class method_flags : std::uint8_t {
-        none = 0,
-        static_specified = 1, // static method
-        memfn_specified = 2, // member method
-        noexcept_specified = 4, // noexcept
-        lvalue_qualified = 8, // left qualifier (e.g. &)
-        rvalue_qualified = 16, // right qualifier (e.g. &&)
-        const_qualified = 32, // const
-        volatile_qualified = 64, // volatile
-    };
-
-    RETTR_ENABLE_ENUM_CLASS_BITMASK_OPERATORS(method_flags);
     
     template <typename Fx, typename... Args>
     constexpr rettr_fn deduction_invoker_type() noexcept -> method_flags {

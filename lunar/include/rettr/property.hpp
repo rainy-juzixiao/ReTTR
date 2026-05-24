@@ -105,6 +105,7 @@ namespace rettr {
 
         any::reference value(object_view object = non_exists_instance); // NOLINT
         any::reference value(object_view object = non_exists_instance) const; // NOLINT
+
         void value(object_view object, const any &val);
 
         rettr::type declaring_type() const noexcept {
@@ -243,9 +244,8 @@ namespace rettr {
                 } else {
                     if (object.type().is_const()) {
                         return {std::invoke(property_ptr, object.as<const Class>())};
-                    } else {
-                        return {std::invoke(property_ptr, object.as<Class>())};
                     }
+                    return {std::invoke(property_ptr, object.as<Class>())};
                 }
             }
 

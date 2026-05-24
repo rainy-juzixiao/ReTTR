@@ -21,7 +21,6 @@
 #include <rettr/enumeration.hpp>
 #include <rettr/method.hpp>
 #include <rettr/property.hpp>
-#include <rettr/type.hpp>
 #include <rettr/implements/type/raw_type.hpp>
 
 namespace rettr::implements::type_private {
@@ -31,7 +30,7 @@ namespace rettr::implements::type_private {
     using derived_info_func_ptr_t = derived_info (*)(void *);
 
     template <typename Type>
-    RETTR_INLINE type_data &type_data() noexcept;
+    RETTR_INLINE type_data &get_type_data() noexcept;
 
     RETTR_LOCAL_API struct type_data *invalid_type_data() noexcept;
 

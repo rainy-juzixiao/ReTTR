@@ -47,6 +47,8 @@ namespace rettr {
         using function::operator();
         using function::return_type;
         using function::static_invoke;
+        using function::which_belongs;
+        using function::type;
 
         method() noexcept = default;
 

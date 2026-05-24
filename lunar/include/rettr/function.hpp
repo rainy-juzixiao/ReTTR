@@ -1,5 +1,5 @@
 /*
-* Copyright 2026 rettr-juzixiao
+ * Copyright 2026 rettr-juzixiao
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,26 +22,25 @@
 #include <rettr/type.hpp>
 
 namespace rettr::implements {
-    template<typename Fx, typename ParamList>
-    struct adapter_std_function_functor {
-    };
+    template <typename Fx, typename ParamList>
+    struct adapter_std_function_functor {};
 
-    template<typename Fx, typename... Args>
-    struct adapter_std_function_functor<Fx, helper::type_list<Args...> > {
+    template <typename Fx, typename... Args>
+    struct adapter_std_function_functor<Fx, helper::type_list<Args...>> {
         adapter_std_function_functor(const std::function<Fx> &function) : object(function) {
         }
 
-        rettr_fn operator()(Args... args) -> decltype(auto) {
+        rettr_fn operator()(Args... args)->decltype(auto) {
             return object(args...);
         }
 
         std::function<Fx> object;
     };
 
-    template<typename Ty, typename... CtorArgs>
+    template <typename Ty, typename... CtorArgs>
     class constructor_bind;
 
-    template<typename Fx>
+    template <typename Fx>
     class method_bind;
 }
 
@@ -78,9 +77,8 @@ namespace rettr {
          * @tparam Fx 函数对象类型。
          * @param function 函数对象。
          */
-        template<typename Fx, typename... Args,
-            std::enable_if_t<function_traits<Fx>::valid, int> = 0>
-        function(Fx &&function, Args &&... default_arguments) noexcept : invoke_accessor_{} {
+        template <typename Fx, typename... Args, std::enable_if_t<function_traits<Fx>::valid, int> = 0>
+        function(Fx &&function, Args &&...default_arguments) noexcept : invoke_accessor_{} {
             // NOLINT
             using traits = function_traits<Fx>;
             using paramlist = typename traits::argument_list;
@@ -93,16 +91,13 @@ namespace rettr {
             static_assert(implements::check_default_args_compatibility<paramlist, start_index, Args...>(),
                           "Default arguments are not compatible with corresponding function parameters.");
 
-            using implemented_type = typename implements::get_ia_implement_type<Fx, implements::default_arguments_store<
-                    Args...>,
-                function_traits<Fx> >::type;
+            using implemented_type = typename implements::get_ia_implement_type<Fx, implements::default_arguments_store<Args...>,
+                                                                                function_traits<Fx>>::type;
             if constexpr (sizeof(implemented_type) >= implements::fn_obj_soo_buffer_size) {
-                invoke_accessor_ =
-                        ::new implemented_type(std::forward<Fx>(function), std::forward<Args>(default_arguments)...);
+                invoke_accessor_ = ::new implemented_type(std::forward<Fx>(function), std::forward<Args>(default_arguments)...);
             } else {
-                invoke_accessor_ = ::new(reinterpret_cast<implemented_type *>(invoker_storage)) implemented_type(
-                    std::forward<Fx>(function),
-                    std::forward<Args>(default_arguments)...);
+                invoke_accessor_ = ::new (reinterpret_cast<implemented_type *>(invoker_storage))
+                    implemented_type(std::forward<Fx>(function), std::forward<Args>(default_arguments)...);
             }
         }
 
@@ -111,9 +106,8 @@ namespace rettr {
          * @tparam Fx 委托对象签名
          * @param function 委托对象。
          */
-        template<typename Rx, typename... FArgs, typename... Args,
-            std::enable_if_t<function_traits<Rx(FArgs...)>::valid, int> = 0>
-        function(const std::function<Rx(FArgs...)> &object, Args &&... default_arguments) noexcept {
+        template <typename Rx, typename... FArgs, typename... Args, std::enable_if_t<function_traits<Rx(FArgs...)>::valid, int> = 0>
+        function(const std::function<Rx(FArgs...)> &object, Args &&...default_arguments) noexcept {
             // NOLINT
             using traits = function_traits<Rx(Args...)>;
             using paramlist = typename traits::argument_list;
@@ -128,12 +122,10 @@ namespace rettr {
             static_assert(implements::check_default_args_compatibility<paramlist, start_index, Args...>(),
                           "Default arguments are not compatible with corresponding function parameters.");
             using wrapper = implements::adapter_std_function_functor<f, Args...>;
-            using implemented_type =
-                    typename implements::get_ia_implement_type<wrapper, implements::default_arguments_store<Args...>
-                        ,
-                        function_traits<f> >::type;
-            invoke_accessor_ = ::new(reinterpret_cast<implemented_type *>(invoker_storage)) implemented_type(
-                wrapper{object}, std::forward<Args>(default_arguments)...);
+            using implemented_type = typename implements::get_ia_implement_type<wrapper, implements::default_arguments_store<Args...>,
+                                                                                function_traits<f>>::type;
+            invoke_accessor_ = ::new (reinterpret_cast<implemented_type *>(invoker_storage))
+                implemented_type(wrapper{object}, std::forward<Args>(default_arguments)...);
         }
 
         ~function();
@@ -144,8 +136,8 @@ namespace rettr {
          * @param args 任意数量的函数实参，需要与目标调用的参数数量一致。
          * @return 函数调用结果，以any形式。
          */
-        template<typename... Args>
-        RETTR_INLINE any static_invoke(Args &&... args) const {
+        template <typename... Args>
+        RETTR_INLINE any static_invoke(Args &&...args) const {
             return invoke(non_exists_instance, std::forward<Args>(args)...);
         }
 
@@ -156,8 +148,8 @@ namespace rettr {
          * @param args 任意数量的函数实参，需要与目标调用的参数数量一致。
          * @return 函数调用结果，以any形式。
          */
-        template<typename... Args>
-        RETTR_INLINE any invoke(object_view instance, Args &&... args) const {
+        template <typename... Args>
+        RETTR_INLINE any invoke(object_view instance, Args &&...args) const {
 #if RETTR_ENABLE_DEBUG
             assert(!empty() && "Cannot call [invoke] method, curent object is empty!");
             if (instance.type().is_const()) {
@@ -184,8 +176,7 @@ namespace rettr {
             }
         }
 
-        RETTR_INLINE any invoke_variadic(object_view instance,
-                                         array_range<class any> args = {}) const; // NOLINT
+        RETTR_INLINE any invoke_variadic(object_view instance, array_range<class any> args = {}) const; // NOLINT
 
         /**
          * @brief 重载函数调用运算符，以调用函数并返回结果。
@@ -194,8 +185,8 @@ namespace rettr {
          * @param args 任意数量的函数实参，需要与目标调用的参数数量一致。
          * @return 函数调用结果，以any形式。
          */
-        template<typename... Args>
-        RETTR_INLINE any operator()(object_view instance, Args &&... args) const {
+        template <typename... Args>
+        RETTR_INLINE any operator()(object_view instance, Args &&...args) const {
             return invoke(instance, std::forward<Args>(args)...);
         }
 
@@ -253,9 +244,7 @@ namespace rettr {
          * @brief 获取函数对象的函数类型。
          * @return 返回函数类型。
          */
-        RETTR_NODISCARD method_flags type()
-        const
-            noexcept;
+        RETTR_NODISCARD method_flags type() const noexcept;
 
         /**
          * @brief 获取函数对象的函数类型。检查是否具有特定的属性
@@ -385,15 +374,14 @@ namespace rettr {
          * @param paramlist 参数列表。
          * @return 如果可以调用，则返回true；否则返回false。
          */
-        RETTR_NODISCARD bool is_invocable(
-            array_range<typeinfo> paramlist) const noexcept;
+        RETTR_NODISCARD bool is_invocable(array_range<typeinfo> paramlist) const noexcept;
 
         /**
          * @brief 检查当前函数对象是否可以调用给定的参数类型。
          * @tparam Args 参数类型。
          * @return 如果可以调用，则返回true；否则返回false。
          */
-        template<typename... Args>
+        template <typename... Args>
         RETTR_NODISCARD bool is_invocable() const noexcept {
             if (empty()) {
                 return false;
@@ -401,15 +389,13 @@ namespace rettr {
             if constexpr (sizeof...(Args) == 0) {
                 return invoke_accessor()->is_invocable({});
             } else {
-                static std::array<typeinfo, sizeof...(Args)> paramlist = {
-                    typeinfo::create<Args>()...
-                };
+                static std::array<typeinfo, sizeof...(Args)> paramlist = {typeinfo::create<Args>()...};
                 return is_invocable(paramlist);
             }
         }
 
-        template<typename... Args>
-        RETTR_NODISCARD bool is_invocable_with(Args &&... args) const noexcept {
+        template <typename... Args>
+        RETTR_NODISCARD bool is_invocable_with(Args &&...args) const noexcept {
             implements::make_paramlist paramlist{std::forward<Args>(args)...};
             return is_invocable(paramlist.get());
         }
@@ -421,9 +407,9 @@ namespace rettr {
          * @tparam Fx 目标函数类型。
          * @return 返回目标函数指针。
          */
-        template<typename Fx>
+        template <typename Fx>
         RETTR_NODISCARD Fx *target() const noexcept {
-            assert(!empty()&& "You're trying to get the arg count of a empty object!");
+            assert(!empty() && "You're trying to get the arg count of a empty object!");
             if constexpr (std::is_same_v<Fx, function>) {
                 return reinterpret_cast<function *>(invoke_accessor()->target(rettr_typeid(Fx)));
             } else {
@@ -466,10 +452,10 @@ namespace rettr {
         }
 
     private:
-        template<typename Ty, typename... CtorArgs>
+        template <typename Ty, typename... CtorArgs>
         friend class implements::constructor_bind;
 
-        template<typename Ty>
+        template <typename Ty>
         friend class implements::method_bind;
 
         RETTR_NODISCARD RETTR_INLINE implements::invoker_accessor *invoke_accessor() const noexcept {
@@ -479,7 +465,7 @@ namespace rettr {
         RETTR_NODISCARD bool is_local() const noexcept;
 
         alignas(std::max_align_t) byte_t
-        invoker_storage[implements::fn_obj_soo_buffer_size]{}; // 不使用std::array/std::aligned_storage
+            invoker_storage[implements::fn_obj_soo_buffer_size]{}; // 不使用std::array/std::aligned_storage
         implements::invoker_accessor *invoke_accessor_{nullptr};
     };
 
@@ -489,8 +475,7 @@ namespace rettr {
      * @param fx 函数对象。
      * @return 返回创建的反射函数对象。
      */
-    template<typename Fx,
-        std::enable_if_t<std::is_constructible_v<function, Fx>, int> = 0>
+    template <typename Fx, std::enable_if_t<std::is_constructible_v<function, Fx>, int> = 0>
     function make_function(Fx &&fx) noexcept {
         return function{std::forward<Fx>(fx)};
     }
@@ -503,8 +488,8 @@ namespace rettr {
      * @param args 函数实参。
      * @return 函数调用结果。
      */
-    template<typename... Args>
-    any invoke(const function &fn, object_view instance, Args &&... args) {
+    template <typename... Args>
+    any invoke(const function &fn, object_view instance, Args &&...args) {
         return fn.invoke(instance, std::forward<Args>(args)...);
     }
 }

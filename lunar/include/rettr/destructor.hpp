@@ -1,5 +1,5 @@
 /*
-* Copyright 2026 rainy-juzixiao
+ * Copyright 2026 rainy-juzixiao
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 #ifndef RETTR_DESTRUCTOR_HPP
 #define RETTR_DESTRUCTOR_HPP
 
-#include <rettr/type.hpp>
 #include <rettr/object_view.hpp>
+#include <rettr/type.hpp>
 
 namespace rettr::implements {
     struct destructor_vtable {
@@ -28,7 +28,7 @@ namespace rettr::implements {
         bool (*is_valid)(const class typeinfo &) noexcept;
     };
 
-    template<typename Ty>
+    template <typename Ty>
     struct destructor_vtable_impl {
         static bool invoke(void *ptr) noexcept {
             static_cast<Ty *>(ptr)->~Ty();
@@ -43,11 +43,7 @@ namespace rettr::implements {
             return t.remove_cvref() == typeinfo::create<Ty>() || t.remove_cvref() == typeinfo::create<Ty *>();
         }
 
-        static constexpr destructor_vtable vtable{
-            &invoke,
-            &destructed_type,
-            &is_valid
-        };
+        static constexpr destructor_vtable vtable{&invoke, &destructed_type, &is_valid};
     };
 }
 
@@ -56,14 +52,18 @@ namespace rettr {
     public:
         destructor() noexcept = default;
 
-        template<typename Ty>
+        template <typename Ty>
         static destructor make() noexcept {
             return destructor{&implements::destructor_vtable_impl<Ty>::vtable};
         }
 
         bool invoke(object_view obj) const noexcept {
-            if (!empty()) return false;
-            if (!vtable_->is_valid(obj.type())) return false;
+            if (!empty()) {
+                return false;
+            }
+            if (!vtable_->is_valid(obj.type())) {
+                return false;
+            }
             return vtable_->invoke(obj.target_as_void_ptr());
         }
 
@@ -95,8 +95,7 @@ namespace rettr {
         }
 
     private:
-        explicit destructor(const implements::destructor_vtable *vtable) noexcept
-            : vtable_(vtable) {
+        explicit destructor(const implements::destructor_vtable *vtable) noexcept : vtable_(vtable) {
         }
 
         const implements::destructor_vtable *vtable_{nullptr};

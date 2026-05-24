@@ -1,0 +1,396 @@
+/*
+ * Copyright 2026 rainy-juzixiao
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#include <rettr/implements/type/type_register.hpp>
+#include <rettr/implements/type/type_register_private.hpp>
+
+#include <algorithm>
+
+namespace rettr::implements {
+    type_register_private &type_register_private::get_instance() noexcept {
+        static type_register_private inst;
+        return inst;
+    }
+
+    void type_register_private::register_reg_manager(registration_manager *manager) noexcept {
+        std::lock_guard<std::mutex> lock(mutex_);
+        registration_manager_list_.insert(manager);
+    }
+
+    void type_register_private::unregister_reg_manager(registration_manager *manager) noexcept {
+        std::lock_guard<std::mutex> lock(mutex_);
+        registration_manager_list_.erase(manager);
+    }
+
+    type_private::type_data *type_register_private::register_name_if_necessary(type_private::type_data *info) noexcept {
+        auto it = orig_name_to_id_.find(info->type_info.name());
+        if (it != orig_name_to_id_.end()) {
+            return it->second.type_data_;
+        }
+        orig_name_to_id_.emplace(info->type_info.name(), rettr::type{info});
+        return info;
+    }
+
+    type_private::type_data *type_register_private::register_type(type_private::type_data *info) noexcept {
+        if (!info) {
+            return nullptr;
+        }
+        std::lock_guard<std::mutex> lock(mutex_);
+        auto *existing = register_name_if_necessary(info);
+        if (existing != info) {
+            return existing;
+        }
+        type_data_storage_.emplace_back(info);
+        type_list_.emplace_back(rettr::type{info});
+        register_base_class_info(info);
+        return info;
+    }
+
+    void type_register_private::unregister_type(type_private::type_data *info) noexcept {
+        if (!info) {
+            return;
+        }
+        std::lock_guard<std::mutex> lock(mutex_);
+        rettr::type t{info};
+        remove_derived_types_from_base_classes(t, info->my_class_data.base_types);
+        remove_base_types_from_derived_classes(t, info->my_class_data.derived_types);
+        orig_name_to_id_.erase(info->type_info.name());
+        type_data_storage_.erase(std::remove(type_data_storage_.begin(), type_data_storage_.end(), info), type_data_storage_.end());
+        type_list_.erase(
+            std::remove_if(type_list_.begin(), type_list_.end(), [info](const rettr::type &t) { return t.type_data_ == info; }),
+            type_list_.end());
+    }
+
+    void type_register_private::register_base_class_info(type_private::type_data *info) noexcept {
+        for (auto &base: info->my_class_data.base_types) {
+            if (base.type_data_) {
+                base.type_data_->my_class_data.derived_types.emplace_back(rettr::type{info});
+            }
+        }
+    }
+
+    bool type_register_private::register_constructor(const constructor *ctor) noexcept {
+        if (!ctor || ctor->empty()) {
+            return false;
+        }
+        std::lock_guard<std::mutex> lock(mutex_);
+        auto it = orig_name_to_id_.find(ctor->return_type().name());
+        if (it == orig_name_to_id_.end()) {
+            return false;
+        }
+        it->second.type_data_->my_class_data.ctors.emplace_back(*ctor);
+        return true;
+    }
+
+    bool type_register_private::register_destructor(const destructor *dtor) noexcept {
+        if (!dtor || dtor->empty()) {
+            return false;
+        }
+        std::lock_guard<std::mutex> lock(mutex_);
+        auto it = orig_name_to_id_.find(dtor->destructed_type().name());
+        if (it == orig_name_to_id_.end()) {
+            return false;
+        }
+        it->second.type_data_->my_class_data.dtor = *dtor;
+        return true;
+    }
+
+    bool type_register_private::register_property(const property *prop) noexcept {
+        if (!prop || prop->empty()) {
+            return false;
+        }
+        std::lock_guard<std::mutex> lock(mutex_);
+        auto it = orig_name_to_id_.find(prop->which_belongs().name());
+        if (it == orig_name_to_id_.end()) {
+            return false;
+        }
+        it->second.type_data_->my_class_data.properties.emplace_back(*prop);
+        return true;
+    }
+
+    bool type_register_private::register_global_property(const property *prop) noexcept {
+        if (!prop || prop->empty()) {
+            return false;
+        }
+        std::lock_guard<std::mutex> lock(mutex_);
+        global_property_storage_.emplace(prop->name(), *prop);
+        global_properties_.emplace_back(*prop);
+        return true;
+    }
+
+    bool type_register_private::unregister_global_property(const property *prop) noexcept {
+        if (!prop) {
+            return false;
+        }
+        std::lock_guard<std::mutex> lock(mutex_);
+        auto range = global_property_storage_.equal_range(prop->name());
+        global_property_storage_.erase(range.first, range.second);
+        global_properties_.erase(std::remove_if(global_properties_.begin(), global_properties_.end(),
+                                                [prop](const property &p) { return p.name() == prop->name(); }),
+                                 global_properties_.end());
+        return true;
+    }
+
+    bool type_register_private::register_method(const method *meth) noexcept {
+        if (!meth || meth->empty()) {
+            return false;
+        }
+        std::lock_guard<std::mutex> lock(mutex_);
+        auto it = orig_name_to_id_.find(meth->which_belongs().name());
+        if (it == orig_name_to_id_.end()) {
+            return false;
+        }
+        it->second.type_data_->my_class_data.methods.emplace_back(*meth);
+        return true;
+    }
+
+    bool type_register_private::register_global_method(const method *meth) noexcept {
+        if (!meth || meth->empty()) {
+            return false;
+        }
+        std::lock_guard<std::mutex> lock(mutex_);
+        global_method_storage_.emplace(meth->name(), *meth);
+        global_methods_.emplace_back(*meth);
+        return true;
+    }
+
+    bool type_register_private::unregister_global_method(const method *meth) noexcept {
+        if (!meth) {
+            return false;
+        }
+        std::lock_guard<std::mutex> lock(mutex_);
+        auto range = global_method_storage_.equal_range(meth->name());
+        global_method_storage_.erase(range.first, range.second);
+        global_methods_.erase(std::remove_if(global_methods_.begin(), global_methods_.end(),
+                                             [meth](const method &m) { return m.name() == meth->name(); }),
+                              global_methods_.end());
+        return true;
+    }
+
+    bool type_register_private::register_enumeration(enumeration_data *edata) noexcept {
+        if (!edata) {
+            return false;
+        }
+        std::lock_guard<std::mutex> lock(mutex_);
+        auto it = orig_name_to_id_.find(edata->enum_type.name());
+        if (it == orig_name_to_id_.end()) {
+            return false;
+        }
+        it->second.type_data_->enumeration_data = edata;
+        return true;
+    }
+
+    bool type_register_private::unregister_enumeration(enumeration_data *edata) noexcept {
+        if (!edata) {
+            return false;
+        }
+        std::lock_guard<std::mutex> lock(mutex_);
+        auto it = orig_name_to_id_.find(edata->enum_type.name());
+        if (it == orig_name_to_id_.end()) {
+            return false;
+        }
+        it->second.type_data_->enumeration_data = nullptr;
+        return true;
+    }
+
+    void type_register_private::register_custom_name(rettr::type &t, string_view name) noexcept {
+        if (t.empty()) {
+            return;
+        }
+        std::lock_guard<std::mutex> lock(mutex_);
+        update_custom_name(std::string{name.data(), name.size()}, t);
+    }
+
+    any type_register_private::metadata(const rettr::type &t, const any &key) noexcept {
+            if (t.empty()) {
+                return {};
+            }
+            auto &data = t.type_data_->metadata();
+            for (auto &m: data) {
+                if (m.key() == key) {
+                    return m.value();
+                }
+            }
+            return {};
+    }
+
+    any type_register_private::metadata_from_list(const any &key, const std::vector<rettr::metadata> &data) noexcept {
+        for (auto &m: data) {
+            if (m.key() == key) {
+                return m.value();
+            }
+        }
+        return {};
+    }
+
+    array_range<class metadata> type_register_private::metadatas(const rettr::type &t) const noexcept {
+        if (t.empty()) {
+            return array_range<class metadata>();
+        }
+        return t.type_data_->metadata();
+    }
+
+    void type_register_private::update_custom_name(std::string new_name, const rettr::type &t) noexcept {
+        custom_name_to_id_.erase(std::string{t.type_data_->type_info.name()});
+        custom_name_to_id_.emplace(std::move(new_name), t);
+    }
+
+    void type_register_private::metadata(const rettr::type &t, const std::vector<rettr::metadata>& data) noexcept {
+        if (t.empty()) {
+            return;
+        }
+        std::lock_guard<std::mutex> lock(mutex_);
+        auto &store = t.type_data_->metadata();
+        for (auto &m: data) {
+            store.emplace_back(std::move(m));
+        }
+    }
+
+    bool type_register_private::register_base_class(const rettr::type &derived, const rettr::type &base) noexcept {
+        if (derived.empty() || base.empty()) {
+            return false;
+        }
+        std::lock_guard<std::mutex> lock(mutex_);
+        derived.type_data_->my_class_data.base_types.emplace_back(base);
+        base.type_data_->my_class_data.derived_types.emplace_back(derived);
+        return true;
+    }
+
+    void type_register_private::remove_derived_types_from_base_classes(rettr::type &t,
+                                                                       const std::vector<rettr::type> &base_types) noexcept {
+        for (auto &base: base_types) {
+            if (!base.type_data_) {
+                continue;
+            }
+            auto &derived = base.type_data_->my_class_data.derived_types;
+            derived.erase(std::remove(derived.begin(), derived.end(), t), derived.end());
+        }
+    }
+
+    void type_register_private::remove_base_types_from_derived_classes(rettr::type &t,
+                                                                       const std::vector<rettr::type> &derived_types) noexcept {
+        for (auto &derived: derived_types) {
+            if (!derived.type_data_) {
+                continue;
+            }
+            auto &bases = derived.type_data_->my_class_data.base_types;
+            bases.erase(std::remove(bases.begin(), bases.end(), t), bases.end());
+        }
+    }
+
+    std::multimap<string_view, rettr::property> &type_register_private::get_global_property_storage() noexcept {
+        return global_property_storage_;
+    }
+
+    std::multimap<string_view, rettr::method> &type_register_private::get_global_method_storage() noexcept {
+        return global_method_storage_;
+    }
+
+    std::vector<rettr::property> &type_register_private::get_global_properties() noexcept {
+        return global_properties_;
+    }
+
+    std::vector<rettr::method> &type_register_private::get_global_methods() noexcept {
+        return global_methods_;
+    }
+
+    std::vector<type_private::type_data *> &type_register_private::get_type_data_storage() noexcept {
+        return type_data_storage_;
+    }
+
+    std::vector<rettr::type> &type_register_private::get_type_storage() noexcept {
+        return type_list_;
+    }
+
+    std::map<string_view, rettr::type> &type_register_private::get_orig_name_to_id() noexcept {
+        return orig_name_to_id_;
+    }
+
+    std::map<std::string, rettr::type> &type_register_private::get_custom_name_to_id() noexcept {
+        return custom_name_to_id_;
+    }
+
+}
+
+namespace rettr::implements {
+    bool type_register::register_property(const property *prop) noexcept {
+        return type_register_private::get_instance().register_property(prop);
+    }
+
+    bool type_register::register_method(method *meth) noexcept {
+        return type_register_private::get_instance().register_method(meth);
+    }
+
+    bool type_register::register_global_property(const property *prop) noexcept {
+        return type_register_private::get_instance().register_global_property(prop);
+    }
+
+    bool type_register::unregister_global_property(const property *prop) noexcept {
+        return type_register_private::get_instance().unregister_global_property(prop);
+    }
+
+    bool type_register::register_global_method(method *meth) noexcept {
+        return type_register_private::get_instance().register_global_method(meth);
+    }
+
+    bool type_register::unregister_global_method(method *meth) noexcept {
+        return type_register_private::get_instance().unregister_global_method(meth);
+    }
+
+    bool type_register::register_constructor(constructor *ctor) noexcept {
+        return type_register_private::get_instance().register_constructor(ctor);
+    }
+
+    bool type_register::register_destructor(destructor *dtor) noexcept {
+        return type_register_private::get_instance().register_destructor(dtor);
+    }
+
+    bool type_register::register_enumeration(enumeration_data *edata) noexcept {
+        return type_register_private::get_instance().register_enumeration(edata);
+    }
+
+    bool type_register::unregister_enumeration(enumeration_data *edata) noexcept {
+        return type_register_private::get_instance().unregister_enumeration(edata);
+    }
+
+    void type_register::custom_name(rettr::type &t, string_view name) noexcept {
+        type_register_private::get_instance().register_custom_name(t, name);
+    }
+
+    void type_register::metadata(const rettr::type &t, std::vector<rettr::metadata> data) noexcept {
+        type_register_private::get_instance().metadata(t, std::move(data));
+    }
+
+    bool type_register::register_base_class(const rettr::type &derived, const rettr::type &base) noexcept {
+        return type_register_private::get_instance().register_base_class(derived, base);
+    }
+
+    void type_register::register_reg_manager(registration_manager *manager) noexcept {
+        type_register_private::get_instance().register_reg_manager(manager);
+    }
+
+    void type_register::unregister_reg_manager(registration_manager *manager) noexcept {
+        type_register_private::get_instance().unregister_reg_manager(manager);
+    }
+
+    type_private::type_data *type_register::register_type(type_private::type_data *info) noexcept {
+        return type_register_private::get_instance().register_type(info);
+    }
+
+    void type_register::unregister_type(type_private::type_data *info) noexcept {
+        type_register_private::get_instance().unregister_type(info);
+    }
+
+}

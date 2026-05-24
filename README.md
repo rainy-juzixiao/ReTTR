@@ -18,12 +18,9 @@ ReTTR并非RTTR的衍生作品，其发行许可证采用Apache 2.0，而RTTR使
 
 # TODO List
 
-- [ ] visitor::constructor_info (rttr)
 - [x] method (rttr)
-- [ ] visitor::method_info (rttr)
-- [ ] type (rttr)
+- [] type (rttr)
 - [x] array_range (rttr)
-- [ ] visitor::type_info (rttr)
 - [x] destructor (rttr)
 - [x] parameter_info (rttr)
 - [x] type_list (rttr)
@@ -33,12 +30,7 @@ ReTTR并非RTTR的衍生作品，其发行许可证采用Apache 2.0，而RTTR使
 - [x] variant (rttr) -> any(ReTTR)
 - [ ] registration::bind (rttr)
 - [x] enumeration (rttr)
-- [ ] visitor::property_getter_setter_info (rttr)
-- [ ] visitor::property_info (rttr)
-- [ ] visitor (rttr)
 - [ ] registration::class_ (rttr)
 - [ ] registration (rttr)
-- [ ] wrapper_mapper (rttr)
 - [x] constructor (rttr)
 - [ ] library (rttr)
-- [ ] visitor::constructor_function_info (rttr)
