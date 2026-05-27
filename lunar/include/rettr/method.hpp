@@ -47,6 +47,7 @@ namespace rettr {
         using function::return_type;
         using function::static_invoke;
         using function::type;
+        using function::function_signature;
 
         method() noexcept = default;
 

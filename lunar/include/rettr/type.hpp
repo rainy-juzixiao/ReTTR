@@ -158,13 +158,8 @@ namespace rettr {
         RETTR_NODISCARD array_range<rettr::constructor> constructors(filter_items filter) const noexcept;
 
         template <typename... Args>
-        RETTR_NODISCARD any create(Args &&...args) const {
-            if (!this->type_data_) {
-                return {};
-            }
-            return create_impl(implements::arg_store<sizeof...(Args)>(std::forward<Args>(args)...));
-        }
-
+        RETTR_NODISCARD any create(Args &&...args) const;
+        
         RETTR_NODISCARD rettr::destructor destructor() const noexcept;
 
         RETTR_NODISCARD bool destroy(const object_view &obj) const noexcept;

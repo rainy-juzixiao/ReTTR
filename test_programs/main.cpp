@@ -22,25 +22,12 @@ public:
 
 RETTR_REGISTRATION {
     using namespace rettr;
-    registration::class_<MyClass>("MyClass")
-        (
-            metadata(std::string_view{"Type"}, 111)
-        )
-        .constructor<int, int, bool>()
-        (
-            parameter_names("left_operand", "right_operand", "add_one"),
-            default_arguments(false)
-        )
+    registration::class_<MyClass>("MyClass")(metadata(std::string_view{"Type"}, 111))
+        .constructor<int, int, bool>()(parameter_names("left_operand", "right_operand", "add_one"), default_arguments(false))
+        .constructor()
         .method("hello", &MyClass::hello)
-        .method("add", &MyClass::add)
-        (
-            parameter_names("left_operand", "right_operand", "add_one"),
-            default_arguments(false)
-        )
-        .property("field", &MyClass::field)
-        (
-            metadata("attr", 10)
-        );
+        .method("add", &MyClass::add)(parameter_names("left_operand", "right_operand", "add_one"), default_arguments(false))
+        .property("field", &MyClass::field)(metadata("attr", 10));
 }
 
 int main() {
@@ -75,17 +62,15 @@ int main() {
 
     rettr::array_range<rettr::parameter_info> param_infos;
     {
-        param_infos = t.constructor({rettr_typeid(int), rettr_typeid(int), rettr_typeid(bool) }).parameter_infos();
+        param_infos = t.constructor({rettr_typeid(int), rettr_typeid(int), rettr_typeid(bool)}).parameter_infos();
     }
 
     for (const auto &param: param_infos) {
-        std::cout << "param " << param.name() << " type: " << param.type().name() << " default_value: " << 
-            (
-                param.has_default_value()
-                ? 
-                param.default_value() : "none"
-            ) << '\n';
+        std::cout << "param " << param.name() << " type: " << param.type().name()
+                  << " default_value: " << (param.has_default_value() ? param.default_value() : "none") << '\n';
     }
 
+    auto obj = t.create();
+    std::cout << obj.type().name() << '\n';
     return 0;
 }

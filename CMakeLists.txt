@@ -33,6 +33,7 @@ option(RETTR_USING_UTF8_OUTPUT_FOR_MSVC "Use utf-8 encoding for output. Reason: 
 
 include(${PROJECT_SOURCE_DIR}/cmake/utility.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/config.cmake)
+add_subdirectory(${PROJECT_SOURCE_DIR}/lunar/examples)
 
 add_executable(test ${PROJECT_SOURCE_DIR}/test_programs/main.cpp)
 

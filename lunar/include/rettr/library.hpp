@@ -1,5 +1,5 @@
 /*
-* Copyright 2026 rainy-juzixiao
+ * Copyright 2026 rainy-juzixiao
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,43 @@
 #ifndef RETTR_LIBRARY_HPP
 #define RETTR_LIBRARY_HPP
 
+#include <rettr/array_range.hpp>
+#include <rettr/core/prerequisites.hpp>
+#include <rettr/string_view.hpp>
+
 namespace rettr {
-    class library {
+    class method;
+    class property;
+    class type;
+
+    class RETTR_API library {
     public:
+        library(string_view file_name, string_view version = {});
+
+        library(const library &) = delete;
+        library(library &&) = delete;
+
+        ~library();
+
+        string_view file_name() const noexcept;
+
+        array_range<property> global_properties() const noexcept;
+        array_range<method> global_methods() const noexcept;
+
+        array_range<type> types() const noexcept;
+
+        bool is_loaded() const noexcept;
+
+        bool load();
+
+        bool unload();
+
+        string_view error_string() const noexcept;
 
     private:
+        class library_private;
 
+        std::unique_ptr<library_private> private_;
     };
 }
 

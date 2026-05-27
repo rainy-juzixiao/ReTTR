@@ -18,7 +18,7 @@
 message("Checking compiler...")
 RETTR_GET_CXX_COMPILER_ID(COMPILER_ID)
 
-set(RETTR_TOOLKIT_CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
+set(RETTR_CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
 if (CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64|ARM64)$")
     message(STATUS "Target architecture is ARM64")
@@ -48,10 +48,10 @@ endif ()
 set_target_properties(rettr PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 add_definitions(
-        -DRETTR_TOOLKIT_PROJECT_VERSION="${PROJECT_VERSION}"
-        -DRETTR_TOOLKIT_PROJECT_MAJOR=${PROJECT_VERSION_MAJOR}
-        -DRETTR_TOOLKIT_PROJECT_MINOR=${PROJECT_VERSION_MINOR}
-        -DRETTR_TOOLKIT_PROJECT_PATCH=${PROJECT_VERSION_PATCH}
+        -DRETTR_PROJECT_VERSION="${PROJECT_VERSION}"
+        -DRETTR_PROJECT_MAJOR=${PROJECT_VERSION_MAJOR}
+        -DRETTR_PROJECT_MINOR=${PROJECT_VERSION_MINOR}
+        -DRETTR_PROJECT_PATCH=${PROJECT_VERSION_PATCH}
 )
 
 target_include_directories(
@@ -165,7 +165,7 @@ if (APPLE)
     endif ()
 endif ()
 
-if (RETTR_USE_CXX26_RELFECTION_TS)
+if (RETTR_USE_CXX26_REFLECTION_TS)
     if (COMPILER_ID MATCHES "GCC")
         set(_test_flags "-std=c++26 -freflection")
 
@@ -206,16 +206,16 @@ if (RETTR_USE_CXX26_RELFECTION_TS)
             message(STATUS "Compiler supports C++26 Static Reflection (with <meta> and ^^ reflection operator)")
             target_compile_options(rettr PUBLIC -std=c++26 -freflection)
             target_compile_definitions(rettr PUBLIC RETTR_HAS_CXX26_STATIC_REFLECTION=1)
-            set(RETTR_TOOLKIT_HAVE_CXX26_STATIC_REFLECTION TRUE)
+            set(RETTR_HAVE_CXX26_STATIC_REFLECTION TRUE)
         else()
             message(STATUS "Compiler does NOT support C++26 Static Reflection, Disable it.")
             target_compile_definitions(rettr PUBLIC RETTR_HAS_CXX26_STATIC_REFLECTION=0)
-            set(RETTR_TOOLKIT_HAVE_CXX26_STATIC_REFLECTION FALSE)
+            set(RETTR_HAVE_CXX26_STATIC_REFLECTION FALSE)
         endif ()
     endif ()
 else ()
     target_compile_definitions(rettr PUBLIC RETTR_HAS_CXX26_STATIC_REFLECTION=0)
-    set(RETTR_TOOLKIT_HAVE_CXX26_STATIC_REFLECTION FALSE)
+    set(RETTR_HAVE_CXX26_STATIC_REFLECTION FALSE)
 endif ()
 
 if (RETTR_USE_WINDOWS_SCHANNEL AND WIN32)

@@ -111,7 +111,7 @@ function(rettr_load_flodar_files DIRECTORY EXTENSION RESULT_VAR)
             if (IS_DIRECTORY ${ENTRY})
                 # 递归处理子目录
                 unset(SUBDIR_RESULT)
-                rainy_load_flodar_files(${ENTRY} ${EXTENSION} SUBDIR_RESULT)
+                rettr_load_flodar_files(${ENTRY} ${EXTENSION} SUBDIR_RESULT)
                 list(APPEND FILE_LIST ${SUBDIR_RESULT})
             else ()
                 # 提取文件扩展名

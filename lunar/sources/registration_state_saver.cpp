@@ -29,24 +29,24 @@ namespace rettr::implements {
         auto &reg = type_register_private::get_instance();
 
         auto &type_storage = reg.get_type_storage();
-        types.clear();
-        types.reserve(type_storage.size() - old_type_size);
+        types_.clear();
+        types_.reserve(type_storage.size() - old_type_size);
         for (auto it = type_storage.begin() + old_type_size; it != type_storage.end(); ++it) {
-            types.push_back(*it);
+            types_.push_back(*it);
         }
 
         auto &global_methods_storage = reg.get_global_methods();
-        global_methods.clear();
-        global_methods.reserve(global_methods_storage.size() - old_methods_size);
+        global_methods_.clear();
+        global_methods_.reserve(global_methods_storage.size() - old_methods_size);
         for (auto it = global_methods_storage.begin() + old_methods_size; it != global_methods_storage.end(); ++it) {
-            global_methods.push_back(*it);
+            global_methods_.push_back(*it);
         }
 
         auto &global_properties_storage = reg.get_global_properties();
-        global_properties.clear();
-        global_properties.reserve(global_properties_storage.size() - old_property_size);
+        global_properties_.clear();
+        global_properties_.reserve(global_properties_storage.size() - old_property_size);
         for (auto it = global_properties_storage.begin() + old_property_size; it != global_properties_storage.end(); ++it) {
-            global_properties.push_back(*it);
+            global_properties_.push_back(*it);
         }
     }
 
@@ -54,21 +54,21 @@ namespace rettr::implements {
         old_type_size = 0;
         old_methods_size = 0;
         old_property_size = 0;
-        types.clear();
-        global_methods.clear();
-        global_properties.clear();
+        types_.clear();
+        global_methods_.clear();
+        global_properties_.clear();
     }
 
-    array_range<type> registration_state_saver::get_types() const noexcept {
-        return {types.data(), types.size()};
+    array_range<type> registration_state_saver::types() const noexcept {
+        return {types_.data(), types_.size()};
     }
 
-    array_range<property> registration_state_saver::get_global_properties() const noexcept {
-        return {global_properties.data(), global_properties.size()};
+    array_range<property> registration_state_saver::global_properties() const noexcept {
+        return {global_properties_.data(), global_properties_.size()};
     }
 
-    array_range<method> registration_state_saver::get_global_methods() const noexcept {
-        return {global_methods.data(), global_methods.size()};
+    array_range<method> registration_state_saver::global_methods() const noexcept {
+        return {global_methods_.data(), global_methods_.size()};
     }
 
 }

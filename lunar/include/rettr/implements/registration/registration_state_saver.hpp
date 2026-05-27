@@ -36,19 +36,19 @@ namespace rettr::implements {
 
         void reset();
 
-        array_range<type> get_types() const noexcept;
+        RETTR_NODISCARD array_range<type> types() const noexcept;
 
-        array_range<property> get_global_properties() const noexcept;
+        RETTR_NODISCARD array_range<property> global_properties() const noexcept;
 
-        array_range<method> get_global_methods() const noexcept;
+        RETTR_NODISCARD array_range<method> global_methods() const noexcept;
 
     private:
         std::size_t old_type_size = 0;
         std::size_t old_methods_size = 0;
         std::size_t old_property_size = 0;
-        std::vector<type> types;
-        std::vector<property> global_properties;
-        std::vector<method> global_methods;
+        std::vector<type> types_;
+        std::vector<property> global_properties_;
+        std::vector<method> global_methods_;
     };
 }
 

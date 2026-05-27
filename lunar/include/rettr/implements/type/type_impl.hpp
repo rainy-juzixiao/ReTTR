@@ -305,6 +305,23 @@ namespace rettr {
             return meth.invoke(non_exists_instance, std::forward<Args>(args)...);
         }
     }
+
+    template <typename... Args>
+    RETTR_NODISCARD any type::create(Args &&...args) const {
+        if (!this->type_data_) {
+            return {};
+        }
+        constexpr bool has_dynamic =
+          (implements::is_dynamic_object<Args> || ...) || helper::is_any_of_v<object_view, std::decay_t<Args>...>;
+        if constexpr (has_dynamic) {
+            const auto ctor =
+                type::constructor(implements::make_paramlist<sizeof...(Args)>(std::forward<Args>(args)...)).get();
+            return ctor.construct(std::forward<Args>(args)...);
+        } else {
+            const auto ctor = type::constructor(implements::make_nondynamic_paramlist<Args...>{}.get());
+            return ctor.construct(std::forward<Args>(args)...);
+        }
+    }
 }
 
 template <>

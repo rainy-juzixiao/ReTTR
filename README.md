@@ -33,4 +33,4 @@ ReTTR并非RTTR的衍生作品，其发行许可证采用Apache 2.0，而RTTR使
 - [x] registration::class_ (rttr)
 - [x] registration (rttr)
 - [x] constructor (rttr)
-- [ ] library (rttr)
+- [x] library (rttr)
