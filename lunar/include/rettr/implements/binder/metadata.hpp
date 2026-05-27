@@ -13,11 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef RETTR_IMPLEMENTS_PARAMETER_INFO_PARAMETER_INFO_PARAMETER_INFOS_HPP
-#define RETTR_IMPLEMENTS_PARAMETER_INFO_PARAMETER_INFO_PARAMETER_INFOS_HPP
+#ifndef RETTR_IMPLEMENTS_BINDER_METADATA_HPP
+#define RETTR_IMPLEMENTS_BINDER_METADATA_HPP
+#include <rettr/core/prerequisites.hpp>
+#include <rettr/implements/metadata.hpp>
 
-namespace rettr {
+namespace rettr::implements {
+    struct metadata_tag {
+        metadata_item value;
+    };
 
+    RETTR_INLINE metadata_tag metadata(metadata_item md) noexcept {
+        return { std::move(md) };
+    }
 }
+
 
 #endif

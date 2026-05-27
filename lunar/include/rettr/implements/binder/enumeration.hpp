@@ -17,6 +17,7 @@
 #define RETTR_IMPLEMENTS_BINDER_ENUMERATION_HPP
 
 #include <rettr/enumeration.hpp>
+#include <rettr/implements/binder/metadata.hpp>
 
 namespace rettr::implements {
     template <typename EnumType>
@@ -34,7 +35,7 @@ namespace rettr::implements {
 }
 
 namespace rettr::implements {
-    template <typename EnumType>
+    template <typename Clazz, typename EnumType>
     class enumeration_bind {
     public:
         static_assert(std::is_enum_v<EnumType>);
@@ -44,6 +45,7 @@ namespace rettr::implements {
             data_.name = name;
             data_.enum_type = &typeinfo::create<EnumType>();
             data_.underlying_type = &typeinfo::create<underlying>();
+            data_.declaring_type = &typeinfo::create<Clazz>();
         }
 
         ~enumeration_bind() {
@@ -67,9 +69,8 @@ namespace rettr::implements {
             data_.values.emplace_back(any{tag.value});
         }
 
-        void apply_(rettr::metadata &&meta) {
-            auto key = meta.key();
-            data_.metadata.insert_or_assign(std::move(key), std::move(meta));
+        void apply_(metadata_tag &&meta) {
+            data_.metadata.emplace_back(std::move(meta.value));
         }
 
         void commit_impl_() {

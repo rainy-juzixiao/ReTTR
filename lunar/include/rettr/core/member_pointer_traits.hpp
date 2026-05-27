@@ -19,7 +19,7 @@
 #include <rettr/core/prerequisites.hpp>
 
 // NOLINTBEGIN (bugprone-marco-parentheses)
-#define RAINY_MEMBER_POINTER_TRAITS_SPEC(SPEC)                                                                                        \
+#define RETTR_MEMBER_POINTER_TRAITS_SPEC(SPEC)                                                                                        \
     template <typename Rx, typename Class, typename... Args>                                                                          \
     struct member_pointer_traits<Rx (Class::*)(Args...) SPEC> {                                                                       \
         static constexpr bool valid = true;                                                                                           \
@@ -34,7 +34,7 @@
     };
 // NOLINTEND (bugprone-marco-parenthese)
 
-#if RAINY_USING_MSVC
+#if RETTR_USING_MSVC
 #pragma warning(push)
 #pragma warning(disable : 4003)
 #endif
@@ -67,30 +67,30 @@ namespace rettr::helper {
 
     // Specializations for various member pointer cv-qualifier and ref-qualifier combinations
     // 各种成员指针 cv-限定符和引用限定符组合的特化
-    RAINY_MEMBER_POINTER_TRAITS_SPEC()
-    RAINY_MEMBER_POINTER_TRAITS_SPEC(&)
-    RAINY_MEMBER_POINTER_TRAITS_SPEC(&&)
-    RAINY_MEMBER_POINTER_TRAITS_SPEC(const)
-    RAINY_MEMBER_POINTER_TRAITS_SPEC(const &)
-    RAINY_MEMBER_POINTER_TRAITS_SPEC(const &&)
-    RAINY_MEMBER_POINTER_TRAITS_SPEC(noexcept)
-    RAINY_MEMBER_POINTER_TRAITS_SPEC(& noexcept)
-    RAINY_MEMBER_POINTER_TRAITS_SPEC(&& noexcept)
-    RAINY_MEMBER_POINTER_TRAITS_SPEC(const noexcept)
-    RAINY_MEMBER_POINTER_TRAITS_SPEC(const & noexcept)
-    RAINY_MEMBER_POINTER_TRAITS_SPEC(const && noexcept)
-    RAINY_MEMBER_POINTER_TRAITS_SPEC(volatile)
-    RAINY_MEMBER_POINTER_TRAITS_SPEC(volatile &)
-    RAINY_MEMBER_POINTER_TRAITS_SPEC(volatile &&)
-    RAINY_MEMBER_POINTER_TRAITS_SPEC(volatile noexcept)
-    RAINY_MEMBER_POINTER_TRAITS_SPEC(volatile & noexcept)
-    RAINY_MEMBER_POINTER_TRAITS_SPEC(volatile && noexcept)
-    RAINY_MEMBER_POINTER_TRAITS_SPEC(const volatile)
-    RAINY_MEMBER_POINTER_TRAITS_SPEC(const volatile &)
-    RAINY_MEMBER_POINTER_TRAITS_SPEC(const volatile &&)
-    RAINY_MEMBER_POINTER_TRAITS_SPEC(const volatile noexcept)
-    RAINY_MEMBER_POINTER_TRAITS_SPEC(const volatile & noexcept)
-    RAINY_MEMBER_POINTER_TRAITS_SPEC(const volatile && noexcept)
+    RETTR_MEMBER_POINTER_TRAITS_SPEC()
+    RETTR_MEMBER_POINTER_TRAITS_SPEC(&)
+    RETTR_MEMBER_POINTER_TRAITS_SPEC(&&)
+    RETTR_MEMBER_POINTER_TRAITS_SPEC(const)
+    RETTR_MEMBER_POINTER_TRAITS_SPEC(const &)
+    RETTR_MEMBER_POINTER_TRAITS_SPEC(const &&)
+    RETTR_MEMBER_POINTER_TRAITS_SPEC(noexcept)
+    RETTR_MEMBER_POINTER_TRAITS_SPEC(& noexcept)
+    RETTR_MEMBER_POINTER_TRAITS_SPEC(&& noexcept)
+    RETTR_MEMBER_POINTER_TRAITS_SPEC(const noexcept)
+    RETTR_MEMBER_POINTER_TRAITS_SPEC(const & noexcept)
+    RETTR_MEMBER_POINTER_TRAITS_SPEC(const && noexcept)
+    RETTR_MEMBER_POINTER_TRAITS_SPEC(volatile)
+    RETTR_MEMBER_POINTER_TRAITS_SPEC(volatile &)
+    RETTR_MEMBER_POINTER_TRAITS_SPEC(volatile &&)
+    RETTR_MEMBER_POINTER_TRAITS_SPEC(volatile noexcept)
+    RETTR_MEMBER_POINTER_TRAITS_SPEC(volatile & noexcept)
+    RETTR_MEMBER_POINTER_TRAITS_SPEC(volatile && noexcept)
+    RETTR_MEMBER_POINTER_TRAITS_SPEC(const volatile)
+    RETTR_MEMBER_POINTER_TRAITS_SPEC(const volatile &)
+    RETTR_MEMBER_POINTER_TRAITS_SPEC(const volatile &&)
+    RETTR_MEMBER_POINTER_TRAITS_SPEC(const volatile noexcept)
+    RETTR_MEMBER_POINTER_TRAITS_SPEC(const volatile & noexcept)
+    RETTR_MEMBER_POINTER_TRAITS_SPEC(const volatile && noexcept)
 
     /**
      * @brief Specialization of member_pointer_traits for actual member pointer types.
@@ -120,6 +120,6 @@ namespace rettr::helper {
     };
 }
 
-#undef RAINY_MEMBER_POINTER_TRAITS_SPEC
+#undef RETTR_MEMBER_POINTER_TRAITS_SPEC
 
 #endif

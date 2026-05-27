@@ -18,142 +18,55 @@
 
 #include <rettr/implements/parameter_info/parameter_info_base.hpp>
 #include <rettr/type.hpp>
+#include <optional>
 
 namespace rettr::implements {
-    template<typename ParamType, std::size_t Index, bool HasName, typename DefaultValueType>
-    class parameter_info_wrapper;
-
-    template<typename ParamType, std::size_t Index, typename DefaultValueType>
-    class parameter_info_wrapper<ParamType, Index, true, DefaultValueType> : parameter_info_base {
+    template <typename T, std::size_t Index>
+    class parameter_info_wrapper : public parameter_info_base {
     public:
-        parameter_info_wrapper(string_view name) noexcept : name_(name) {
+        explicit parameter_info_wrapper(string_view name = {}) : name_(name) {
         }
-
-        ~parameter_info_wrapper() override = default;
 
         string_view name() const noexcept override {
             return name_;
         }
+        
+        void set_name(string_view name) noexcept override {
+            name_ = name;
+        }
+
 
         rettr::type type() const noexcept override {
-            return type::from<ParamType>();
+            return type::from<T>();
         }
-
+        
         bool has_default_value() const noexcept override {
-            return default_value_ != nullptr;
+            return default_val_.has_value();
         }
-
+        
         any default_value() const override {
-            return *default_value_;
+            return default_val_.value_or(any());
         }
-
+        
         std::uint32_t index() const noexcept override {
             return Index;
         }
-
-        void set_default_value(const DefaultValueType *default_value) noexcept { default_value_ = default_value; }
-
-    private:
-        string_view name_;
-        const DefaultValueType *default_value_{nullptr};
-    };
-
-
-    template<typename ParamType, std::size_t Index, typename DefaultValueType>
-    class parameter_info_wrapper<ParamType, Index, false, DefaultValueType> : parameter_info_base {
-    public:
-        parameter_info_wrapper(string_view name) noexcept {
+        
+        void set_default_value(const any &val) override {
+            default_val_ = val;
         }
 
-        ~parameter_info_wrapper() override = default;
-
-        string_view name() const noexcept override {
-            return
-                    {};
-        }
-
-        rettr::type type() const noexcept override {
-            return type::from<ParamType>();
-        }
-
-        bool has_default_value() const noexcept override {
-            return default_value_ != nullptr;
-        }
-
-        any default_value() const override {
-            return *default_value_;
-        }
-
-        std::uint32_t index() const noexcept override {
-            return Index;
-        }
-
-        void set_default_value(const DefaultValueType *default_value) noexcept { default_value_ = default_value; }
-
-    private:
-        const DefaultValueType *default_value_{nullptr};
-    };
-
-    template<typename ParamType, std::size_t Index>
-    class parameter_info_wrapper<ParamType, Index, true, void> : parameter_info_base {
-    public:
-        parameter_info_wrapper(string_view name) noexcept : name_(name) {
-        }
-
-        ~parameter_info_wrapper() override = default;
-
-        string_view name() const noexcept override {
-            return name_;
-        }
-
-        rettr::type type() const noexcept override {
-            return type::from<ParamType>();
-        }
-
-        bool has_default_value() const noexcept override {
-            return false;
-        }
-
-        any default_value() const override {
-            return {};
-        }
-
-        std::uint32_t index() const noexcept override {
-            return Index;
+        std::unique_ptr<parameter_info_base> clone() const override {
+            auto cloned = std::make_unique<parameter_info_wrapper>(name_);
+            if (default_val_) {
+                cloned->default_val_ = default_val_;
+            }
+            return cloned;
         }
 
     private:
         string_view name_;
-    };
-
-
-    template<typename ParamType, std::size_t Index>
-    class parameter_info_wrapper<ParamType, Index, false, void> : parameter_info_base {
-    public:
-        parameter_info_wrapper(string_view name) noexcept {
-        }
-
-        ~parameter_info_wrapper() override = default;
-
-        string_view name() const noexcept override {
-            return {};
-        }
-
-        rettr::type type() const noexcept override {
-            return type::from<ParamType>();
-        }
-
-        bool has_default_value() const noexcept override {
-            return false;
-        }
-
-        any default_value() const override {
-            return any{};
-        }
-
-        std::uint32_t index() const noexcept override {
-            return Index;
-        }
+        std::optional<any> default_val_;
     };
 }
 

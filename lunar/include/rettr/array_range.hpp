@@ -19,6 +19,8 @@
 #include <rettr/core/prerequisites.hpp>
 
 namespace rettr {
+    class typeinfo;
+
     template <typename Ty>
     struct default_predicate {
         default_predicate() {
@@ -32,6 +34,16 @@ namespace rettr {
         }
 
         std::function<bool(const Ty &)> func;
+    };
+
+    template <>
+    struct default_predicate<typeinfo> {
+        constexpr default_predicate() {
+        }
+
+        constexpr bool operator()(const typeinfo &) const {
+            return true;
+        }
     };
 
     template <typename Ty, typename Predicate = default_predicate<Ty>>
@@ -210,6 +222,8 @@ namespace rettr {
         using pointer = Ty *;
         using reference = Ty &;
 
+        friend class const_iterator;
+
         iterator() : ptr_(nullptr), range_(nullptr) {
         }
 
@@ -244,8 +258,16 @@ namespace rettr {
             return ptr_ == right.ptr_;
         }
 
+        bool operator==(const const_iterator& right) const {
+            return ptr_ == right.ptr_;
+        }
+
         bool operator!=(const iterator &right) const {
             return ptr_ != right.ptr_;
+        }
+
+        bool operator!=(const const_iterator& right) const {
+            return ptr_ == right.ptr_;
         }
 
     private:
@@ -261,6 +283,8 @@ namespace rettr {
         using difference_type = std::ptrdiff_t;
         using pointer = const Ty *;
         using reference = const Ty &;
+
+        friend class iterator;
 
         const_iterator() : ptr_(nullptr), range_(nullptr) {
         }
@@ -295,12 +319,21 @@ namespace rettr {
             return tmp;
         }
 
-        bool operator==(const const_iterator &right) const {
+
+        bool operator==(const iterator &right) const {
             return ptr_ == right.ptr_;
         }
 
-        bool operator!=(const const_iterator &right) const {
+        bool operator==(const const_iterator& right) const {
+            return ptr_ == right.ptr_;
+        }
+
+        bool operator!=(const iterator &right) const {
             return ptr_ != right.ptr_;
+        }
+
+        bool operator!=(const const_iterator& right) const {
+            return ptr_ == right.ptr_;
         }
 
     private:
@@ -316,6 +349,8 @@ namespace rettr {
         using difference_type = std::ptrdiff_t;
         using pointer = Ty *;
         using reference = Ty &;
+
+        friend class const_reverse_iterator;
 
         reverse_iterator() : ptr_(nullptr), range_(nullptr) {
         }
@@ -347,12 +382,21 @@ namespace rettr {
             return tmp;
         }
 
+
         bool operator==(const reverse_iterator &right) const {
+            return ptr_ == right.ptr_;
+        }
+
+        bool operator==(const const_reverse_iterator& right) const {
             return ptr_ == right.ptr_;
         }
 
         bool operator!=(const reverse_iterator &right) const {
             return ptr_ != right.ptr_;
+        }
+
+        bool operator!=(const const_reverse_iterator& right) const {
+            return ptr_ == right.ptr_;
         }
 
     private:
@@ -368,6 +412,8 @@ namespace rettr {
         using difference_type = std::ptrdiff_t;
         using pointer = const Ty *;
         using reference = const Ty &;
+
+        friend class reverse_iterator;
 
         const_reverse_iterator() : ptr_(nullptr), range_(nullptr) {
         }
@@ -402,14 +448,22 @@ namespace rettr {
             return tmp;
         }
 
-        bool operator==(const const_reverse_iterator &right) const {
+        bool operator==(const reverse_iterator &right) const {
             return ptr_ == right.ptr_;
         }
 
-        bool operator!=(const const_reverse_iterator &right) const {
+        bool operator==(const const_reverse_iterator& right) const {
+            return ptr_ == right.ptr_;
+        }
+
+        bool operator!=(const reverse_iterator &right) const {
             return ptr_ != right.ptr_;
         }
 
+        bool operator!=(const const_reverse_iterator& right) const {
+            return ptr_ == right.ptr_;
+        }
+        
     private:
         pointer ptr_;
         const array_range<Ty, Predicate> *range_;

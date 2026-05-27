@@ -18,7 +18,6 @@
 
 #include <rettr/access_levels.hpp>
 #include <rettr/function.hpp>
-#include <rettr/implements/iterator.hpp>
 #include <rettr/implements/metadata.hpp>
 #include <rettr/parameter_info.hpp>
 #include <vector>
@@ -26,13 +25,16 @@
 namespace rettr::implements {
     template <typename T, typename... Args>
     struct constructor_invoker {
-        rettr_fn operator()(Args... args)->any {
-            return any{T(std::forward<Args>(args)...)};
+        rettr_fn operator()(Args... args)->T {
+            return T(std::forward<Args>(args)...);
         }
     };
 
     template <typename, typename...>
     class constructor_bind;
+
+    template <typename>
+    class constructor_func_bind;
 }
 
 namespace rettr {
@@ -62,16 +64,9 @@ namespace rettr {
             std::swap(access_level_, right.access_level_);
         }
 
-        RETTR_NODISCARD parameter_info parameter(std::size_t idx) const noexcept {
-            if (idx >= params_.size()) {
-                return {};
-            }
-            return params_[idx];
-        }
+        RETTR_NODISCARD parameter_info parameter(std::size_t idx) const noexcept;
 
-        RETTR_NODISCARD array_range<parameter_info> parameter_infos() const noexcept {
-            return {params_.data(), params_.size()};
-        }
+        RETTR_NODISCARD array_range<parameter_info> parameter_infos() const noexcept;
 
         RETTR_NODISCARD std::size_t parameter_count() const noexcept {
             return params_.size();
@@ -81,14 +76,16 @@ namespace rettr {
             return access_level_;
         }
 
-        RETTR_NODISCARD const rettr::metadata &metadata(const any &key) const noexcept {
-            static const rettr::metadata empty{};
-            const auto it = metadatas_.find(key);
-            return it != metadatas_.end() ? it->second : empty;
+        RETTR_NODISCARD const rettr::metadata_item &metadata(const any &key) const noexcept {
+            static const rettr::metadata_item empty{};
+            const auto it = std::find_if(metadatas_.begin(), metadatas_.end(), [&key](const auto &item) {
+                return item.key() == key;
+            });
+            return it != metadatas_.end() ? *it : empty;
         }
 
-        rettr_fn metadatas() const noexcept -> auto {
-            return implements::mapped_range(metadatas_);
+        RETTR_NODISCARD array_range<metadata_item> metadatas() const noexcept {
+            return metadatas_;
         }
 
         template <typename... Args>
@@ -100,9 +97,7 @@ namespace rettr {
             return function::invoke_variadic(non_exists_instance, args);
         }
 
-        rettr::type declaring_type() const noexcept {
-            return rettr::type::from_typeid(function::which_belongs().remove_cvref());
-        }
+        rettr::type declaring_type() const noexcept;
 
         bool operator==(const constructor &right) const noexcept {
             return function::equal_with(right);
@@ -114,16 +109,19 @@ namespace rettr {
 
     private:
         explicit constructor(function &&fn, access_levels access_level, std::vector<parameter_info> &&params,
-                             std::vector<rettr::metadata> &&metadata) noexcept :
+                             std::vector<rettr::metadata_item> &&metadata) noexcept :
             function(std::move(fn)), access_level_(access_level), params_(std::move(params)), metadatas_(std::move(metadata)) {
         }
 
         access_levels access_level_{access_levels::public_access};
         std::vector<parameter_info> params_;
-        std::vector<rettr::metadata> metadatas_;
+        std::vector<rettr::metadata_item> metadatas_;
 
         template <typename, typename...>
         friend class implements::constructor_bind;
+
+        template <typename>
+        friend class implements::constructor_func_bind;
     };
 }
 

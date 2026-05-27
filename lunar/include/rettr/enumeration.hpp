@@ -19,7 +19,7 @@
 #include <rettr/any.hpp>
 #include <rettr/core/prerequisites.hpp>
 #include <rettr/implements/metadata.hpp>
-#include <rettr/type.hpp>
+#include <rettr/string_view.hpp>
 #include <unordered_map>
 #include <vector>
 
@@ -31,17 +31,25 @@ namespace rettr::implements {
         string_view name;
         std::vector<string_view> names;
         std::vector<any> values;
-        std::unordered_map<any, rettr::metadata> metadata;
+        std::vector<rettr::metadata_item> metadata;
     };
+
+    template <typename Clazz, typename EnumType>
+    class enumeration_bind;
+
+    class enumeration_proxy;
 }
 
 namespace rettr {
+    class type;
+}
 
+namespace rettr {
     class RETTR_API enumeration {
     public:
         enumeration() noexcept = default;
 
-        explicit enumeration(const implements::enumeration_data *data) noexcept : data_(data) {
+        explicit enumeration(implements::enumeration_data *data) noexcept : data_(data) {
         }
 
         bool empty() const noexcept {
@@ -52,80 +60,21 @@ namespace rettr {
             return !empty();
         }
 
-        string_view name() const noexcept {
-            if (empty()) {
-                return {};
-            }
-            return data_->name;
-        }
+        string_view name() const noexcept;
 
-        rettr::type type() const noexcept {
-            if (empty()) {
-                return {};
-            }
-            return rettr::type::from_typeid(*data_->enum_type);
-        }
+        rettr::type type() const noexcept;
+        rettr::type underlying_type() const noexcept;
 
-        rettr::type underlying_type() const noexcept {
-            if (empty()) {
-                return {};
-            }
-            return rettr::type::from_typeid(*data_->underlying_type);
-        }
+        rettr::type declaring_type() const noexcept;
+        array_range<string_view> names() const noexcept;
+        RETTR_NODISCARD array_range<any> values() const noexcept;
 
-        rettr::type declaring_type() const noexcept {
-            if (empty()) {
-                return {};
-            }
-            return rettr::type::from_typeid(data_->declaring_type->remove_cvref());
-        }
+        RETTR_NODISCARD const rettr::metadata_item &metadata(const any &key) const noexcept;
 
-        array_range<string_view> names() const noexcept {
-            if (empty()) {
-                return {};
-            }
-            return {data_->names.data(), data_->names.size()};
-        }
+        RETTR_NODISCARD array_range<rettr::metadata_item> metadatas() const noexcept;
+        any name_to_value(string_view name) const;
 
-        array_range<any> values() const noexcept {
-            if (empty()) {
-                return {};
-            }
-            return {data_->values.data(), data_->values.size()};
-        }
-
-        const rettr::metadata &metadata(const any &key) const noexcept {
-            static const rettr::metadata empty{};
-            if (empty()) {
-                return empty;
-            }
-            const auto it = data_->metadata.find(key);
-            return it != data_->metadata.end() ? it->second : empty;
-        }
-
-        any name_to_value(string_view name) const {
-            if (empty()) {
-                return {};
-            }
-            for (std::size_t i = 0; i < data_->names.size(); ++i) {
-                if (data_->names[i] == name) {
-                    return data_->values[i];
-                }
-            }
-            return {};
-        }
-
-        string_view value_to_name(const any &value) const {
-            if (empty()) {
-                return {};
-            }
-            for (std::size_t i = 0; i < data_->values.size(); ++i) {
-                if (data_->values[i] == value) {
-                    return data_->names[i];
-                }
-            }
-            return {};
-        }
+        string_view value_to_name(const any &value) const;
 
         bool operator==(const enumeration &other) const noexcept {
             return data_ == other.data_;
@@ -136,7 +85,12 @@ namespace rettr {
         }
 
     private:
-        const implements::enumeration_data *data_{nullptr};
+        template <typename Clazz, typename EnumType>
+        friend class enumeration_bind;
+
+        friend class implements::enumeration_proxy;
+
+        implements::enumeration_data *data_{nullptr};
     };
 
 }

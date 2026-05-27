@@ -17,14 +17,15 @@
 #define RETTR_IMPLEMENTS_BINDER_PROPERTY_HPP
 
 #include <rettr/implements/binder/access_levels.hpp>
+#include <rettr/implements/binder/metadata.hpp>
 #include <rettr/property.hpp>
 
 namespace rettr::implements {
-    template <typename Fx>
+    template <typename Clazz, typename Px>
     class property_bind {
     public:
-        explicit property_bind(Fx &&fx, std::function<void(property)> commit) noexcept :
-            commit_(std::move(commit)), prop_(std::forward<Fx>(fx)) {
+        explicit property_bind(Px &&px,string_view name, std::function<void(property)> commit) noexcept :
+            commit_(std::move(commit)), prop_(std::in_place_type<Clazz>, name, std::forward<Px>(px)) {
         }
 
         ~property_bind() {
@@ -47,8 +48,8 @@ namespace rettr::implements {
             prop_.access_levels_ = tag.value;
         }
 
-        void apply_(rettr::metadata &&meta) {
-            prop_.metadatas_.emplace_back(std::move(meta));
+        void apply_(metadata_tag &&meta) {
+            prop_.metadatas_.emplace_back(std::move(meta.value));
         }
 
         void commit_impl_() {
@@ -59,7 +60,6 @@ namespace rettr::implements {
         property prop_;
         bool committed_{false};
     };
-
 }
 
 #endif

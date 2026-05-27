@@ -1,5 +1,5 @@
 /*
-* Copyright 2026 rainy-juzixiao
+ * Copyright 2026 rainy-juzixiao
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,43 +15,39 @@
  */
 #ifndef RETTR_PARAMETER_INFO_HPP
 #define RETTR_PARAMETER_INFO_HPP
-
 #include <rettr/implements/parameter_info/parameter_info_base.hpp>
 
 namespace rettr {
     class parameter_info {
     public:
-        parameter_info() noexcept = default;
+        parameter_info() noexcept;
 
-        explicit parameter_info(const implements::parameter_info_base *base) noexcept
-            : base_(base) {
-        }
+        explicit parameter_info(const implements::parameter_info_base *base) noexcept;
 
-        string_view name() const noexcept { return base_->name(); }
+        explicit parameter_info(std::unique_ptr<implements::parameter_info_base> owned) noexcept;
 
-        rettr::type type() const noexcept { return base_->type(); }
+        parameter_info(const parameter_info &other);
+        parameter_info &operator=(const parameter_info &other);
 
-        bool has_default_value() const noexcept { return base_->has_default_value(); }
+        parameter_info(parameter_info &&) noexcept = default;
+        parameter_info &operator=(parameter_info &&) noexcept = default;
 
-        any default_value() const { return base_->default_value(); }
+        ~parameter_info() = default;
 
-        std::uint32_t index() const noexcept { return base_->index(); }
+        string_view name() const noexcept;
+        rettr::type type() const noexcept;
+        bool has_default_value() const noexcept;
+        any default_value() const;
+        std::uint32_t index() const noexcept;
+        bool empty() const noexcept;
+        explicit operator bool() const noexcept;
 
-        bool empty() const noexcept { return base_ == nullptr; }
-
-        explicit operator bool() const noexcept { return !empty(); }
-
-        bool operator==(const parameter_info &right) const noexcept {
-            return base_ == right.base_;
-        }
-
-        bool operator!=(const parameter_info &right) const noexcept {
-            return base_ != right.base_;
-        }
+        bool operator==(const parameter_info &right) const noexcept;
+        bool operator!=(const parameter_info &right) const noexcept;
 
     private:
+        std::unique_ptr<implements::parameter_info_base> owned_;
         const implements::parameter_info_base *base_{nullptr};
     };
 }
-
 #endif

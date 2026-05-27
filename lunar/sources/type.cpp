@@ -19,33 +19,59 @@
 #include <rettr/type.hpp>
 
 namespace rettr {
-    RETTR_INLINE array_range<type> type::types() noexcept {
+    template <>
+    struct default_predicate<property> {
+        default_predicate() {
+        }
+
+        default_predicate(std::function<bool(const property &)> func) : func(std::move(func)) {
+        }
+
+        bool operator()(const property &obj) const {
+            return (func ? func(obj) : true);
+        }
+
+        std::function<bool(const property &)> func;
+    };
+}
+
+namespace rettr::implements::type_private {
+    type invalid_type() noexcept {
+        auto data = type_private::invalid_type_data();
+        type t;
+        t.type_data_ = data;
+        return t;
+    }
+}
+
+namespace rettr {
+    array_range<type> type::types() noexcept {
         auto &type_list = implements::type_register_private::get_instance().get_type_storage();
-        return array_range(&type_list[1], type_list.size() - 1);
+        return array_range(type_list.data(), type_list.size());
     }
 
-    RETTR_INLINE array_range<type> type::base_classes() const noexcept {
-        return make_array_range(type_data_->my_class_data.base_types);
+    array_range<type> type::base_classes() const noexcept {
+        return make_array_range(*type_data_->my_class_data.base_types);
     }
 
-    RETTR_INLINE array_range<type> type::derived_classes() const noexcept {
-        return make_array_range(type_data_->my_class_data.derived_types);
+    array_range<type> type::derived_classes() const noexcept {
+        return make_array_range(*type_data_->my_class_data.derived_types);
     }
 
-    RETTR_INLINE any type::metadata(const any &key) const {
+    any type::metadata(const any &key) const {
         return implements::type_register_private::get_instance().metadata(*this, key);
     }
 
-    RETTR_INLINE any type::metadatas() const {
-        return implements::type_register_private::get_instance().metadata_from_list(*this);
+    any type::metadatas() const {
+        return implements::type_register_private::get_instance().metadatas(get_raw_type());
     }
 
-    RETTR_INLINE constructor type::constructor(const array_range<typeinfo> &params) const noexcept {
+    const rettr::constructor &type::constructor(const array_range<typeinfo> &params) const noexcept {
         static const class constructor empty;
         if (!type_data_) {
             return empty;
         }
-        for (auto &item: type_data_->my_class_data.ctors) {
+        for (auto &item: *type_data_->my_class_data.ctors) {
             if (const auto &method = item; method.is_invocable(params)) {
                 return method;
             }
@@ -54,10 +80,10 @@ namespace rettr {
         return empty;
     }
 
-    RETTR_INLINE array_range<constructor> type::constructors() const noexcept {
+    array_range<constructor> type::constructors() const noexcept {
         auto &ctors = type_data_->my_class_data.ctors;
-        if (!ctors.empty()) {
-            return array_range<class constructor>(ctors.data(), ctors.size(),
+        if (!ctors->empty()) {
+            return array_range<class constructor>(ctors->data(), ctors->size(),
                                                   default_predicate<class constructor>([](const class constructor &ctor) {
                                                       return (ctor.access_level() == access_levels::public_access);
                                                   }));
@@ -66,49 +92,50 @@ namespace rettr {
         return array_range<class constructor>();
     }
 
-    RETTR_INLINE array_range<rettr::constructor> type::constructors(filter_items filter) const noexcept {
+    array_range<rettr::constructor> type::constructors(filter_items filter) const noexcept {
         auto &ctors = type_data_->my_class_data.ctors;
-        if (!ctors.empty()) {
-            return array_range<class constructor>(ctors.data(), ctors.size(),
+        if (!ctors->empty()) {
+            return array_range<class constructor>(ctors->data(), ctors->size(),
                                                   implements::get_filter_predicate<class constructor>(*this, filter));
         }
         return array_range<class constructor>();
     }
 
-    RETTR_INLINE destructor type::destructor() const noexcept {
+    destructor type::destructor() const noexcept {
         if (!type_data_) {
             return rettr::destructor{};
         }
-        const auto &dtor = type_data_->my_class_data.dtor;
+        const auto &dtor = *type_data_->my_class_data.dtor;
         return dtor;
     }
 
-    RETTR_INLINE bool type::destroy(const object_view &obj) const noexcept {
+    bool type::destroy(const object_view &obj) const noexcept {
         if (!type_data_) {
             return false;
         }
         const auto &dtor = type_data_->my_class_data.dtor;
-        std::ignore = dtor.invoke(obj);
+        std::ignore = dtor->invoke(obj);
         return true;
     }
 
-    RETTR_INLINE property type::property(string_view name) const noexcept {
+    property type::property(string_view name) const noexcept {
         const auto raw_t = get_raw_type();
 
         const auto &vec = raw_t.type_data_->my_class_data.properties;
 
-        const auto ret = std::find_if(vec.crbegin(), vec.crend(), [name](const class property &item) { return item.name() == name; });
+        const auto ret =
+            std::find_if(vec->crbegin(), vec->crend(), [name](const class property &item) { return item.name() == name; });
 
-        if (ret != vec.crend()) {
+        if (ret != vec->crend()) {
             return *ret;
         }
         return {};
     }
 
-    RETTR_INLINE array_range<rettr::property> type::properties() const noexcept {
+    array_range<rettr::property> type::properties() const noexcept {
         auto &vec = get_raw_type().type_data_->my_class_data.properties;
-        if (!vec.empty()) {
-            return array_range<rettr::property>(vec.data(), vec.size(),
+        if (!vec->empty()) {
+            return array_range<rettr::property>(vec->data(), vec->size(),
                                                 default_predicate<rettr::property>([](const rettr::property &item) {
                                                     return item.access_level() == access_levels::public_access;
                                                 }));
@@ -116,17 +143,17 @@ namespace rettr {
         return {};
     }
 
-    RETTR_INLINE array_range<rettr::property> type::properties(filter_items filter) const noexcept {
+    array_range<rettr::property> type::properties(filter_items filter) const noexcept {
         const auto raw_t = get_raw_type();
         auto &vec = raw_t.type_data_->my_class_data.properties;
-        if (!vec.empty()) {
-            return array_range<rettr::property>(vec.data(), vec.size(),
+        if (!vec->empty()) {
+            return array_range<rettr::property>(vec->data(), vec->size(),
                                                 implements::get_filter_predicate<rettr::property>(raw_t, filter));
         }
         return {};
     }
 
-    RETTR_INLINE rettr::property type::global_property(string_view name) noexcept {
+    rettr::property type::global_property(string_view name) noexcept {
         auto &prop_list = implements::type_register_private::get_instance().get_global_property_storage();
 
         if (const auto it = prop_list.find(name); it != prop_list.end()) {
@@ -135,43 +162,43 @@ namespace rettr {
         return {};
     }
 
-    RETTR_INLINE array_range<rettr::property> type::global_properties() noexcept {
+    array_range<rettr::property> type::global_properties() noexcept {
         auto &vec = implements::type_register_private::get_instance().get_global_properties();
         return array_range<rettr::property>(vec.data(), vec.size());
     }
 
-    RETTR_INLINE any type::property_value(string_view name, object_view obj) const {
+    any type::property_value(string_view name, object_view obj) const {
         return property(name)(obj).construct_from_this();
     }
 
-    RETTR_INLINE any type::property_value(string_view name) {
+    any type::property_value(string_view name) {
         return global_property(name)(non_exists_instance).construct_from_this();
     }
 
-    RETTR_INLINE void type::property_value(string_view name, object_view obj, any arg) const {
+    void type::property_value(string_view name, object_view obj, any arg) const {
         property(name)(obj) = arg;
     }
 
-    RETTR_INLINE void type::property_value(const string_view name, any arg) {
+    void type::property_value(const string_view name, any arg) {
         global_property(name)(non_exists_instance) = arg;
     }
 
-    RETTR_INLINE const rettr::method &type::method(const std::string_view name) const noexcept {
+    const rettr::method &type::method(const std::string_view name) const noexcept {
+        static const rettr::method empty;
         const auto raw_t = get_raw_type();
 
         const auto &vec = raw_t.type_data_->my_class_data.methods;
 
-        if (const auto ret = std::find_if(vec.begin(), vec.end(), [name](const class method &item) { return item.name() == name; });
-            ret != vec.end()) {
+        if (const auto ret = std::find_if(vec->begin(), vec->end(), [name](const class method &item) { return item.name() == name; });
+            ret != vec->end()) {
             return *ret;
         }
 
-        return {};
+        return empty;
     }
 
-    RETTR_INLINE const rettr::method &type::method(const std::string_view name,
-                                                   const array_range<typeinfo> &overload_version_paramlist, filter_items filter_items,
-                                                   const method_flags filter_method_flag) const noexcept {
+    const rettr::method &type::method(const std::string_view name, const array_range<typeinfo> &overload_version_paramlist,
+                                      const method_flags filter_method_flag) const noexcept {
         const auto raw_t = get_raw_type();
 
         const auto &vec = raw_t.type_data_->my_class_data.methods;
@@ -188,11 +215,9 @@ namespace rettr {
             filter &= ~(method_flags::noexcept_specified);
             return candidate == filter;
         };
-        const auto pred = implements::get_filter_predicate<rettr::method>(raw_t, filter_items);
-        for (const auto &item: vec) {
+        for (const auto &item: *vec) {
             if (item.name() == name) {
-                if (item.is_invocable(overload_version_paramlist) && match_method_type(item.type(), filter_method_flag) &&
-                    pred(item)) {
+                if (item.is_invocable(overload_version_paramlist) && match_method_type(item.type(), filter_method_flag)) {
                     return item;
                 }
             }
@@ -200,7 +225,7 @@ namespace rettr {
         return empty;
     }
 
-    RETTR_INLINE array_range<rettr::method> type::methods() const noexcept {
+    array_range<rettr::method> type::methods() const noexcept {
         if (!type_data_) {
             return {};
         }
@@ -208,14 +233,14 @@ namespace rettr {
         const auto raw_t = get_raw_type();
         const auto &vec = raw_t.type_data_->my_class_data.methods;
 
-        if (!vec.empty()) {
-            return array_range<rettr::method>(vec.data(), vec.size());
+        if (!vec->empty()) {
+            return array_range<rettr::method>(vec->data(), vec->size());
         }
 
         return {};
     }
 
-    RETTR_INLINE array_range<rettr::method> type::methods(filter_items filter) const noexcept {
+    array_range<rettr::method> type::methods(filter_items filter) const noexcept {
         if (!type_data_) {
             return {};
         }
@@ -223,14 +248,15 @@ namespace rettr {
         const auto raw_t = get_raw_type();
         const auto &vec = raw_t.type_data_->my_class_data.methods;
 
-        if (!vec.empty()) {
-            return array_range<rettr::method>(vec.data(), vec.size(), implements::get_filter_predicate<rettr::method>(raw_t, filter));
+        if (!vec->empty()) {
+            return array_range<rettr::method>(vec->data(), vec->size(),
+                                              implements::get_filter_predicate<rettr::method>(raw_t, filter));
         }
 
         return {};
     }
 
-    RETTR_INLINE rettr::method type::global_method(const string_view name) noexcept {
+    rettr::method type::global_method(const string_view name) noexcept {
         auto &meth_list = implements::type_register_private::get_instance().get_global_method_storage();
 
         if (const auto it = meth_list.find(name); it != meth_list.end()) {
@@ -239,8 +265,7 @@ namespace rettr {
         return {};
     }
 
-    RETTR_INLINE rettr::method type::global_method(const std::string_view name,
-                                                   const array_range<typeinfo> &overload_version_paramlist) noexcept {
+    rettr::method type::global_method(const std::string_view name, const array_range<typeinfo> &overload_version_paramlist) noexcept {
         const auto &meth_list = implements::type_register_private::get_instance().get_global_methods();
         for (const auto &method: meth_list) {
             if (method.name() == name) {
@@ -252,7 +277,7 @@ namespace rettr {
         return {};
     }
 
-    RETTR_INLINE array_range<rettr::method> type::global_methods() noexcept {
+    array_range<rettr::method> type::global_methods() noexcept {
         auto &meth_list = implements::type_register_private::get_instance().get_global_methods();
         return array_range<rettr::method>(meth_list.data(), meth_list.size());
     }

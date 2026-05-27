@@ -18,6 +18,7 @@
 
 #include <rettr/core/prerequisites.hpp>
 #include <rettr/core/type_list.hpp>
+#include <rettr/core/meta_traits.hpp>
 
 // NOLINTBEGIN(bugprone-macro-parentheses)
 #define RETTR_DECLARE_NORMAL_FUNCTION_TRAITS(IsNothrowInvocable, IsVolatile, SPEC)                                                    \
@@ -229,7 +230,7 @@ namespace rettr {
     template<typename Ty>
     struct function_traits
             : implements::fn_obj_traits<
-                function_traits<typename implements::try_to_get_operator<rettr::helper::remove_cvref_t<Ty> >::type> > {
+                function_traits<typename implements::try_to_get_operator<helper::remove_cvref_t<Ty> >::type> > {
     };
 
     /**

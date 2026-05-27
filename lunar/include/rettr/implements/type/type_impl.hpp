@@ -16,6 +16,29 @@
 #ifndef RETTR_IMPLEMENTS_TYPE_TYPE_IMPL_HPP
 #define RETTR_IMPLEMENTS_TYPE_TYPE_IMPL_HPP
 #include <rettr/implements/type/type_data.hpp>
+#include <rettr/implements/registration/registration_manager.hpp>
+
+namespace rettr::implements::type_private {
+    template <typename T>
+    using is_complete_type = std::integral_constant<bool, !std::is_function<T>::value && !std::is_same<T, void>::value>;
+
+    RETTR_INLINE type create_type(type_data* data) noexcept {
+        return data ? type(data) : type();
+    }
+
+    template <typename T>
+    RETTR_LOCAL_API RETTR_INLINE type create_or_get_type() noexcept {
+        if constexpr (is_complete_type<T>::value) {
+            using type_must_be_complete = char[sizeof(T) ? 1 : -1];
+            (void) sizeof(type_must_be_complete);
+            static const type val = create_type(get_registration_manager().add_item(make_type_data<T>()));
+            return val;
+        } else {
+            static const type val = create_type(get_registration_manager().add_item(make_type_data<T>()));
+            return val;
+        }
+    }
+}
 
 namespace rettr {
     RETTR_INLINE type::type() noexcept = default;
@@ -71,14 +94,19 @@ namespace rettr {
         return type{type_data_->array_raw_type};
     }
 
-    template <typename T>
+    template <typename Ty>
     type type::from() noexcept {
-        return type{&implements::type_private::get_type_data<T>()};
+        return implements::type_private::create_or_get_type<Ty>();
     }
 
-    template <typename T>
-    type type::from(T &&object) noexcept {
-        return type::from<std::decay_t<T>>();
+    template <>
+    RETTR_INLINE type type::from<struct implements::invalid_type>() noexcept {
+        return implements::type_private::invalid_type();
+    }
+
+    template <typename Ty>
+    type type::from(Ty &&object) noexcept {
+        return type::from<std::decay_t<Ty>>();
     }
 
     RETTR_INLINE type type::from_name(string_view name) noexcept {
@@ -117,14 +145,14 @@ namespace rettr {
         if (empty()) {
             return false;
         }
-        return !type_data_->my_class_data.template_arguments_types.empty();
+        return !type_data_->my_class_data.template_arguments_types->empty();
     }
 
     RETTR_INLINE array_range<type> type::template_arguments() const noexcept {
         if (empty()) {
             return {};
         }
-        auto &args = type_data_->my_class_data.template_arguments_types;
+        auto &args = *type_data_->my_class_data.template_arguments_types;
         return {args.data(), args.size()};
     }
 
@@ -132,14 +160,14 @@ namespace rettr {
         if (empty()) {
             return false;
         }
-        return type_data_->enumeration_data != nullptr;
+        return type_data_->enumeration_data_ != nullptr;
     }
 
     RETTR_INLINE rettr::enumeration type::enumeration() const noexcept {
         if (!is_enumeration()) {
             return {};
         }
-        return rettr::enumeration{type_data_->enumeration_data};
+        return rettr::enumeration{type_data_->enumeration_data_};
     }
 
     RETTR_INLINE bool type::is_array() const noexcept {
@@ -198,21 +226,21 @@ namespace rettr {
         return type_data_->type_info.has_traits(traits::is_member_fnptr);
     }
 
-    template <typename T>
+    template <typename Ty>
     bool type::is_derived_from() const noexcept {
-        return is_derived_from(type::from<T>());
+        return is_derived_from(type::from<Ty>());
     }
 
-    template <typename T>
+    template <typename Ty>
     bool type::is_base_of() const noexcept {
-        return is_base_of(type::from<T>());
+        return is_base_of(type::from<Ty>());
     }
 
     RETTR_INLINE bool type::is_derived_from(const type &base) const noexcept {
         if (empty() || base.empty()) {
             return false;
         }
-        auto &bases = type_data_->my_class_data.base_types;
+        auto &bases = *type_data_->my_class_data.base_types;
         for (auto &b: bases) {
             if (b == base) {
                 return true;
@@ -239,11 +267,11 @@ namespace rettr {
         }
         constexpr bool has_dynamic =
             (implements::is_dynamic_object<Args> || ...) || helper::is_any_of_v<object_view, std::decay_t<Args>...>;
-        if constexpr (has_dynamic){
+        if constexpr (has_dynamic) {
             const auto meth = this->method(name, implements::make_paramlist<sizeof...(Args)>(std::forward<Args>(args)...)).get();
             return meth.invoke(instance, std::forward<Args>(args)...);
-        }else {
-            const auto meth = this->method(name, implements::make_nondynamic_paramlist<Args>{}.get());
+        } else {
+            const auto meth = this->method(name, implements::make_nondynamic_paramlist<Args...>{}.get());
             return meth.invoke(instance, std::forward<Args>(args)...);
         }
     }
@@ -255,24 +283,25 @@ namespace rettr {
         }
         constexpr bool has_dynamic =
             (implements::is_dynamic_object<Args> || ...) || helper::is_any_of_v<object_view, std::decay_t<Args>...>;
-        if constexpr (has_dynamic){
+        if constexpr (has_dynamic) {
             const auto meth = this->method(name, implements::make_paramlist<sizeof...(Args)>(std::forward<Args>(args)...)).get();
             return meth.invoke(std::forward<Args>(args)...);
-        }else {
-            const auto meth = this->method(name, implements::make_nondynamic_paramlist<Args>{}.get());
+        } else {
+            const auto meth = this->method(name, implements::make_nondynamic_paramlist<Args...>{}.get());
             return meth.invoke(std::forward<Args>(args)...);
         }
     }
 
     template <typename... Args>
-    any type::invoke(std::string_view name, Args &&...args) {
+    any type::global_invoke(std::string_view name, Args &&...args) {
         constexpr bool has_dynamic =
             (implements::is_dynamic_object<Args> || ...) || helper::is_any_of_v<object_view, std::decay_t<Args>...>;
-        if constexpr (has_dynamic){
-            const auto meth = type::method(name, implements::make_paramlist<sizeof...(Args)>(std::forward<Args>(args)...)).get();
+        if constexpr (has_dynamic) {
+            const auto meth =
+                type::global_method(name, implements::make_paramlist<sizeof...(Args)>(std::forward<Args>(args)...)).get();
             return meth.invoke(non_exists_instance, std::forward<Args>(args)...);
-        }else {
-            const auto meth = type::method(name, implements::make_nondynamic_paramlist<Args>{}.get());
+        } else {
+            const auto meth = type::global_method(name, implements::make_nondynamic_paramlist<Args...>{}.get());
             return meth.invoke(non_exists_instance, std::forward<Args>(args)...);
         }
     }

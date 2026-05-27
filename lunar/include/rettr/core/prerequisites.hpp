@@ -491,6 +491,8 @@ namespace rettr::implements {
      *        internal_construct_tag_t 的实例，用于构造函数标记。
      */
     RETTR_INLINE_CONSTEXPR internal_construct_tag_t internal_construct_tag{};
+
+    struct invalid_type {};
 }
 
 #endif

@@ -21,7 +21,7 @@
 #include <rettr/core/prerequisites.hpp>
 #include <rettr/implements/metadata.hpp>
 #include <rettr/object_view.hpp>
-#include <rettr/type.hpp>
+#include <rettr/string_view.hpp>
 
 #if RETTR_USING_MSVC
 #pragma warning(push)
@@ -39,6 +39,8 @@ namespace rettr {
     };
 
     RETTR_ENABLE_ENUM_CLASS_BITMASK_OPERATORS(property_flags);
+    
+    class type;
 }
 
 namespace rettr::implements {
@@ -62,7 +64,7 @@ namespace rettr::implements {
         return flags;
     }
 
-    template <typename Fx>
+    template <typename Clazz, typename Fx>
     class property_bind;
 }
 
@@ -108,9 +110,7 @@ namespace rettr {
 
         void value(object_view object, const any &val);
 
-        rettr::type declaring_type() const noexcept {
-            return rettr::type::from_typeid(which_belongs().remove_cvref());
-        }
+        rettr::type declaring_type() const noexcept;
 
         template <typename Class, typename Type>
         auto target() const noexcept -> Type Class::* {
@@ -148,29 +148,35 @@ namespace rettr {
 
         RETTR_NODISCARD bool empty() const noexcept;
 
-        RETTR_NODISCARD std::string_view name() const noexcept;
+        RETTR_NODISCARD string_view name() const noexcept;
 
-        RETTR_NODISCARD const metadata &metadata(const any &key) const noexcept;
-        RETTR_NODISCARD array_range<class metadata> metadatas() const noexcept;
+        RETTR_NODISCARD const metadata_item &metadata(const any &key) const noexcept;
+        RETTR_NODISCARD array_range<rettr::metadata_item> metadatas() const noexcept;
 
         access_levels access_level() const noexcept;
 
     private:
-        template <typename Fx>
+        template <typename Clazz, typename Fx>
         friend class implements::property_bind;
 
         template <typename Class, typename Type>
-        property(string_view name, Type Class::*property, access_levels levels = access_levels::public_access) :
+        property(std::in_place_type_t<Class> ,string_view name, Type Class::*property, access_levels levels = access_levels::public_access) :
             name_{name}, access_levels_{levels}, is_empty_(false) { // NOLINT
             ::new (reinterpret_cast<property_accessor_impl<Type, Type Class::*, Class> *>(&property_storage))
-                property_accessor_impl<Type, Type Class::*, Class>(property);
+                property_accessor_impl<Type, Type Class::*, Class>(property, &rettr_typeid(Class));
         }
 
-        template <typename Type>
-        property(string_view name, Type *static_property, access_levels levels = access_levels::public_access) :
-            name_{name}, access_levels_{levels}, is_empty_(false) { // NOLINT
-            ::new (reinterpret_cast<property_accessor_impl<Type, Type *, void> *>(&property_storage))
-                property_accessor_impl<Type, Type *, void>(static_property);
+        template <typename Type, typename Clazz>
+        property(std::in_place_type_t<Clazz>, string_view name, Type *static_property, access_levels levels = access_levels::public_access) :
+            name_{name}, access_levels_{levels}, is_empty_(false) {
+            // NOLINT
+            if constexpr (std::is_void_v<Clazz>) {
+                ::new (reinterpret_cast<property_accessor_impl<Type, Type *, void> *>(&property_storage))
+                    property_accessor_impl<Type, Type *, void>(static_property);
+            } else {
+                ::new (reinterpret_cast<property_accessor_impl<Type, Type *, void> *>(&property_storage))
+                    property_accessor_impl<Type, Type *, void>(static_property, &rettr_typeid(Clazz));
+            }
         }
 
         struct property_accessor {
@@ -207,7 +213,8 @@ namespace rettr {
         struct property_accessor_impl final : property_accessor {
             using compound_type = CompoundType;
 
-            property_accessor_impl(compound_type property) noexcept : property_ptr(property) { // NOLINT
+            property_accessor_impl(compound_type property, const typeinfo *belongs = nullptr) noexcept :
+                property_ptr(property) { // NOLINT
             }
 
             void set_property(object_view object, const any &any) const override {
@@ -262,7 +269,7 @@ namespace rettr {
             }
 
             RETTR_NODISCARD const typeinfo &property_type() const noexcept override {
-                return property_type_res<Type>();
+                return belongs_to ? *belongs_to : property_type_res<Type>();
             }
 
             RETTR_NODISCARD std::uintptr_t target(const typeinfo &ctti) const noexcept override {
@@ -274,6 +281,7 @@ namespace rettr {
 
             static constexpr property_flags property_type_ = implements::deduction_property_type<Type, Class>();
             compound_type property_ptr;
+            const typeinfo *belongs_to;
         };
 
         static constexpr std::size_t soo_buffer_size =
@@ -283,9 +291,9 @@ namespace rettr {
 
         byte_t property_storage[soo_buffer_size]{};
         string_view name_;
-        std::vector<class metadata> metadatas_;
-        access_levels access_levels_;
-        bool is_empty_;
+        std::vector<class metadata_item> metadatas_;
+        access_levels access_levels_{};
+        bool is_empty_{};
     };
 }
 

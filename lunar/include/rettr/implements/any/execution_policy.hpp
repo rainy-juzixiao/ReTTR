@@ -134,7 +134,7 @@ namespace rettr {
             if constexpr (helper::has_operator_preinc_v<Ty> && not_bool) {
                 auto &left_operand = left.template as<Ty>();
                 ++left_operand;
-                return any{std::in_place_type<decltype(--left_operand)>, left_operand};
+                return any{std::in_place_type<decltype(++left_operand)>, left_operand};
             }
             return {};
         }
@@ -468,8 +468,6 @@ namespace rettr::implements {
         if constexpr (IsCompareable) {
             static any_magic_method<RemoveCVRef, any> obj{};
             return std::invoke(MemPtr, obj, *left, *right);
-        } else {
-            throw std::runtime_error("Current type not support this operation");
         }
         return false;
     }

@@ -18,25 +18,8 @@
 
 #include <rettr/core/prerequisites.hpp>
 #include <rettr/implements/invocable/invoker_accessor.hpp>
-#include <rettr/implements/parameter_info/parameter_info_base.hpp>
-#include <rettr/type.hpp>
 
 namespace rettr::implements {
-    template <typename Fx, typename ParamList>
-    struct adapter_std_function_functor {};
-
-    template <typename Fx, typename... Args>
-    struct adapter_std_function_functor<Fx, helper::type_list<Args...>> {
-        adapter_std_function_functor(const std::function<Fx> &function) : object(function) {
-        }
-
-        rettr_fn operator()(Args... args)->decltype(auto) {
-            return object(args...);
-        }
-
-        std::function<Fx> object;
-    };
-
     template <typename Ty, typename... CtorArgs>
     class constructor_bind;
 
@@ -77,10 +60,11 @@ namespace rettr {
          * @tparam Fx 函数对象类型。
          * @param function 函数对象。
          */
-        template <typename Fx, typename... Args, std::enable_if_t<function_traits<Fx>::valid, int> = 0>
+        template <typename Fx, typename... Args, std::enable_if_t<function_traits<std::remove_reference_t<Fx>>::valid, int> = 0>
         function(Fx &&function, Args &&...default_arguments) noexcept : invoke_accessor_{} {
             // NOLINT
-            using traits = function_traits<Fx>;
+            using fx = std::remove_reference_t<Fx>;
+            using traits = function_traits<fx>;
             using paramlist = typename traits::argument_list;
 
             static constexpr std::size_t arity = traits::arity;
@@ -91,41 +75,14 @@ namespace rettr {
             static_assert(implements::check_default_args_compatibility<paramlist, start_index, Args...>(),
                           "Default arguments are not compatible with corresponding function parameters.");
 
-            using implemented_type = typename implements::get_ia_implement_type<Fx, implements::default_arguments_store<Args...>,
-                                                                                function_traits<Fx>>::type;
+            using implemented_type = typename implements::get_ia_implement_type<fx, implements::default_arguments_store<Args...>,
+                                                                                function_traits<fx>>::type;
             if constexpr (sizeof(implemented_type) >= implements::fn_obj_soo_buffer_size) {
                 invoke_accessor_ = ::new implemented_type(std::forward<Fx>(function), std::forward<Args>(default_arguments)...);
             } else {
                 invoke_accessor_ = ::new (reinterpret_cast<implemented_type *>(invoker_storage))
                     implemented_type(std::forward<Fx>(function), std::forward<Args>(default_arguments)...);
             }
-        }
-
-        /**
-         * @brief 为rettr-toolkit委托对象特化的构造函数。
-         * @tparam Fx 委托对象签名
-         * @param function 委托对象。
-         */
-        template <typename Rx, typename... FArgs, typename... Args, std::enable_if_t<function_traits<Rx(FArgs...)>::valid, int> = 0>
-        function(const std::function<Rx(FArgs...)> &object, Args &&...default_arguments) noexcept {
-            // NOLINT
-            using traits = function_traits<Rx(Args...)>;
-            using paramlist = typename traits::argument_list;
-
-            static constexpr std::size_t arity = traits::arity;
-            static constexpr std::size_t default_arg_count = sizeof...(Args);
-            static constexpr std::size_t start_index = arity - default_arg_count;
-
-            using f = Rx(Args...);
-
-            static_assert(default_arg_count <= arity, "Too many default arguments provided for the function.");
-            static_assert(implements::check_default_args_compatibility<paramlist, start_index, Args...>(),
-                          "Default arguments are not compatible with corresponding function parameters.");
-            using wrapper = implements::adapter_std_function_functor<f, Args...>;
-            using implemented_type = typename implements::get_ia_implement_type<wrapper, implements::default_arguments_store<Args...>,
-                                                                                function_traits<f>>::type;
-            invoke_accessor_ = ::new (reinterpret_cast<implemented_type *>(invoker_storage))
-                implemented_type(wrapper{object}, std::forward<Args>(default_arguments)...);
         }
 
         ~function();
@@ -176,7 +133,7 @@ namespace rettr {
             }
         }
 
-        RETTR_INLINE any invoke_variadic(object_view instance, array_range<class any> args = {}) const; // NOLINT
+        any invoke_variadic(object_view instance, array_range<class any> args = {}) const; // NOLINT
 
         /**
          * @brief 重载函数调用运算符，以调用函数并返回结果。

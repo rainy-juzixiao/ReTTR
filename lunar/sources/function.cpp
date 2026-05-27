@@ -233,7 +233,7 @@ namespace rettr {
         return invoke_accessor()->is_invocable_with(args);
     }
 
-    RETTR_INLINE any function::invoke_variadic(object_view instance,
+    any function::invoke_variadic(object_view instance,
                                                const array_range<any> args) const {
 #if RETTR_ENABLE_DEBUG
         assert(!empty()&& "Cannot call [invoke] method, curent object is empty!");

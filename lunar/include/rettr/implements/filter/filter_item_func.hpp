@@ -20,6 +20,24 @@
 #include <rettr/filter_item.hpp>
 #include <rettr/type.hpp>
 
+namespace rettr {
+    template <>
+    struct default_predicate<constructor> {
+        default_predicate() {
+        }
+
+        default_predicate(std::function<bool(const constructor &)> func) : func(std::move(func)) {
+        }
+
+        bool operator()(const constructor &obj) const {
+            return (func ? func(obj) : true);
+        }
+
+        std::function<bool(const constructor &)> func;
+
+    };
+}
+
 namespace rettr::implements {
     static bool is_valid_filter_item(filter_items filter) {
         if ((filter.test_flag(filter_item::public_access) || filter.test_flag(filter_item::non_public_access)) &&
@@ -69,6 +87,8 @@ namespace rettr::implements {
 
     template <>
     RETTR_INLINE default_predicate<constructor> get_filter_predicate(const type &t, filter_items filter) {
+        std::ignore = t;
+
         if (!is_valid_filter_item(filter)) {
             return {[](const constructor &) { return false; }};
         }

@@ -15,9 +15,9 @@
  */
 #ifndef RETTR_TYPE_HPP
 #define RETTR_TYPE_HPP
+#include <rettr/core/prerequisites.hpp>
 #include <rettr/any.hpp>
 #include <rettr/array_range.hpp>
-#include <rettr/core/prerequisites.hpp>
 #include <rettr/filter_item.hpp>
 #include <rettr/implements/invocable/method_flags.hpp>
 #include <rettr/object_view.hpp>
@@ -43,9 +43,11 @@ namespace rettr::implements::type_private {
     struct type_data;
 
     RETTR_LOCAL_API RETTR_INLINE type create_type(type_data *) noexcept;
+    RETTR_API type invalid_type() noexcept;
 
     template <typename T>
     RETTR_LOCAL_API std::unique_ptr<type_data> make_type_data();
+    struct type_data *invalid_type_data() noexcept;
 
     template <typename T>
     RETTR_LOCAL_API RETTR_INLINE type type_from_instance(const T *) noexcept;
@@ -56,10 +58,6 @@ namespace rettr::implements {
     struct base_class_info;
     class type_register;
     class type_register_private;
-
-    static type invalid_type() noexcept;
-
-    struct invalid_type {};
 
     struct class_data;
     class destructor_wrapper_base;
@@ -74,9 +72,11 @@ namespace rettr {
     public:
         using type_id = uintptr_t;
 
-        RETTR_NODISCARD RETTR_INLINE type(const type &right) noexcept;
+        type() noexcept;
 
-        RETTR_NODISCARD RETTR_INLINE type &operator=(const type &right) noexcept;
+        RETTR_INLINE type(const type &right) noexcept;
+
+        RETTR_INLINE type &operator=(const type &right) noexcept;
 
         RETTR_NODISCARD RETTR_INLINE bool operator==(const type &right) const noexcept;
 
@@ -116,7 +116,7 @@ namespace rettr {
 
         RETTR_NODISCARD RETTR_INLINE bool is_enumeration() const noexcept;
 
-        RETTR_NODISCARD enumeration enumeration() const noexcept;
+        RETTR_NODISCARD rettr::enumeration enumeration() const noexcept;
 
         RETTR_NODISCARD RETTR_INLINE bool is_array() const noexcept;
 
@@ -151,7 +151,7 @@ namespace rettr {
         RETTR_NODISCARD any metadata(const any &key) const;
         RETTR_NODISCARD any metadatas() const;
 
-        RETTR_NODISCARD constructor constructor(const array_range<typeinfo> &params = std::vector<type>()) const noexcept;
+        RETTR_NODISCARD const rettr::constructor& constructor(const array_range<typeinfo> &params = std::vector<type>()) const noexcept;
 
         RETTR_NODISCARD array_range<rettr::constructor> constructors() const noexcept;
 
@@ -165,11 +165,11 @@ namespace rettr {
             return create_impl(implements::arg_store<sizeof...(Args)>(std::forward<Args>(args)...));
         }
 
-        RETTR_NODISCARD destructor destructor() const noexcept;
+        RETTR_NODISCARD rettr::destructor destructor() const noexcept;
 
         RETTR_NODISCARD bool destroy(const object_view &obj) const noexcept;
 
-        RETTR_NODISCARD property property(string_view name) const noexcept;
+        RETTR_NODISCARD rettr:: property property(string_view name) const noexcept;
 
         RETTR_NODISCARD array_range<rettr::property> properties() const noexcept;
 
@@ -191,7 +191,6 @@ namespace rettr {
 
         RETTR_NODISCARD const rettr::method &method(const std::string_view name,
                                                     const array_range<typeinfo> &overload_version_paramlist,
-                                                    filter_items filter_items = filter_item::public_access,
                                                     const method_flags filter_method_flag = method_flags::none) const noexcept;
 
         RETTR_NODISCARD array_range<rettr::method> methods() const noexcept;
@@ -212,12 +211,10 @@ namespace rettr {
         any invoke(static_invoke_tag, std::string_view name, Args &&...args) const;
 
         template <typename... Args>
-        static any invoke(std::string_view name, Args &&...args);
+        static any global_invoke(std::string_view name, Args &&...args);
 
     private:
-        type() noexcept;
-
-        RETTR_INLINE explicit type(implements::type_private::type_data *data) noexcept;
+        RETTR_INLINE type(implements::type_private::type_data *data) noexcept;
 
         RETTR_NODISCARD RETTR_INLINE type get_raw_type() const noexcept;
 
@@ -229,6 +226,7 @@ namespace rettr {
         friend struct implements::class_data;
 
         friend type implements::type_private::create_type(implements::type_private::type_data *) noexcept;
+        friend type implements::type_private::invalid_type() noexcept;
 
         template <typename T>
         friend std::unique_ptr<implements::type_private::type_data> implements::type_private::make_type_data();

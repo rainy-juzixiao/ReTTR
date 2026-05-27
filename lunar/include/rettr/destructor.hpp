@@ -17,7 +17,6 @@
 #define RETTR_DESTRUCTOR_HPP
 
 #include <rettr/object_view.hpp>
-#include <rettr/type.hpp>
 
 namespace rettr::implements {
     struct destructor_vtable {
@@ -36,7 +35,7 @@ namespace rettr::implements {
         }
 
         static const class typeinfo &destructed_type() noexcept {
-            return typeinfo::create<Ty>();
+            return typeinfo::of<Ty>();
         }
 
         static bool is_valid(const class typeinfo &t) noexcept {
@@ -67,16 +66,9 @@ namespace rettr {
             return vtable_->invoke(obj.target_as_void_ptr());
         }
 
-        rettr::type declaring_type() const noexcept {
-            if (!empty()) {
-                return implements::invalid_type();
-            }
-            return rettr::type::from_typeid(vtable_->destructed_type().remove_cvref());
-        }
+        rettr::type declaring_type() const noexcept;
 
-        rettr::type destructed_type() const noexcept {
-            return declaring_type();
-        }
+        rettr::type destructed_type() const noexcept;
 
         bool empty() const noexcept {
             return vtable_ == nullptr;

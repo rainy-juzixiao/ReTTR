@@ -17,7 +17,10 @@
 #define RETTR_IMPLEMENTS_TYPE_RAW_TYPE_HPP
 
 #include <rettr/core/prerequisites.hpp>
-#include <rettr/type.hpp>
+
+namespace rettr {
+    class type;
+}
 
 namespace rettr::implements::type_private {
     template <typename Ty, typename Enable = void>
@@ -36,31 +39,30 @@ namespace rettr::implements::type_private {
         using type = typename raw_type<std::remove_reference_t<Ty>>::type;
     };
 
-    template <typename Ty, bool = std::is_same_v<Ty, typename raw_type<Ty>::type>>
+    template <typename Ty, bool = std::is_same_v<Ty, typename raw_type<Ty>::type>, typename Type = type>
     struct RETTR_LOCAL_API raw_type_info {
-        static RETTR_INLINE type extract() noexcept {
+        static RETTR_INLINE Type extract() noexcept {
             return invalid_type();
         }
     };
 
-    template <typename Ty>
-    struct RETTR_LOCAL_API raw_type_info<Ty, false> {
-        static RETTR_INLINE type extract() noexcept {
-            return type::from<typename raw_type<Ty>::type>();
+    template <typename Ty, typename Type>
+    struct RETTR_LOCAL_API raw_type_info<Ty, false, Type> {
+        static RETTR_INLINE Type extract() noexcept {
+            return Type::template from<typename raw_type<Ty>::type>();
         }
     };
 
-
-    template <typename Ty, bool = std::is_array_v<Ty>>
+    template <typename Ty, bool = std::is_array_v<Ty>, typename Type = type>
     struct RETTR_LOCAL_API array_raw_type {
-        static RETTR_INLINE type extract() noexcept {
-            return type::from<std::remove_all_extents_t<Ty>>();
+        static RETTR_INLINE Type extract() noexcept {
+            return Type::template from<std::remove_all_extents_t<Ty>>();
         }
     };
 
-    template <typename Ty>
-    struct RETTR_LOCAL_API array_raw_type<Ty, false> {
-        static RETTR_INLINE type extract() noexcept {
+    template <typename Ty, typename Type>
+    struct RETTR_LOCAL_API array_raw_type<Ty, false, Type> {
+        static RETTR_INLINE Type extract() noexcept {
             return invalid_type();
         }
     };

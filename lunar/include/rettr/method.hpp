@@ -18,7 +18,6 @@
 
 #include <rettr/access_levels.hpp>
 #include <rettr/function.hpp>
-#include <rettr/implements/iterator.hpp>
 #include <rettr/implements/metadata.hpp>
 #include <rettr/parameter_info.hpp>
 #include <unordered_map>
@@ -47,7 +46,6 @@ namespace rettr {
         using function::operator();
         using function::return_type;
         using function::static_invoke;
-        using function::which_belongs;
         using function::type;
 
         method() noexcept = default;
@@ -74,37 +72,29 @@ namespace rettr {
             return name_;
         }
 
-        rettr::type declaring_type() const noexcept {
-            return rettr::type::from_typeid(function::which_belongs().remove_cvref());
-        }
+        rettr::type declaring_type() const noexcept;
 
         access_levels access_level() const noexcept {
             return access_level_;
         }
 
-        array_range<parameter_info> parameter_infos() const noexcept {
-            return {params_.data(), params_.size()};
-        }
+        array_range<parameter_info> parameter_infos() const noexcept;
 
-        parameter_info parameter(std::size_t idx) const noexcept {
-            if (idx >= params_.size()) {
-                return {};
-            }
-            return params_[idx];
-        }
-
+        parameter_info parameter(std::size_t idx) const noexcept;
         std::size_t parameter_count() const noexcept {
             return params_.size();
         }
 
         const any &metadata(const any &key) const noexcept {
             static const any empty{};
-            const auto it = metadatas_.find(key);
-            return it != metadatas_.end() ? it->second : empty; // NOLINT
+            const auto it = std::find_if(metadatas_.begin(), metadatas_.end(),[&key](const rettr::metadata_item &meta) {
+                return meta.key() == key;
+            });
+            return it != metadatas_.end() ? it->value() : empty; // NOLINT
         }
 
-        rettr_fn metadatas() const noexcept -> auto {
-            return implements::mapped_range(metadatas_);
+        array_range<metadata_item> metadatas() const noexcept {
+            return metadatas_;
         }
 
         bool operator==(const method &right) const noexcept {
@@ -115,17 +105,22 @@ namespace rettr {
             return function::not_equal_with(right);
         }
 
+        const rettr::typeinfo &which_belongs() const noexcept {
+            return which_belongs_;
+        }
+
     private:
         explicit method(function &&fn, string_view name, access_levels access_level, std::vector<parameter_info> &&params,
-                        std::vector<rettr::metadata> &&metadata) noexcept :
+                        std::vector<rettr::metadata_item> &&metadata, typeinfo which_belongs) noexcept :
             function(std::move(fn)), name_(name), access_level_(access_level), params_(std::move(params)),
-            metadatas_(std::move(metadata)) {
+            metadatas_(std::move(metadata)), which_belongs_(which_belongs) {
         }
 
         string_view name_;
         access_levels access_level_{access_levels::public_access};
         std::vector<parameter_info> params_;
-        std::vector<rettr::metadata> metadatas_;
+        std::vector<rettr::metadata_item> metadatas_;
+        typeinfo which_belongs_;
 
         template <typename>
         friend class implements::method_bind;

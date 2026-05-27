@@ -13,10 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <rettr/property.hpp>
 #include <algorithm>
+#include <rettr/property.hpp>
+#include <rettr/type.hpp>
 
 namespace rettr {
+    rettr::type property::declaring_type() const noexcept {
+        return rettr::type::from_typeid(which_belongs().remove_cvref());
+    }
+
     RETTR_NODISCARD const typeinfo &property::which_belongs() const noexcept {
         return reinterpret_cast<const property_accessor *>(property_storage)->which_belongs();
     }
@@ -84,18 +89,18 @@ namespace rettr {
         return is_empty_;
     }
 
-    RETTR_NODISCARD const metadata &property::metadata(const any &key) const noexcept {
-        static const rettr::metadata empty{};
+    RETTR_NODISCARD const metadata_item &property::metadata(const any &key) const noexcept {
+        static const metadata_item empty{};
         const auto it =
-            std::find_if(metadatas_.begin(), metadatas_.end(), [&key](const rettr::metadata &m) { return m.key() == key; });
+            std::find_if(metadatas_.begin(), metadatas_.end(), [&key](const rettr::metadata_item &m) { return m.key() == key; });
         return it != metadatas_.end() ? *it : empty;
     }
 
-    RETTR_NODISCARD array_range<class metadata> property::metadatas() const noexcept {
+    RETTR_NODISCARD array_range<rettr::metadata_item> property::metadatas() const noexcept {
         return {metadatas_.data(), metadatas_.size()};
     }
 
-    RETTR_NODISCARD std::string_view property::name() const noexcept {
+    RETTR_NODISCARD string_view property::name() const noexcept {
         return name_;
     }
 
@@ -128,16 +133,23 @@ namespace rettr {
 
     property &property::operator=(const property &right) noexcept {
         if (this != &right) {
-            property tmp(right);
-            std::swap(*this, tmp);
+            name_ = right.name_;
+            metadatas_ = right.metadatas_;
+            access_levels_ = right.access_levels_;
+            is_empty_ = right.is_empty_;
+            std::memcpy(property_storage, right.property_storage, soo_buffer_size);
         }
         return *this;
     }
 
     property &property::operator=(property &&right) noexcept {
         if (this != &right) {
-            property tmp(std::move(right));
-            std::swap(*this, tmp);
+            name_ = right.name_;
+            metadatas_ = std::move(right.metadatas_);
+            access_levels_ = right.access_levels_;
+            is_empty_ = right.is_empty_;
+            std::memcpy(property_storage, right.property_storage, soo_buffer_size);
+            std::memset(right.property_storage, 0, soo_buffer_size);
         }
         return *this;
     }

@@ -87,7 +87,7 @@ namespace rettr::implements {
 
         template<typename Functor, typename... UAx>
         explicit invoker_accessor_impl(Functor &&method, UAx &&... args) noexcept {
-            ::new(&this->storage) invoker(std::forward<Functor>(method), std::forward<UAx>(args)...);
+            ::new (&this->storage) storage_t(std::forward<Functor>(method), std::forward<UAx>(args)...);
         }
 
         invoker_accessor_impl(const storage_t &right) : storage(right) {

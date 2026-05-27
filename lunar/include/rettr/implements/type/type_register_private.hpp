@@ -55,11 +55,11 @@ namespace rettr::implements {
 
         void register_custom_name(rettr::type &t, string_view name) noexcept;
 
-        any metadata(const rettr::type &t, const any& key) noexcept;
-        any metadata_from_list(const any &key, const std::vector<rettr::metadata>& data) noexcept;
-        void metadata(const rettr::type &t, const std::vector<rettr::metadata>& data) noexcept;
+        any metadata(const rettr::type &t, const any &key) noexcept;
+        any metadata_from_list(const any &key, const std::vector<rettr::metadata_item> &data) noexcept;
+        void metadata(const rettr::type &t, const std::vector<rettr::metadata_item> &data) noexcept;
 
-        array_range<class metadata> metadatas(const rettr::type& t) const noexcept;
+        array_range<class metadata_item> metadatas(const rettr::type &t) const noexcept;
 
         bool register_base_class(const rettr::type &derived, const rettr::type &base) noexcept;
 
@@ -72,8 +72,8 @@ namespace rettr::implements {
         std::vector<type_private::type_data *> &get_type_data_storage() noexcept;
         std::vector<rettr::type> &get_type_storage() noexcept;
 
-        std::map<string_view, rettr::type> &get_orig_name_to_id() noexcept;
-        std::map<std::string, rettr::type> &get_custom_name_to_id() noexcept;
+        std::unordered_map<rettr::typeinfo, rettr::type> &get_orig_name_to_id() noexcept;
+        std::unordered_map<std::string, rettr::type> &get_custom_name_to_id() noexcept;
 
         static type_register_private &get_instance() noexcept;
 
@@ -81,7 +81,7 @@ namespace rettr::implements {
         type_register_private() = default;
         ~type_register_private() = default;
 
-        type_private::type_data *register_name_if_necessary(type_private::type_data *info) noexcept;
+        type_private::type_data *register_id_if_necessary(type_private::type_data *info) noexcept;
 
         static void register_base_class_info(type_private::type_data *info) noexcept;
 
@@ -92,8 +92,8 @@ namespace rettr::implements {
         void remove_base_types_from_derived_classes(rettr::type &t, const std::vector<rettr::type> &derived_types) noexcept;
 
         std::set<registration_manager *> registration_manager_list_;
-        std::map<std::string, rettr::type> custom_name_to_id_;
-        std::map<string_view, rettr::type> orig_name_to_id_;
+        std::unordered_map<std::string, rettr::type> custom_name_to_id_;
+        std::unordered_map<rettr::typeinfo, rettr::type> type_id_to_type_;
         std::vector<rettr::type> type_list_;
         std::vector<type_private::type_data *> type_data_storage_;
         std::multimap<string_view, rettr::property> global_property_storage_;
@@ -102,7 +102,6 @@ namespace rettr::implements {
         std::vector<rettr::method> global_methods_;
         std::mutex mutex_;
     };
-
 }
 
 #endif

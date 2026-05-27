@@ -18,17 +18,20 @@
 
 #include <rettr/core/prerequisites.hpp>
 #include <rettr/string_view.hpp>
-#include <rettr/type.hpp>
 #include <rettr/any.hpp>
+
+namespace rettr {
+    class type;
+}
 
 namespace rettr::implements {
     class RETTR_API parameter_info_base {
     public:
-        parameter_info_base() noexcept;
-
-        virtual ~parameter_info_base();
+        virtual ~parameter_info_base() = default;
 
         virtual string_view name() const noexcept = 0;
+        
+        virtual void set_name(string_view name) noexcept = 0;
 
         virtual rettr::type type() const noexcept = 0;
 
@@ -37,6 +40,10 @@ namespace rettr::implements {
         virtual any default_value() const = 0;
 
         virtual std::uint32_t index() const noexcept = 0;
+
+        virtual void set_default_value(const any& val) = 0;
+        
+        virtual std::unique_ptr<parameter_info_base> clone() const = 0;
     };
 }
 
