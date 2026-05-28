@@ -18,12 +18,12 @@
 
 // NOLINTBEGIN, clang-format off
 
-#include <rettr/core/prerequisites.hpp>
+#include <functional>
 #include <rettr/core/marco_gen.hpp>
+#include <rettr/core/prerequisites.hpp>
 #include <rettr/typeinfo.hpp>
 #include <tuple>
 #include <variant>
-#include <functional>
 
 // NOLINTEND, clang-format on
 
@@ -64,8 +64,8 @@ namespace rettr::implements {
     struct has_get_private_ptrs : std::false_type {};
 
     template <typename Ty>
-    struct has_get_private_ptrs<Ty, std::void_t<decltype(get_private_ptrs(
-                                        private_access_tag<helper::remove_cvref_t<Ty>>))>> : std::true_type {};
+    struct has_get_private_ptrs<Ty, std::void_t<decltype(get_private_ptrs(private_access_tag<helper::remove_cvref_t<Ty>>))>>
+        : std::true_type {};
 
     template <typename Ty, typename = void>
     struct get_private_ptrs_helper {
@@ -73,8 +73,7 @@ namespace rettr::implements {
     };
 
     template <typename Ty>
-    struct get_private_ptrs_helper<
-        Ty, std::void_t<decltype(get_private_ptrs(private_access_tag<helper::remove_cvref_t<Ty>>))>> {
+    struct get_private_ptrs_helper<Ty, std::void_t<decltype(get_private_ptrs(private_access_tag<helper::remove_cvref_t<Ty>>))>> {
         static constexpr auto value = get_private_ptrs(private_access_tag<helper::remove_cvref_t<Ty>>);
     };
 }
@@ -126,8 +125,7 @@ namespace rettr::implements {
     };
 
     template <typename Ty, typename... Args>
-    constexpr rettr_fn test_constructible(int)
-        -> decltype(Ty{std::declval<Args>()..., any_type{}}, std::true_type{}) {
+    constexpr rettr_fn test_constructible(int) -> decltype(Ty{std::declval<Args>()..., any_type{}}, std::true_type{}) {
         std::terminate();
         return {};
     }
@@ -181,8 +179,7 @@ namespace rettr {
     RETTR_CONSTEXPR_BOOL is_reflectet_for_type_valid = true;
 
     template <typename Type>
-    RETTR_CONSTEXPR_BOOL
-        is_reflectet_for_type_valid<Type, std::void_t<decltype(reflectet_for_type<Type>::invalid_mark)>> = false;
+    RETTR_CONSTEXPR_BOOL is_reflectet_for_type_valid<Type, std::void_t<decltype(reflectet_for_type<Type>::invalid_mark)>> = false;
 }
 
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
@@ -225,8 +222,7 @@ namespace rettr::implements {
             }(std::make_index_sequence<filtered.size()>{});
         }
 
-        template <typename UTy, std::enable_if_t<
-                                    type_traits::type_relations::is_same_v<helper::remove_cvref_t<UTy>, Ty>, int> = 0>
+        template <typename UTy, std::enable_if_t<type_traits::type_relations::is_same_v<helper::remove_cvref_t<UTy>, Ty>, int> = 0>
         static constexpr rettr_fn make_ptr(UTy &&obj) noexcept -> auto {
             constexpr auto pmembers = get_memptr_tuple();
             return [&]<std::size_t... Is>(std::index_sequence<Is...>) {
@@ -256,18 +252,15 @@ namespace rettr::implements {
 
 #define RETTR_DECLARE_TO_TUPLE(N)                                                                                                     \
     template <typename Ty>                                                                                                            \
-    struct rettr::implements::refl_to_tuple_impl<N, Ty> : std::integral_constant<std::size_t, N> {                        \
-        static constexpr rettr_fn make() noexcept -> auto {                                                                            \
-            auto &[RETTR_TO_TUPLE_EXPAND_ARGS(N)] =                                                                                   \
-                helper::get_fake_object<helper::remove_cvref_t<Ty>>();                                   \
+    struct rettr::implements::refl_to_tuple_impl<N, Ty> : std::integral_constant<std::size_t, N> {                                    \
+        static constexpr rettr_fn make() noexcept -> auto {                                                                           \
+            auto &[RETTR_TO_TUPLE_EXPAND_ARGS(N)] = helper::get_fake_object<helper::remove_cvref_t<Ty>>();                            \
             auto ref_tup = std::tie(RETTR_TO_TUPLE_EXPAND_ARGS(N));                                                                   \
             auto get_ptrs = [](auto &..._refs) { return std::make_tuple(&_refs...); };                                                \
             return std::apply(get_ptrs, ref_tup);                                                                                     \
         }                                                                                                                             \
-        template <typename UTy,                                                                                                       \
-                  std::enable_if_t<                                                                       \
-                      std::is_same_v<helper::remove_cvref_t<UTy>, Ty>, int> = 0>       \
-        static constexpr rettr_fn make_ptr(UTy &&obj) noexcept -> auto {                                                               \
+        template <typename UTy, std::enable_if_t<std::is_same_v<helper::remove_cvref_t<UTy>, Ty>, int> = 0>                           \
+        static constexpr rettr_fn make_ptr(UTy &&obj) noexcept -> auto {                                                              \
             auto &[RETTR_TO_TUPLE_EXPAND_ARGS(N)] = obj;                                                                              \
             auto ref_tup = std::tie(RETTR_TO_TUPLE_EXPAND_ARGS(N));                                                                   \
             auto get_ptrs = [](auto &..._refs) { return std::make_tuple(&_refs...); };                                                \
@@ -399,8 +392,7 @@ namespace rettr {
         } else {
 #if RETTR_HAS_CXX20
             constexpr bool has_get_private_ptrs_v = implements::has_get_private_ptrs<type>::value;
-            static_assert(member_count_v<type> != 0 || has_get_private_ptrs_v || std::is_empty_v<type>,
-                          "Failed!");
+            static_assert(member_count_v<type> != 0 || has_get_private_ptrs_v || std::is_empty_v<type>, "Failed!");
             if constexpr (std::is_empty_v<type>) {
                 return std::array<std::string_view, 0>{};
             } else if constexpr (!has_get_private_ptrs_v) {
@@ -523,7 +515,7 @@ namespace rettr {
     struct is_pair : std::bool_constant<is_pair_v<Pair>> {};
 }
 
-namespace rettr {
+namespace rettr::implements {
     template <typename Fx, typename Tuple, std::size_t... Is>
     constexpr decltype(auto) apply_impl(Fx &&fx, Tuple &&tuple, std::index_sequence<Is...>) {
         return std::forward<Fx>(fx)(
@@ -546,58 +538,6 @@ namespace rettr {
         return make_pointer_tuple_impl(obj, std::make_index_sequence<Count>{});
     }
 
-    template <typename Ty1, typename Ty2>
-    struct reflectet_for_type<std::pair<Ty1, Ty2>> {
-        static constexpr inline std::size_t count = 2;
-
-        static constexpr auto make() noexcept {
-            auto &pair = helper::get_fake_object<std::pair<Ty1, Ty2>>();
-            return std::make_tuple(&pair.first, &pair.second);
-        }
-
-        static constexpr auto bind_obj(std::pair<Ty1, Ty2> &obj) noexcept {
-            return std::make_tuple(&obj.first, &obj.second);
-        }
-
-        static constexpr auto member_names() noexcept {
-            std::array<std::string_view, 2> names = {"first", "second"};
-            return names;
-        }
-    };
-
-    template <typename Tuple>
-    struct reflectet_for_type<Tuple, std::enable_if_t<is_tuple_v<Tuple>>> {
-        static constexpr inline std::size_t count = tuple_traits<helper::remove_cvref_t<Tuple>>::size;
-
-        static constexpr auto make() noexcept {
-            auto &obj = helper::get_fake_object<helper::remove_cvref_t<Tuple>>();
-            return make_pointer_tuple<Tuple, count>(obj);
-        }
-
-        static constexpr auto bind_obj(Tuple &obj) noexcept {
-            return make_pointer_tuple<Tuple, count>(obj);
-        }
-    };
-
-    template <typename Ty>
-    struct reflectet_for_type<Ty, std::enable_if_t<std::is_array_v<Ty>>> {
-        static constexpr inline std::size_t count = helper::array_size_v<Ty>;
-
-        static constexpr auto make() noexcept {
-            auto &obj = helper::get_fake_object<Ty>();
-            return make_array_pointer_tuple(obj, count);
-        }
-
-        static constexpr auto bind_obj(Ty &obj) noexcept {
-            return make_array_pointer_tuple(obj, count);
-        }
-
-        static constexpr auto member_names() noexcept {
-            std::array<std::string_view, 0> empty;
-            return empty;
-        }
-    };
-
     template <typename Ty, std::size_t... Is>
     constexpr auto make_array_pointer_tuple_impl(Ty &obj, std::index_sequence<Is...>) {
         return std::make_tuple(&obj[Is]...);
@@ -618,32 +558,8 @@ namespace rettr {
         return make_generic_array_pointer_tuple_impl(obj, std::make_index_sequence<count>{});
     }
 
-    template <template <typename Ty, std::size_t N> typename ArrayTemplate, typename Ty, std::size_t N>
-    struct reflectet_for_type<
-        ArrayTemplate<Ty, N>,
-        std::void_t<
-            std::enable_if_t<std::is_aggregate_v<ArrayTemplate<Ty, N>>>,
-            typename ArrayTemplate<Ty, N>::value_type, typename ArrayTemplate<Ty, N>::iterator>> {
-        static constexpr inline std::size_t count = N;
-
-        static constexpr auto make() noexcept {
-            auto &obj = helper::get_fake_object<ArrayTemplate<Ty, N>>();
-            return make_generic_array_pointer_tuple(obj, count);
-        }
-
-        static constexpr auto bind_obj(ArrayTemplate<Ty, N> &obj) noexcept {
-            return make_generic_array_pointer_tuple(obj, count);
-        }
-
-        static constexpr auto member_names() noexcept {
-            std::array<std::string_view, 0> empty;
-            return empty;
-        }
-    };
-
     template <typename Ty, std::size_t N, std::size_t... Is>
-    constexpr auto make_std_array_pointer_tuple_impl(std::array<Ty, N> &obj,
-                                                             std::index_sequence<Is...>) {
+    constexpr auto make_std_array_pointer_tuple_impl(std::array<Ty, N> &obj, std::index_sequence<Is...>) {
         return std::make_tuple(&obj[Is]...);
     }
 
@@ -651,46 +567,118 @@ namespace rettr {
     constexpr auto make_std_array_pointer_tuple(std::array<Ty, N> &obj) {
         return make_std_array_pointer_tuple_impl(obj, std::make_index_sequence<N>{});
     }
-
-    template <template <typename Ty, std::size_t N> typename ArrayTemplate, typename Ty, std::size_t N>
-    struct reflectet_for_type<ArrayTemplate<Ty, N>, std::enable_if_t<std::is_same_v<
-                                                        ArrayTemplate<Ty, N>, std::array<Ty, N>>>> {
-        static constexpr inline std::size_t count = N;
-
-        static constexpr auto make() noexcept {
-            if constexpr (count <= 256) {
-                auto &obj = helper::get_fake_object<std::array<Ty, N>>();
-                return make_std_array_pointer_tuple<count>(obj);
-            } else {
-                return std::make_tuple();
-            }
-        }
-
-        static constexpr auto bind_obj(ArrayTemplate<Ty, N> &obj) noexcept {
-            if constexpr (count <= 256) {
-                return make_std_array_pointer_tuple<count>(obj);
-            } else {
-                return std::make_tuple();
-            }
-        }
-
-        static constexpr auto member_names() noexcept {
-            std::array<std::string_view, 0> empty;
-            return empty;
-        }
-    };
 }
+
+template <typename Ty1, typename Ty2>
+struct rettr::reflectet_for_type<std::pair<Ty1, Ty2>> {
+    static constexpr inline std::size_t count = 2;
+
+    static constexpr auto make() noexcept {
+        auto &pair = helper::get_fake_object<std::pair<Ty1, Ty2>>();
+        return std::make_tuple(&pair.first, &pair.second);
+    }
+
+    static constexpr auto bind_obj(std::pair<Ty1, Ty2> &obj) noexcept {
+        return std::make_tuple(&obj.first, &obj.second);
+    }
+
+    static constexpr auto member_names() noexcept {
+        std::array<std::string_view, 2> names = {"first", "second"};
+        return names;
+    }
+};
+
+template <typename Tuple>
+struct rettr::reflectet_for_type<Tuple, std::enable_if_t<rettr::is_tuple_v<Tuple>>> {
+    static constexpr inline std::size_t count = tuple_traits<helper::remove_cvref_t<Tuple>>::size;
+
+    static constexpr auto make() noexcept {
+        auto &obj = helper::get_fake_object<helper::remove_cvref_t<Tuple>>();
+        return implements::make_pointer_tuple<Tuple, count>(obj);
+    }
+
+    static constexpr auto bind_obj(Tuple &obj) noexcept {
+        return implements::make_pointer_tuple<Tuple, count>(obj);
+    }
+};
+
+template <typename Ty>
+struct rettr::reflectet_for_type<Ty, std::enable_if_t<std::is_array_v<Ty>>> {
+    static constexpr inline std::size_t count = helper::array_size_v<Ty>;
+
+    static constexpr auto make() noexcept {
+        auto &obj = helper::get_fake_object<Ty>();
+        return implements::make_array_pointer_tuple(obj, count);
+    }
+
+    static constexpr auto bind_obj(Ty &obj) noexcept {
+        return implements::make_array_pointer_tuple(obj, count);
+    }
+
+    static constexpr auto member_names() noexcept {
+        std::array<std::string_view, 0> empty{};
+        return empty;
+    }
+};
+
+template <template <typename Ty, std::size_t N> typename ArrayTemplate, typename Ty, std::size_t N>
+struct rettr::reflectet_for_type<ArrayTemplate<Ty, N>,
+                          std::void_t<std::enable_if_t<std::is_aggregate_v<ArrayTemplate<Ty, N>>>,
+                                      typename ArrayTemplate<Ty, N>::value_type, typename ArrayTemplate<Ty, N>::iterator>> {
+    static constexpr inline std::size_t count = N;
+
+    static constexpr auto make() noexcept {
+        auto &obj = helper::get_fake_object<ArrayTemplate<Ty, N>>();
+        return implements::make_generic_array_pointer_tuple(obj, count);
+    }
+
+    static constexpr auto bind_obj(ArrayTemplate<Ty, N> &obj) noexcept {
+        return implements::make_generic_array_pointer_tuple(obj, count);
+    }
+
+    static constexpr auto member_names() noexcept {
+        std::array<std::string_view, 0> empty{};
+        return empty;
+    }
+};
+
+template <template <typename Ty, std::size_t N> typename ArrayTemplate, typename Ty, std::size_t N>
+struct rettr::reflectet_for_type<ArrayTemplate<Ty, N>, std::enable_if_t<std::is_same_v<ArrayTemplate<Ty, N>, std::array<Ty, N>>>> {
+    static constexpr inline std::size_t count = N;
+
+    static constexpr auto make() noexcept {
+        if constexpr (count <= 256) {
+            auto &obj = helper::get_fake_object<std::array<Ty, N>>();
+            return implements::make_std_array_pointer_tuple<count>(obj);
+        } else {
+            return std::make_tuple();
+        }
+    }
+
+    static constexpr auto bind_obj(ArrayTemplate<Ty, N> &obj) noexcept {
+        if constexpr (count <= 256) {
+            return implements::make_std_array_pointer_tuple<count>(obj);
+        } else {
+            return std::make_tuple();
+        }
+    }
+
+    static constexpr auto member_names() noexcept {
+        std::array<std::string_view, 0> empty{};
+        return empty;
+    }
+};
 
 #define RETTR_PTR_EACH(obj, member) &obj.member
 #define RETTR_NAME_EACH(obj, member) #member
 
 #define RETTR_REFLECT_TUPLE_LIKE(STRUCT, ...)                                                                                         \
     template <>                                                                                                                       \
-    struct rettr::reflectet_for_type<STRUCT> {                                                                            \
+    struct rettr::reflectet_for_type<STRUCT> {                                                                                        \
         static constexpr inline std::size_t count = RETTR_ARG_COUNT(__VA_ARGS__);                                                     \
                                                                                                                                       \
         static constexpr auto make() noexcept {                                                                                       \
-            auto &obj = std::get_fake_object<STRUCT>();                                                               \
+            auto &obj = std::get_fake_object<STRUCT>();                                                                               \
             return std::make_tuple(RETTR_FE_FOR_EACH(RETTR_PTR_EACH, obj, __VA_ARGS__));                                              \
         }                                                                                                                             \
                                                                                                                                       \
@@ -699,18 +687,18 @@ namespace rettr {
         }                                                                                                                             \
                                                                                                                                       \
         static constexpr auto member_names() noexcept {                                                                               \
-            std::array<std::string_view, count> names = {RETTR_FE_FOR_EACH(RETTR_NAME_EACH, dummy, __VA_ARGS__)};             \
+            std::array<std::string_view, count> names = {RETTR_FE_FOR_EACH(RETTR_NAME_EACH, dummy, __VA_ARGS__)};                     \
             return names;                                                                                                             \
         }                                                                                                                             \
     };
 
 #define RETTR_REFLECT_TUPLE_LIKE_MARK_EMPTY(STRUCT)                                                                                   \
     template <>                                                                                                                       \
-    struct rettr::reflectet_for_type<STRUCT> {                                                                            \
+    struct rettr::reflectet_for_type<STRUCT> {                                                                                        \
         static constexpr inline std::size_t count = 0;                                                                                \
                                                                                                                                       \
         static constexpr auto make() noexcept {                                                                                       \
-            auto &obj = std::get_fake_object<STRUCT>();                                                               \
+            auto &obj = std::get_fake_object<STRUCT>();                                                                               \
             return std::make_tuple();                                                                                                 \
         }                                                                                                                             \
                                                                                                                                       \
@@ -719,7 +707,7 @@ namespace rettr {
         }                                                                                                                             \
                                                                                                                                       \
         static constexpr auto member_names() noexcept {                                                                               \
-            std::array<std::string_view, count> names = {};                                                                   \
+            std::array<std::string_view, count> names = {};                                                                           \
             return names;                                                                                                             \
         }                                                                                                                             \
     };
@@ -728,40 +716,39 @@ namespace rettr {
 #define RETTR_PRIVATE_PTR_EACH(obj, ptr) (obj.*ptr)
 
 #define RETTR_PRIVATE_REFLECT_TUPLE_LIKE(TYPE, ...)                                                                                   \
-    namespace rettr::implements {                                                                                         \
+    namespace rettr::implements {                                                                                                     \
         template struct private_access<TYPE, RETTR_FE_FOR_EACH(RETTR_MEMPTR_EACH, TYPE, __VA_ARGS__)>;                                \
         inline constexpr auto get_private_ptrs(const private_access_tag_t<TYPE> &);                                                   \
     }                                                                                                                                 \
                                                                                                                                       \
     template <>                                                                                                                       \
-    struct rettr::reflectet_for_type<TYPE> {                                                                              \
+    struct rettr::reflectet_for_type<TYPE> {                                                                                          \
         static constexpr inline std::size_t count = RETTR_ARG_COUNT(__VA_ARGS__);                                                     \
                                                                                                                                       \
         static constexpr auto make() noexcept {                                                                                       \
             using Ty = TYPE;                                                                                                          \
-            auto &obj = std::get_fake_object<Ty>();                                                                   \
+            auto &obj = std::get_fake_object<Ty>();                                                                                   \
             constexpr auto ptrs = implements::get_private_ptrs_helper<TYPE>::value;                                                   \
-            return std::apply([&](auto... ptr) { return std::make_tuple(std::addressof(obj.*ptr)...); }, ptrs);                   \
+            return std::apply([&](auto... ptr) { return std::make_tuple(std::addressof(obj.*ptr)...); }, ptrs);                       \
         }                                                                                                                             \
                                                                                                                                       \
         static constexpr auto bind_obj(TYPE &obj) noexcept {                                                                          \
             using Ty = TYPE;                                                                                                          \
             constexpr auto ptrs = implements::get_private_ptrs_helper<TYPE>::value;                                                   \
-            return std::apply([&](auto... ptr) { return std::make_tuple(std::addressof(obj.*ptr)...); }, ptrs);                   \
+            return std::apply([&](auto... ptr) { return std::make_tuple(std::addressof(obj.*ptr)...); }, ptrs);                       \
         }                                                                                                                             \
                                                                                                                                       \
         static constexpr auto member_names() noexcept {                                                                               \
-            std::array<std::string_view, count> names = {RETTR_FE_FOR_EACH(RETTR_NAME_EACH, dummy, __VA_ARGS__)};             \
+            std::array<std::string_view, count> names = {RETTR_FE_FOR_EACH(RETTR_NAME_EACH, dummy, __VA_ARGS__)};                     \
             return names;                                                                                                             \
         }                                                                                                                             \
     };
 
 namespace rettr::implements {
     template <typename Tuple, typename NamesArray, typename Fx, std::size_t... Idx>
-    constexpr rettr_fn for_each_impl(Tuple &&tuple, NamesArray &&names, Fx &&func, std::index_sequence<Idx...>)
-        -> void {
+    constexpr rettr_fn for_each_impl(Tuple &&tuple, NamesArray &&names, Fx &&func, std::index_sequence<Idx...>) -> void {
         (std::invoke(std::forward<Fx>(func), *std::get<Idx>(std::forward<Tuple>(tuple)),
-                         std::get<Idx>(std::forward<NamesArray>(names)), Idx),
+                     std::get<Idx>(std::forward<NamesArray>(names)), Idx),
          ...);
     }
 
@@ -824,8 +811,7 @@ namespace rettr {
     }
 
     template <typename Ty>
-    RETTR_STATIC_REFLECTION_CONSTEXPR26 rettr_fn get_member_offset_arr(Ty &&t)
-        -> const std::array<std::size_t, member_count_v<Ty>>& {
+    RETTR_STATIC_REFLECTION_CONSTEXPR26 rettr_fn get_member_offset_arr(Ty &&t) -> const std::array<std::size_t, member_count_v<Ty>> & {
         using type = helper::remove_cvref_t<Ty>;
         constexpr size_t count = member_count_v<type>;
 #if RETTR_HAS_CXX26_STATIC_REFLECTION
@@ -833,15 +819,14 @@ namespace rettr {
         return implements::member_offset_arr_cache<Ty>;
 #else
         auto tp = struct_bind_tuple(std::forward<Ty>(t));
-        static std::array<size_t, count> arr =
-            implements::get_member_offset_arr_impl(t, tp, std::make_index_sequence<count>{});
+        static std::array<size_t, count> arr = implements::get_member_offset_arr_impl(t, tp, std::make_index_sequence<count>{});
         return arr;
 #endif
     }
 
     template <typename Ty>
     RETTR_STATIC_REFLECTION_CONSTEXPR26 RETTR_INLINE rettr_fn get_member_offset_arr()
-        -> const std::array<std::size_t, member_count_v<Ty>>& {
+        -> const std::array<std::size_t, member_count_v<Ty>> & {
         return get_member_offset_arr(helper::get_fake_object<Ty>());
     }
 
@@ -871,8 +856,7 @@ namespace rettr {
     template <typename Object, typename Visitor>
     constexpr rettr_fn visit_members(Object &&object, Visitor &&visitor) -> void {
         auto tuple = struct_bind_tuple<helper::remove_cvref_t<Object>>(object);
-        implements::visit_members_impl(tuple, std::forward<Visitor>(visitor),
-                                       std::make_index_sequence<member_count_v<Object>>{});
+        implements::visit_members_impl(tuple, std::forward<Visitor>(visitor), std::make_index_sequence<member_count_v<Object>>{});
     }
 
     template <typename Ty, std::size_t Idx>
@@ -934,8 +918,7 @@ namespace rettr {
     }
 
     template <typename Ty>
-    constexpr rettr_fn get(Ty &&object, std::string_view name)
-        -> decltype(tuple_to_variant<helper::remove_cvref_t<Ty>>()) {
+    constexpr rettr_fn get(Ty &&object, std::string_view name) -> decltype(tuple_to_variant<helper::remove_cvref_t<Ty>>()) {
         const std::size_t index = index_of<Ty>(name);
         return get<Ty>(std::forward<Ty>(object), index);
     }

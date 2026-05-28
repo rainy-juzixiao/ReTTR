@@ -1133,7 +1133,7 @@ namespace rettr::implements {
     }
 }
 
-namespace rettr {
+namespace rettr::implements {
     template<typename Derived, typename Base>
     void register_base() {
         static_assert(std::is_base_of_v<Base, Derived>, "Base must be base of Derived");
@@ -1149,7 +1149,7 @@ namespace rettr {
         }
     }
 
-    RETTR_INLINE void *apply_offset(void *ptr, const typeinfo &source, const typeinfo &target) {
+    RETTR_INLINE void *apply_offset(void *ptr, const rettr::typeinfo &source, const rettr::typeinfo &target) {
         if (!ptr) {
             return nullptr;
         }

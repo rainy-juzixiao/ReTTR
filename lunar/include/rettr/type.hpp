@@ -30,7 +30,6 @@ namespace rettr {
     class property;
     class enumeration;
     class type;
-    class visitor;
 
     struct static_invoke_tag {
         constexpr explicit  static_invoke_tag() = default;
