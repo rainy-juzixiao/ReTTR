@@ -15,22 +15,3 @@ ReTTR并非RTTR的衍生作品，其发行许可证采用Apache 2.0，而RTTR使
 - instance （由object_view取代）
 
 根据情况再进行删减
-
-# TODO List
-
-- [x] method (rttr)
-- [x] type (rttr)
-- [x] array_range (rttr)
-- [x] destructor (rttr)
-- [x] parameter_info (rttr)
-- [x] type_list (rttr)
-- [x] basic_string_view (rttr)
-- [x] enum_flags (rttr)
-- [x] property (rttr)
-- [x] variant (rttr) -> any(ReTTR)
-- [x] registration::bind (rttr)
-- [x] enumeration (rttr)
-- [x] registration::class_ (rttr)
-- [x] registration (rttr)
-- [x] constructor (rttr)
-- [x] library (rttr)
