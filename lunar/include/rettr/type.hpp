@@ -48,26 +48,21 @@ namespace rettr::implements::type_private {
     template <typename T>
     RETTR_LOCAL_API std::unique_ptr<type_data> make_type_data();
     struct type_data *invalid_type_data() noexcept;
-
-    template <typename T>
-    RETTR_LOCAL_API RETTR_INLINE type type_from_instance(const T *) noexcept;
 }
 
 namespace rettr::implements {
-    struct derived_info;
     struct base_class_info;
+
     class type_register;
     class type_register_private;
 
     struct class_data;
-    class destructor_wrapper_base;
-    class property_wrapper_base;
+
+    template <typename DerivedClass, typename... T>
+    struct RETTR_LOCAL_API type_from_base_classes;
 }
 
 namespace rettr {
-    template <typename Target_Type, typename Source_Type>
-    Target_Type rettr_cast(Source_Type object) noexcept;
-
     class RETTR_API type {
     public:
         using type_id = uintptr_t;
@@ -219,6 +214,9 @@ namespace rettr {
         friend class implements::type_register;
         friend class implements::type_register_private;
         friend struct implements::class_data;
+
+        template <typename DerivedClass, typename... T>
+        friend class implements::type_from_base_classes;
 
         friend type implements::type_private::create_type(implements::type_private::type_data *) noexcept;
         friend type implements::type_private::invalid_type() noexcept;

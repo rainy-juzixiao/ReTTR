@@ -2966,4 +2966,15 @@ namespace rettr::helper {
     RETTR_CONSTEXPR_BOOL is_pointer_reference_v<Ty *&> = true;
 }
 
+namespace rettr::helper {
+    template <typename Ty>
+    struct pointer_rank : std::integral_constant<std::size_t, 0> {};
+
+    template <typename Ty>
+    struct pointer_rank<Ty *> : std::integral_constant<std::size_t, 1 + pointer_rank<Ty>::value> {};
+
+    template <typename Ty>
+    inline constexpr std::size_t pointer_rank_v = pointer_rank<Ty>::value;
+}
+
 #endif

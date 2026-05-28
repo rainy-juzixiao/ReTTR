@@ -46,7 +46,6 @@ namespace rettr {
             implements::constructor_bind<Clazz, ConstructorArgs...>{[this](rettr::constructor ctor) { 
                 reg_exec_->add_registration_func(
                     this, [c = std::move(ctor)]() mutable {
-                    std::cout << c.return_type().name() << '\n';
                         implements::get_registration_manager().add_item(std::move(c));
                     }
                 );

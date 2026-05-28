@@ -28,7 +28,7 @@ namespace rettr::implements::type_private {
 
     using cast_func_ptr_t = void *(*) (void *);
 
-    RETTR_LOCAL_API struct type_data *invalid_type_data() noexcept;
+    RETTR_LOCAL_API RETTR_INLINE struct type_data *invalid_type_data() noexcept;
 
     struct RETTR_API class_data {
         class_data(std::unique_ptr<std::vector<type>> template_arguments_types);
@@ -47,17 +47,6 @@ namespace rettr::implements::type_private {
     };
 
     using get_metadata_func = std::vector<metadata_item> &(*) (void);
-}
-
-namespace rettr::implements::type_private {
-    template <typename Ty>
-    struct pointer_rank : std::integral_constant<std::size_t, 0> {};
-
-    template <typename Ty>
-    struct pointer_rank<Ty *> : std::integral_constant<std::size_t, 1 + pointer_rank<Ty>::value> {};
-
-    template <typename Ty>
-    inline constexpr std::size_t pointer_rank_v = pointer_rank<Ty>::value;
 }
 
 namespace rettr::implements::type_private {
@@ -126,7 +115,7 @@ namespace rettr::implements::type_private {
         auto obj = std::make_unique<struct type_data>(
             /* raw_type_data       = */ raw_type_info<Ty>::extract().type_data_,
             /* array_raw_type      = */ array_raw_type<Ty>::extract().type_data_,
-            /* pointer_dimension   = */ pointer_rank_v<Ty>,
+            /* pointer_dimension   = */ helper::pointer_rank_v<Ty>,
             /* type_info           = */ typeinfo::create<Ty>(),
             /* enumeration_data    = */ nullptr,
             /* valid               = */ true,
@@ -138,7 +127,22 @@ namespace rettr::implements::type_private {
         return obj;
     }
 
-    RETTR_LOCAL_API struct type_data *invalid_type_data() noexcept;
+    RETTR_LOCAL_API RETTR_INLINE struct type_data *invalid_type_data() noexcept {
+        static auto obj = std::make_unique<struct type_data>(
+            /* raw_type_data       = */ nullptr,
+            /* array_raw_type      = */ nullptr,
+            /* pointer_dimension   = */ 0,
+            /* type_info           = */ typeinfo::create<struct invalid_type>(),
+            /* enumeration_data    = */ nullptr,
+            /* valid               = */ false,
+            /* my_class_data       = */
+            class_data{std::make_unique<std::vector<type>>(template_arguments<struct invalid_type>::extract())},
+            /* metadata            = */ nullptr);
+        obj->array_raw_type = obj.get();
+        obj->raw_type_data = obj.get();
+        return obj.get();
+    }
+
     // clang-format on
 }
 

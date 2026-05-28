@@ -1,5 +1,5 @@
 /*
-* Copyright 2026 rettr-juzixiao
+ * Copyright 2026 rettr-juzixiao
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,9 @@
 #define RETTR_BASE_CLASSES_HPP
 
 #include <rettr/type.hpp>
+#include <mutex>
 
-namespace rettr :: implements {
+namespace rettr::implements {
     struct base_class_info {
         base_class_info(type t, void *(*rettr_cast_func)(void *) ) : m_base_type(t), m_rettr_cast_func(rettr_cast_func) {
         }
@@ -42,9 +43,20 @@ namespace rettr :: implements {
     };
 
     template <typename T>
-    using has_base_class_list = std::integral_constant<bool, has_base_class_list_impl<T>::value>;
+    using has_base_class_list = std::bool_constant<has_base_class_list_impl<T>::value>;
 
     using info_container = std::vector<implements::base_class_info>;
+
+    struct derived_class_info {
+        derived_class_info(type t, void *(*rettr_downcast_func)(void *) ) :
+            m_derived_type(t), m_rettr_downcast_func(rettr_downcast_func) {
+        }
+
+        type m_derived_type;
+        void *(*m_rettr_downcast_func)(void *); // BaseClass* → DerivedClass*
+    };
+
+    using derived_info_container = std::vector<derived_class_info>;
 
     template <typename DerivedClass, typename... T>
     struct RETTR_LOCAL_API type_from_base_classes;
@@ -67,7 +79,24 @@ namespace rettr :: implements {
                           "The parent class has no base class list defined - please use the macro RETTR_ENABLE");
             vec.emplace_back(type::from<BaseClass>(), &rettr_cast_impl<DerivedClass, BaseClass>);
 
-            register_base<BaseClass, DerivedClass>();
+            static std::once_flag derived_registered;
+            std::call_once(derived_registered, [] {
+                register_base<DerivedClass, BaseClass>();
+
+                type base_type = type::from<BaseClass>();
+                auto &derived = base_type.type_data_->my_class_data.derived_types;
+                if (!derived) {
+                    derived = std::make_unique<std::vector<type>>();
+                }
+                derived->push_back(type::from<DerivedClass>());
+
+                type derived_type = type::from<DerivedClass>();
+                auto &base = derived_type.type_data_->my_class_data.base_types;
+                if (!base) {
+                    base = std::make_unique<std::vector<type>>();
+                }
+                base->push_back(type::from<BaseClass>());
+            });
 
             type_from_base_classes<DerivedClass, typename BaseClass::base_class_list>::fill(vec);
             type_from_base_classes<DerivedClass, U...>::fill(vec);
