@@ -267,7 +267,7 @@ namespace rettr {
         }
 
         bool operator!=(const const_iterator& right) const {
-            return ptr_ == right.ptr_;
+            return ptr_ != right.ptr_;
         }
 
     private:
@@ -333,7 +333,7 @@ namespace rettr {
         }
 
         bool operator!=(const const_iterator& right) const {
-            return ptr_ == right.ptr_;
+            return ptr_ != right.ptr_;
         }
 
     private:
@@ -396,7 +396,7 @@ namespace rettr {
         }
 
         bool operator!=(const const_reverse_iterator& right) const {
-            return ptr_ == right.ptr_;
+            return ptr_ != right.ptr_;
         }
 
     private:
@@ -461,7 +461,7 @@ namespace rettr {
         }
 
         bool operator!=(const const_reverse_iterator& right) const {
-            return ptr_ == right.ptr_;
+            return ptr_ != right.ptr_;
         }
         
     private:

@@ -72,24 +72,22 @@ namespace rettr {
                                                  [c = std::move(ctor)]() mutable { implements::store_item<Clazz>(std::move(c)); });
             }},
             reg_exec_(std::move(reg_exec)) {
-            if (called_bind) {
+            reg_exec_->add_registration_func(static_cast<const void *>(this));
+        }
+
+        ~bind() {
+            if (!called_bind) {
                 implements::constructor_bind<Clazz, ConstructorArgs...>::operator()(
                     implements::make_access_level_tag<AccLevel>::make());
             }
         }
 
-        ~bind() {
-            if (!called_bind) {
-                implements::constructor_bind<Clazz, ConstructorArgs...>::operator()(implements::make_access_level_tag<AccLevel>::make());
-            }
-        }
-
         template <typename... Modifiers>
-        registration::class_<Clazz> &operator()(Modifiers &&...mods) {
+        registration::class_<Clazz> operator()(Modifiers &&...mods) {
             implements::constructor_bind<Clazz, ConstructorArgs...>::operator()(std::forward<Modifiers>(mods)...,
                                                                                 implements::make_access_level_tag<AccLevel>::make());
             called_bind = true;
-            return *this;
+            return {reg_exec_};
         }
 
     private:
@@ -110,6 +108,7 @@ namespace rettr {
                                                   },
                                                   std::move(func)},
             reg_exec_(std::move(reg_exec)) {
+            reg_exec_->add_registration_func(static_cast<const void *>(this));
         }
 
         ~bind() {
@@ -119,7 +118,7 @@ namespace rettr {
         }
 
         template <typename... Modifiers>
-        registration::class_<Clazz> &operator()(Modifiers &&...mods) {
+        registration::class_<Clazz> operator()(Modifiers &&...mods) {
             implements::constructor_func_bind<Fx>::operator()(std::forward<Modifiers>(mods)...,
                                                               implements::make_access_level_tag<AccLevel>::make());
             called_bind = true;
@@ -144,6 +143,7 @@ namespace rettr {
                                                       });
                                                   }},
             reg_exec_(std::move(reg_exec)) {
+            reg_exec_->add_registration_func(static_cast<const void *>(this));
         }
 
         ~bind() {
@@ -153,11 +153,11 @@ namespace rettr {
         }
 
         template <typename... Modifiers>
-        registration::class_<Clazz> &operator()(Modifiers &&...mods) {
+        registration::class_<Clazz> operator()(Modifiers &&...mods) {
             implements::property_bind<Clazz, Acc>::operator()(std::forward<Modifiers>(mods)...,
                                                               implements::make_access_level_tag<AccLevel>::make());
             called_bind = true;
-            return *this;
+            return {reg_exec_};
         }
 
     private:
@@ -178,6 +178,7 @@ namespace rettr {
                                                      [p = std::move(prop)]() mutable { implements::store_item<Clazz>(std::move(p)); });
                 }},
             reg_exec_(std::move(reg_exec)) {
+            reg_exec_->add_registration_func(static_cast<const void *>(this), [] {});
         }
 
         ~bind() {
@@ -187,11 +188,11 @@ namespace rettr {
         }
 
         template <typename... Modifiers>
-        registration::class_<Clazz> &operator()(Modifiers &&...mods) {
+        registration::class_<Clazz> operator()(Modifiers &&...mods) {
             implements::property_bind<Clazz, const Acc>::operator()(std::forward<Modifiers>(mods)...,
                                                                     implements::make_access_level_tag<AccLevel>::make());
             called_bind = true;
-            return *this;
+            return {reg_exec_};
         }
 
     private:
@@ -212,6 +213,7 @@ namespace rettr {
                                                   [m = std::move(meth)]() mutable { implements::store_item<Clazz>(std::move(m)); });
                                           }},
             reg_exec_(std::move(reg_exec)) {
+            reg_exec_->add_registration_func(static_cast<const void *>(this));
         }
 
         ~bind() {
@@ -221,11 +223,11 @@ namespace rettr {
         }
 
         template <typename... Modifiers>
-        registration::class_<Clazz> &operator()(Modifiers &&...mods) {
+        registration::class_<Clazz> operator()(Modifiers &&...mods) {
             implements::method_bind<Func>::operator()(std::forward<Modifiers>(mods)...,
                                                       implements::make_access_level_tag<AccLevel>::make());
             called_bind = true;
-            return *this;
+            return {reg_exec_};
         }
 
     private:
@@ -242,6 +244,7 @@ namespace rettr {
             implements::enumeration_bind<Clazz, EnumType>{name,
                                                           [this](rettr::enumeration enum_data) { enum_ = std::move(enum_data); }},
             reg_exec_(std::move(reg_exec)) {
+            reg_exec_->add_registration_func(static_cast<const void *>(this));
         }
 
         ~bind() {
@@ -251,9 +254,9 @@ namespace rettr {
         }
 
         template <typename... Modifiers>
-        registration::class_<Clazz> &operator()(Modifiers &&...mods) {
+        registration::class_<Clazz> operator()(Modifiers &&...mods) {
             implements::enumeration_bind<Clazz, EnumType>::operator()(std::forward<Modifiers>(mods)...);
-            return *this;
+            return {reg_exec_};
         }
 
     private:

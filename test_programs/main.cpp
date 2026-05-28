@@ -2,6 +2,7 @@
 #include <rettr/registration.hpp>
 #include <rettr/rettr_cast.hpp>
 #include <rettr/rettr_enable.hpp>
+#include <random>
 
 class MyClass {
 public:
@@ -135,8 +136,6 @@ RETTR_REGISTRATION {
         .method("add", &MyClass::add)(parameter_names("left_operand", "right_operand", "add_one"), default_arguments(false))
         .property("field", &MyClass::field)(metadata("attr", 10));
 }
-
-#include <random>
 
 int main() {
     {

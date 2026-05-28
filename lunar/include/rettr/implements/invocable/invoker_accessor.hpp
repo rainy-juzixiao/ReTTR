@@ -18,8 +18,6 @@
 #include <numeric>
 #include <rettr/implements/invocable/invoker.hpp>
 
-#include <iostream>
-
 namespace rettr::implements {
     template <typename Fx, bool IsFnObj = is_fnobj<Fx>::value>
     struct function_signature {

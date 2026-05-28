@@ -108,7 +108,9 @@ namespace rettr {
         template <typename... Args>
         RETTR_INLINE any invoke(object_view instance, Args &&...args) const {
 #if RETTR_ENABLE_DEBUG
-            assert(!empty() && "Cannot call [invoke] method, curent object is empty!");
+            if (empty()) {
+                return {};
+            }
             if (instance.type().is_const()) {
                 if (!is_const()) {
                     errno = ECANCELED;
