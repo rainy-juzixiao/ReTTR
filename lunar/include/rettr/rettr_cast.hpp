@@ -39,7 +39,7 @@ namespace rettr {
                       "Return type must have const qualifier");
 
         using source_type_no_cv = std::remove_cv_t<std::remove_pointer_t<SourceType>>;
-        return static_cast<TargetType>(apply_offset(const_cast<source_type_no_cv *>(object)->rettr_private_stub_for_this_pointer(),
+        return static_cast<TargetType>(implements::apply_offset(const_cast<source_type_no_cv *>(object)->rettr_private_stub_for_this_pointer(),
                                                     object->rettr_private_stub_for_type(), rettr_typeid(return_type)));
     }
 }
