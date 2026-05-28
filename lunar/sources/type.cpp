@@ -47,7 +47,7 @@ namespace rettr::implements::type_private {
 namespace rettr {
     array_range<type> type::types() noexcept {
         auto &type_list = implements::type_register_private::get_instance().get_type_storage();
-        return array_range(type_list.data(), type_list.size());
+        return array_range(&type_list[1], type_list.size() - 1);
     }
 
     array_range<type> type::base_classes() const noexcept {
@@ -280,5 +280,14 @@ namespace rettr {
     array_range<rettr::method> type::global_methods() noexcept {
         auto &meth_list = implements::type_register_private::get_instance().get_global_methods();
         return array_range<rettr::method>(meth_list.data(), meth_list.size());
+    }
+
+    type type::from_name(string_view name) noexcept {
+        auto &custom_name_to_id = implements::type_register_private::get_instance().get_custom_name_to_id();
+        auto ret = custom_name_to_id.find(std::string{name.data(), name.size()});
+        if (ret != custom_name_to_id.end()) {
+            return ret->second;
+        }
+        return {};
     }
 }

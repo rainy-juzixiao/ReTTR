@@ -72,11 +72,22 @@ namespace rettr::implements {
         }
 
         template <typename... Defaults>
+        void apply_to_ctor(function &fn, std::tuple<Defaults...> &args) {
+            std::apply(
+                [&fn, this](auto &&...args) {
+                    fn = {invoker{}, std::forward<decltype(args)>(args)...};
+                },
+                args);
+        }
+
+        template <typename... Defaults>
         void apply_(default_arguments_tag<Defaults...> &&tag) {
             static_assert(sizeof...(Defaults) <= arity);
             defaults_applier_ = [this, vals = std::move(tag.values)](function &fn) mutable {
                 constexpr std::size_t num_defaults = sizeof...(Defaults);
                 constexpr std::size_t offset = arity - num_defaults;
+
+                apply_to_ctor(fn, vals);
 
                 using implemented_type = typename get_ia_implement_type<invoker, default_arguments_store<Defaults...>, traits>::type;
                 auto *impl = static_cast<implemented_type *>(fn.invoke_accessor());
@@ -95,8 +106,7 @@ namespace rettr::implements {
         template <std::size_t I, std::size_t Offset, std::size_t NumDefaults, typename Impl, typename DefaultsTuple>
         void apply_one_default_(Impl *impl, DefaultsTuple &vals) {
             constexpr std::size_t param_index = Offset + NumDefaults - 1 - I;
-            auto val = std::get<I>(vals);
-            any value(std::in_place_type<std::decay_t<std::tuple_element_t<I, DefaultsTuple>>>, val);
+            any value(std::in_place_type<std::decay_t<std::tuple_element_t<I, DefaultsTuple>>>, std::get<I>(vals));
             wrappers_[param_index]->set_default_value(value);
         }
 
@@ -109,9 +119,11 @@ namespace rettr::implements {
 
         template <std::size_t... Is>
         void commit_impl_(std::index_sequence<Is...>) {
-            function fn{invoker{}};
+            function fn{};
             if (defaults_applier_) {
                 defaults_applier_(fn);
+            } else {
+                fn = {invoker{}};
             }
 
             std::vector<parameter_info> params;
@@ -183,11 +195,22 @@ namespace rettr::implements {
         }
 
         template <typename... Defaults>
+        void apply_to_ctor(function &fn, std::tuple<Defaults...> &args) {
+            std::apply(
+                [&fn, this](auto &&...args) {
+                    fn = {invoker{}, std::forward<decltype(args)>(args)...};
+                },
+                args);
+        }
+
+        template <typename... Defaults>
         void apply_(default_arguments_tag<Defaults...> &&tag) {
             static_assert(sizeof...(Defaults) <= arity);
             defaults_applier_ = [this, vals = std::move(tag.values)](function &fn) mutable {
                 constexpr std::size_t num_defaults = sizeof...(Defaults);
                 constexpr std::size_t offset = arity - num_defaults;
+
+                apply_to_ctor(fn, vals);
 
                 using implemented_type = typename get_ia_implement_type<invoker, default_arguments_store<Defaults...>, traits>::type;
                 auto *impl = static_cast<implemented_type *>(fn.invoke_accessor());
@@ -220,9 +243,11 @@ namespace rettr::implements {
 
         template <std::size_t... Is>
         void commit_impl_(std::index_sequence<Is...>) {
-            function fn{std::move(func_)};
+            function fn{};
             if (defaults_applier_) {
                 defaults_applier_(fn);
+            } else {
+                fn = {std::move(func_)};
             }
 
             std::vector<parameter_info> params;

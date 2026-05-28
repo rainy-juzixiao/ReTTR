@@ -15,7 +15,6 @@
  */
 #ifndef RETTR_BASE_CLASSES_HPP
 #define RETTR_BASE_CLASSES_HPP
-
 #include <rettr/type.hpp>
 #include <mutex>
 
@@ -47,17 +46,6 @@ namespace rettr::implements {
 
     using info_container = std::vector<implements::base_class_info>;
 
-    struct derived_class_info {
-        derived_class_info(type t, void *(*rettr_downcast_func)(void *) ) :
-            m_derived_type(t), m_rettr_downcast_func(rettr_downcast_func) {
-        }
-
-        type m_derived_type;
-        void *(*m_rettr_downcast_func)(void *); // BaseClass* → DerivedClass*
-    };
-
-    using derived_info_container = std::vector<derived_class_info>;
-
     template <typename DerivedClass, typename... T>
     struct RETTR_LOCAL_API type_from_base_classes;
 
@@ -82,20 +70,7 @@ namespace rettr::implements {
             static std::once_flag derived_registered;
             std::call_once(derived_registered, [] {
                 register_base<DerivedClass, BaseClass>();
-
-                type base_type = type::from<BaseClass>();
-                auto &derived = base_type.type_data_->my_class_data.derived_types;
-                if (!derived) {
-                    derived = std::make_unique<std::vector<type>>();
-                }
-                derived->push_back(type::from<DerivedClass>());
-
-                type derived_type = type::from<DerivedClass>();
-                auto &base = derived_type.type_data_->my_class_data.base_types;
-                if (!base) {
-                    base = std::make_unique<std::vector<type>>();
-                }
-                base->push_back(type::from<BaseClass>());
+                implements::type_register::register_base_class(type::from<DerivedClass>(), type::from<BaseClass>());
             });
 
             type_from_base_classes<DerivedClass, typename BaseClass::base_class_list>::fill(vec);

@@ -109,16 +109,10 @@ namespace rettr {
         return type::from<std::decay_t<Ty>>();
     }
 
-    RETTR_INLINE type type::from_name(string_view name) noexcept {
-        for (auto &t: types()) {
-            if (t.name() == name) {
-                return t;
-            }
-        }
-        return {};
-    }
-
     RETTR_INLINE type type::from_typeid(const typeinfo &ti) noexcept {
+        if (ti == rettr_typeid(implements::invalid_type)) {
+            return implements::type_private::invalid_type();
+        }
         for (auto &t: types()) {
             if (!t.empty() && t.type_data_->type_info == ti) {
                 return t;
@@ -269,9 +263,15 @@ namespace rettr {
             (implements::is_dynamic_object<Args> || ...) || helper::is_any_of_v<object_view, std::decay_t<Args>...>;
         if constexpr (has_dynamic) {
             const auto meth = this->method(name, implements::make_paramlist<sizeof...(Args)>(std::forward<Args>(args)...)).get();
+            if (meth.empty()) {
+                return {};
+            }
             return meth.invoke(instance, std::forward<Args>(args)...);
         } else {
             const auto meth = this->method(name, implements::make_nondynamic_paramlist<Args...>{}.get());
+            if (meth.empty()) {
+                return {};
+            }
             return meth.invoke(instance, std::forward<Args>(args)...);
         }
     }
@@ -285,9 +285,15 @@ namespace rettr {
             (implements::is_dynamic_object<Args> || ...) || helper::is_any_of_v<object_view, std::decay_t<Args>...>;
         if constexpr (has_dynamic) {
             const auto meth = this->method(name, implements::make_paramlist<sizeof...(Args)>(std::forward<Args>(args)...)).get();
+            if (meth.empty()) {
+                return {};
+            }
             return meth.invoke(std::forward<Args>(args)...);
         } else {
             const auto meth = this->method(name, implements::make_nondynamic_paramlist<Args...>{}.get());
+            if (meth.empty()) {
+                return {};
+            }
             return meth.invoke(std::forward<Args>(args)...);
         }
     }
@@ -299,9 +305,15 @@ namespace rettr {
         if constexpr (has_dynamic) {
             const auto meth =
                 type::global_method(name, implements::make_paramlist<sizeof...(Args)>(std::forward<Args>(args)...)).get();
+            if (meth.empty()) {
+                return {};
+            }
             return meth.invoke(non_exists_instance, std::forward<Args>(args)...);
         } else {
             const auto meth = type::global_method(name, implements::make_nondynamic_paramlist<Args...>{}.get());
+            if (meth.empty()) {
+                return {};
+            }
             return meth.invoke(non_exists_instance, std::forward<Args>(args)...);
         }
     }

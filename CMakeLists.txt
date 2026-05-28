@@ -35,6 +35,11 @@ include(${PROJECT_SOURCE_DIR}/cmake/utility.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/config.cmake)
 add_subdirectory(${PROJECT_SOURCE_DIR}/lunar/examples)
 
-add_executable(test ${PROJECT_SOURCE_DIR}/test_programs/main.cpp)
+enable_testing()
+add_subdirectory(${PROJECT_SOURCE_DIR}/third_party)
 
-target_link_libraries(test rettr)
+add_subdirectory(${PROJECT_SOURCE_DIR}/lunar/tests)
+
+add_executable(test_program ${PROJECT_SOURCE_DIR}/test_programs/main.cpp)
+
+target_link_libraries(test_program rettr)

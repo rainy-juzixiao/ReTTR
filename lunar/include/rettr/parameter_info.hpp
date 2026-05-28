@@ -18,7 +18,7 @@
 #include <rettr/implements/parameter_info/parameter_info_base.hpp>
 
 namespace rettr {
-    class parameter_info {
+    class RETTR_API parameter_info {
     public:
         parameter_info() noexcept;
 

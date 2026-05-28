@@ -17,6 +17,7 @@
 #define RETTR_IMPLEMENTS_BINDER_METHOD_BIND_HPP
 
 #include <array>
+#include <iostream>
 #include <memory>
 #include <rettr/implements/binder/access_levels.hpp>
 #include <rettr/implements/binder/metadata.hpp>
@@ -73,16 +74,26 @@ namespace rettr::implements {
         }
 
         template <typename... Defaults>
+        void apply_to_function(function &fn, std::tuple<Defaults...> &args) {
+            std::apply(
+                [&fn, this](auto &&...args) {
+                    fn = {fn_, std::forward<decltype(args)>(args)...};
+                },
+                args);
+        }
+
+        template <typename... Defaults>
         void apply_(default_arguments_tag<Defaults...> &&tag) {
             static_assert(sizeof...(Defaults) <= arity);
             defaults_applier_ = [this, vals = std::move(tag.values)](function &fn) mutable {
                 constexpr std::size_t num_defaults = sizeof...(Defaults);
                 constexpr std::size_t offset = arity - num_defaults;
 
+                apply_to_function(fn, vals);
+
                 using implemented_type = typename get_ia_implement_type<Fx, default_arguments_store<Defaults...>, traits>::type;
                 auto *impl = static_cast<implemented_type *>(fn.invoke_accessor());
-                apply_defaults_(impl, vals, std::make_index_sequence<num_defaults>{},
-                                std::integral_constant<std::size_t, offset>{});
+                apply_defaults_(impl, vals, std::make_index_sequence<num_defaults>{}, std::integral_constant<std::size_t, offset>{});
             };
         }
 
@@ -97,8 +108,7 @@ namespace rettr::implements {
         template <std::size_t I, std::size_t Offset, std::size_t NumDefaults, typename Impl, typename DefaultsTuple>
         void apply_one_default_(Impl *impl, DefaultsTuple &vals) {
             constexpr std::size_t param_index = Offset + NumDefaults - 1 - I;
-            auto val = std::get<I>(vals);
-            any value(std::in_place_type<std::decay_t<std::tuple_element_t<I, DefaultsTuple>>>, val);
+            any value(std::in_place_type<std::decay_t<std::tuple_element_t<I, DefaultsTuple>>>, std::get<I>(vals));
             parameter_wrappers_[param_index]->set_default_value(value);
         }
 
@@ -113,9 +123,11 @@ namespace rettr::implements {
             std::vector<parameter_info> params;
             params.reserve(arity);
 
-            function fn(fn_);
+            function fn;
             if (defaults_applier_) {
                 defaults_applier_(fn);
+            } else {
+                fn = {fn_};
             }
 
             for (auto &wrapper: parameter_wrappers_) {

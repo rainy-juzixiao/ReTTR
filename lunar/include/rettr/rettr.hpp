@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef RETTR_IMPLEMENTS_BINDER_ACCESS_LEVELS_HPP
-#define RETTR_IMPLEMENTS_BINDER_ACCESS_LEVELS_HPP
-#include <rettr/core/prerequisites.hpp>
-#include <rettr/access_levels.hpp>
 
-namespace rettr::implements {
-    struct access_level_tag {
-        access_levels value;
-    };
-}
+#ifndef RETTR_ALL_HPP
+#define RETTR_ALL_HPP
 
+// NOLINTBEGIN
+
+#include <rettr/registration.hpp>
+#include <rettr/rettr_enable.hpp>
+#include <rettr/rettr_cast.hpp>
+
+// NOLINTEND
 
 #endif

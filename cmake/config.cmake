@@ -37,7 +37,7 @@ if (RETTR_BUILD_WITH_DYNAMIC AND NOT RETTR_USE_CROSSCOMPILE)
     add_library(rettr SHARED ${RETTR_FILES_LIST})
     set_target_properties(rettr PROPERTIES OUTPUT_NAME ${rettr_libraryname})
     target_compile_definitions(rettr PRIVATE RETTR_DYNAMIC_EXPORTS=1)
-    target_compile_definitions(rettr PUBLIC RETTR_USING_DYNAMIC=1)
+    target_compile_definitions(rettr PUBLIC RETTR_USING_DYNAMIC=1)    
 else ()
     message("Building library target")
     add_library(rettr STATIC ${RETTR_FILES_LIST})
@@ -45,7 +45,8 @@ else ()
     target_compile_definitions(rettr PUBLIC RETTR_USING_DYNAMIC=0)
 endif ()
 
-set_target_properties(rettr PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+add_library(RETTR::rettr ALIAS rettr)
+add_library(rainy-juzixiao::rettr ALIAS rettr)
 
 add_definitions(
         -DRETTR_PROJECT_VERSION="${PROJECT_VERSION}"

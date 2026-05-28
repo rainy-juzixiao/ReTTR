@@ -19,7 +19,9 @@
 project(plugin_example LANGUAGES CXX)
 
 add_library(plugin_example SHARED "main.cpp")
-target_link_libraries(plugin_example rettr)
+
+target_link_libraries(plugin_example rainy-juzixiao::rettr)
+
 set_target_properties(plugin_example PROPERTIES
         DEBUG_POSTFIX "_d"
         "Examples/library_loading"

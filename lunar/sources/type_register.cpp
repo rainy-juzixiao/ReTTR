@@ -31,6 +31,9 @@ namespace rettr::implements {
         return inst;
     }
 
+    type_register_private::type_register_private() : type_list_({type(type_private::invalid_type_data())}) {
+    }
+
     void type_register_private::register_reg_manager(registration_manager *manager) noexcept {
         std::lock_guard<std::mutex> lock(mutex_);
         registration_manager_list_.insert(manager);

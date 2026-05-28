@@ -93,6 +93,30 @@ namespace rettr {
     template <typename Clazz>
     registration::class_<Clazz>::class_(const std::shared_ptr<implements::registration_executer> &reg_exec) : reg_exec(reg_exec) {
     }
+
+    template <typename Acc>
+    registration::bind<implements::prop, struct implements::invalid_type, Acc, implements::registration_private::public_access>
+    registration::property(string_view name, Acc accessor) {
+        return {std::make_shared<implements::registration_executer>(), name, accessor};
+    }
+
+    template <typename Acc>
+    registration::bind<implements::prop_readonly, struct implements::invalid_type, Acc,
+                       implements::registration_private::public_access>
+    registration::property_readonly(string_view name, Acc accessor) {
+        return {std::make_shared<implements::registration_executer>(), name, accessor};
+    }
+
+    template <typename Func>
+    registration::bind<implements::meth, struct implements::invalid_type, Func, implements::registration_private::public_access>
+    registration::method(string_view name, Func func) {
+        return {std::make_shared<implements::registration_executer>(), name, func};
+    }
+
+    template <typename EnumType>
+    registration::bind<implements::enum_, struct implements::invalid_type, EnumType> registration::enumeration(string_view name) {
+        return {std::make_shared<implements::registration_executer>(), name};
+    }
 }
 
 namespace rettr {
@@ -117,28 +141,28 @@ namespace rettr {
     }
 }
 
-#define RETTR_REGISTRATION                                                                                                             \
-    static void rettr_auto_register_reflection_function_();                                                                            \
+#define RETTR_REGISTRATION                                                                                                            \
+    static void rettr_auto_register_reflection_function_();                                                                           \
     namespace {                                                                                                                       \
-        struct rettr__auto__register__ {                                                                                               \
-            rettr__auto__register__() {                                                                                                \
-                rettr_auto_register_reflection_function_();                                                                            \
+        struct rettr__auto__register__ {                                                                                              \
+            rettr__auto__register__() {                                                                                               \
+                rettr_auto_register_reflection_function_();                                                                           \
             }                                                                                                                         \
         };                                                                                                                            \
     }                                                                                                                                 \
-    static const rettr__auto__register__ RETTR_CAT(auto_register__, __LINE__);                                                          \
+    static const rettr__auto__register__ RETTR_CAT(auto_register__, __LINE__);                                                        \
     static void rettr_auto_register_reflection_function_()
 
 
 #if RETTR_USING_MSVC
 #define RETTR_PLUGIN_REGISTRATION RETTR_REGISTRATION
 #else
-#define RETTR_PLUGIN_REGISTRATION                                                                                                      \
-    static void rettr_auto_register_reflection_function_() RETTR_CTOR_DECLARE_FUNCTION;                                                   \
-    static void rettr_auto_unregister_reflection_function() RETTR_DTOR_DECLARE_FUNCTION;                                                  \
+#define RETTR_PLUGIN_REGISTRATION                                                                                                     \
+    static void rettr_auto_register_reflection_function_() RETTR_CTOR_DECLARE_FUNCTION;                                               \
+    static void rettr_auto_unregister_reflection_function() RETTR_DTOR_DECLARE_FUNCTION;                                              \
                                                                                                                                       \
-    static void rettr_auto_unregister_reflection_function() {                                                                          \
-        rettr::implements::get_registration_manager().unregister();                                                                        \
+    static void rettr_auto_unregister_reflection_function() {                                                                         \
+        rettr::implements::get_registration_manager().unregister();                                                                   \
     }                                                                                                                                 \
     static void rettr_auto_register_reflection_function_()
 #endif

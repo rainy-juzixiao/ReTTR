@@ -78,7 +78,7 @@ namespace rettr::implements {
         static type_register_private &get_instance() noexcept;
 
     private:
-        type_register_private() = default;
+        type_register_private();
         ~type_register_private() = default;
 
         type_private::type_data *register_id_if_necessary(type_private::type_data *info) noexcept;

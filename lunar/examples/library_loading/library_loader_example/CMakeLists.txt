@@ -20,7 +20,7 @@ project(library_loader_example LANGUAGES CXX)
 
 add_executable(library_loader_example "main.cpp")
 
-target_link_libraries(library_loader_example rettr)
+target_link_libraries(library_loader_example rainy-juzixiao::rettr)
 add_dependencies(library_loader_example plugin_example)
 
 set_target_properties(library_loader_example PROPERTIES

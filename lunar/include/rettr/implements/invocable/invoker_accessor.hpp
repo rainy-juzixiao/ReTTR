@@ -18,26 +18,26 @@
 #include <numeric>
 #include <rettr/implements/invocable/invoker.hpp>
 
+#include <iostream>
+
 namespace rettr::implements {
-    template<typename Fx, bool IsFnObj = is_fnobj<Fx>::value>
+    template <typename Fx, bool IsFnObj = is_fnobj<Fx>::value>
     struct function_signature {
         using type = Fx;
     };
 
-    template<typename Fx>
+    template <typename Fx>
     struct function_signature<Fx, true> {
         using traits = function_traits<Fx>;
         using return_type = typename traits::return_type;
         using type_list = typename traits::argument_list;
 
-        template<typename TypeList>
-        struct extractor {
-        };
+        template <typename TypeList>
+        struct extractor {};
 
-        template<typename... Args>
-        struct extractor<helper::type_list<Args...> > {
-            using type =
-            std::conditional_t<traits::is_noexcept, return_type(Args...) noexcept, return_type(Args...)>;
+        template <typename... Args>
+        struct extractor<helper::type_list<Args...>> {
+            using type = std::conditional_t<traits::is_noexcept, return_type(Args...) noexcept, return_type(Args...)>;
         };
 
         using type = typename extractor<type_list>::type;
@@ -71,22 +71,21 @@ namespace rettr::implements {
 
         virtual bool equal_with(const invoker_accessor *impl) const noexcept = 0;
 
-        RETTR_NODISCARD virtual bool is_invocable(
-            array_range<class typeinfo> paramlist) const noexcept = 0;
+        RETTR_NODISCARD virtual bool is_invocable(array_range<class typeinfo> paramlist) const noexcept = 0;
 
         RETTR_NODISCARD virtual bool is_invocable_with(array_range<any> paramlist) const noexcept = 0;
 
         virtual void destruct(bool local) noexcept = 0;
     };
 
-    template<typename Fx, typename Class, typename ReturnType, typename DefaultArguments, typename... Args>
+    template <typename Fx, typename Class, typename ReturnType, typename DefaultArguments, typename... Args>
     struct invoker_accessor_impl final : invoker_accessor {
         using function_signature_t = typename implements::function_signature<Fx>::type;
         using storage_t = invoker<Fx, DefaultArguments, Args...>;
         using typelist = helper::type_list<Args...>;
 
-        template<typename Functor, typename... UAx>
-        explicit invoker_accessor_impl(Functor &&method, UAx &&... args) noexcept {
+        template <typename Functor, typename... UAx>
+        explicit invoker_accessor_impl(Functor &&method, UAx &&...args) noexcept {
             ::new (&this->storage) storage_t(std::forward<Functor>(method), std::forward<UAx>(args)...);
         }
 
@@ -120,7 +119,7 @@ namespace rettr::implements {
             if constexpr (sizeof(std::decay_t<decltype(*this)>) >= fn_obj_soo_buffer_size) {
                 return ::new invoker_accessor_impl(storage);
             } else {
-                return ::new(reinterpret_cast<invoker_accessor_impl *>(soo_buffer)) invoker_accessor_impl(storage);
+                return ::new (reinterpret_cast<invoker_accessor_impl *>(soo_buffer)) invoker_accessor_impl(storage);
             }
         }
 
@@ -137,8 +136,7 @@ namespace rettr::implements {
             }
             auto cast_impl = static_cast<const invoker_accessor_impl *>(impl);
             if constexpr (is_fnobj<Fx>::value) {
-                return std::memcmp(reinterpret_cast<const void *>(&storage.fn),
-                                   reinterpret_cast<const void *>(&cast_impl->storage.fn),
+                return std::memcmp(reinterpret_cast<const void *>(&storage.fn), reinterpret_cast<const void *>(&cast_impl->storage.fn),
                                    sizeof(storage.fn)) == 0;
             } else {
                 if constexpr (helper::has_operator_eq_v<Fx>) {
@@ -150,8 +148,7 @@ namespace rettr::implements {
 
         RETTR_NODISCARD std::uintptr_t target(const class typeinfo &fx_sign) const noexcept override {
             if (fx_sign == rettr_typeid(function *)) {
-                return reinterpret_cast<std::uintptr_t>(const_cast<std::decay_t<Fx> *>(&storage.
-                    fn));
+                return reinterpret_cast<std::uintptr_t>(const_cast<std::decay_t<Fx> *>(&storage.fn));
             }
             if constexpr (is_fnobj<Fx>::value) {
                 if (fx_sign != rettr_typeid(Fx)) {
@@ -169,16 +166,14 @@ namespace rettr::implements {
             if constexpr (storage_t::arity == 0) {
                 if constexpr (std::is_polymorphic_v<Class>) {
                     auto *ptr = object.template try_dynamic_cast<Class>();
-                    assert(ptr != nullptr&&
-                        "Failure to convert the instance to the target pointer type during runtime");
+                    assert(ptr != nullptr && "Failure to convert the instance to the target pointer type during runtime");
                     return access_invoke(std::forward<Fx>(storage.fn), ptr);
                 } else {
                     assert(object.type().is_compatible(rettr_typeid(Class)) || object.type().is_void());
                     return access_invoke(std::forward<Fx>(storage.fn), object.target_as_void_ptr());
                 }
             } else {
-                if constexpr (!std::is_same_v<decltype(storage.arguments.store), std::tuple
-                    <> >) {
+                if constexpr (!std::is_same_v<decltype(storage.arguments.store), std::tuple<>>) {
                     return invoke(object, {});
                 }
                 return {};
@@ -192,19 +187,17 @@ namespace rettr::implements {
             void *ptr = nullptr;
             if constexpr (std::is_polymorphic_v<Class>) {
                 ptr = static_cast<void *>(object.template try_dynamic_cast<Class>());
-                assert(ptr != nullptr&&
-                    "Failure to convert the instance to the target pointer type during runtime");
+                assert(ptr != nullptr && "Failure to convert the instance to the target pointer type during runtime");
             } else {
                 assert(object.type().is_compatible(rettr_typeid(Class)) || object.type().is_void());
                 ptr = object.target_as_void_ptr();
             }
             if (size == arity) {
                 const std::size_t args_hash =
-                        std::accumulate(arg_view.begin(), arg_view.end(), std::size_t{0},
-                                         [right = std::size_t{1}](const std::size_t acc,
-                                                                  const object_view &item) mutable {
-                                             return acc + static_cast<std::size_t>(item.type().hash_code() * right++);
-                                         });
+                    std::accumulate(arg_view.begin(), arg_view.end(), std::size_t{0},
+                                    [right = std::size_t{1}](const std::size_t acc, const object_view &item) mutable {
+                                        return acc + static_cast<std::size_t>(item.type().hash_code() * right++);
+                                    });
                 /*
                 在此处，我们考虑了参数校验的开销影响。例如，基本的遍历，占据n次比较开销用于检查遍历条件。
                 因此，为了减少不必要的比较开销，我们设计了一个优化算法。
@@ -231,8 +224,7 @@ namespace rettr::implements {
                     return storage.invoke_impl(ptr, arg_view, std::make_index_sequence<arity>{});
                 } else {
                     // 如果参数一致，我们或许可以尝试转换参数类型来进行fallback处理
-                    return storage.invoke_with_conv_impl(ptr, arg_view,
-                                                         std::make_index_sequence<arity>{});
+                    return storage.invoke_with_conv_impl(ptr, arg_view, std::make_index_sequence<arity>{});
                 }
             }
             if (size < least || size > arity) {
@@ -257,19 +249,14 @@ namespace rettr::implements {
             }
             if (size == arity) {
                 const std::size_t args_hash =
-                        std::accumulate(arg_view.begin(), arg_view.end(), std::size_t{0},
-                                        [right = std::size_t{1}](const std::size_t acc, const any &item) mutable {
-                                            return acc + static_cast<std::size_t>(item.type().hash_code() * right++);
-                                        });
+                    std::accumulate(arg_view.begin(), arg_view.end(), std::size_t{0},
+                                    [right = std::size_t{1}](const std::size_t acc, const any &item) mutable {
+                                        return acc + static_cast<std::size_t>(item.type().hash_code() * right++);
+                                    });
                 if (args_hash == storage_t::param_hash) {
-                    return storage.invoke_impl(ptr, arg_view, std::make_index_sequence<arity>{
-                                               }
-                    );
+                    return storage.invoke_impl(ptr, arg_view, std::make_index_sequence<arity>{});
                 } else {
-                    return storage.invoke_with_conv_impl(ptr, arg_view,
-                                                         std::make_index_sequence<arity>{
-                                                         }
-                    );
+                    return storage.invoke_with_conv_impl(ptr, arg_view, std::make_index_sequence<arity>{});
                 }
             }
             if (size < least || size > arity) {
@@ -279,66 +266,86 @@ namespace rettr::implements {
             return storage.invoke_with_defaults(ptr, arg_view);
         }
 
-        RETTR_NODISCARD bool is_invocable(
-            array_range<class typeinfo> paramlist) const noexcept override {
-            if (storage_t::arity != paramlist.size()) {
+        RETTR_NODISCARD bool is_invocable(array_range<class typeinfo> paramlist) const noexcept override {
+            const std::size_t size = paramlist.size();
+            static constexpr std::size_t arity = storage_t::arity;
+            static constexpr std::size_t least = arity - storage_t::default_arity;
+            if (size < least || size > arity) {
                 return false;
             }
-            std::size_t paramhash =
+            if (size == arity) {
+                std::size_t paramhash =
                     std::accumulate(paramlist.begin(), paramlist.end(), std::size_t{0},
-                                     [right = std::size_t{1}
-                                     ](const std::size_t acc, const class typeinfo &item) mutable {
-                                         return acc + (item.hash_code() * right++);
-                                     });
-            if (paramhash == storage.param_hash) {
-                return true;
+                                    [right = std::size_t{1}](const std::size_t acc, const class typeinfo &item) mutable {
+                                        return acc + (item.hash_code() * right++);
+                                    });
+                if (paramhash == storage_t::param_hash) {
+                    return true;
+                }
+                if (storage.is_compatible(paramlist)) {
+                    return true;
+                }
+                return is_invocable_helper(paramlist, std::make_index_sequence<arity>{});
             }
-            if (storage.is_compatible(paramlist)) {
-                return true;
-            }
-            return is_invocable_helper(paramlist, std::make_index_sequence<storage_t::arity>{
-                                       }
-            );
+            return dispatch_partial(paramlist, size);
         }
 
         RETTR_NODISCARD bool is_invocable_with(array_range<any> paramlist) const noexcept override {
-            if (storage_t::arity != paramlist.size()) {
+            const std::size_t size = paramlist.size();
+            static constexpr std::size_t arity = storage_t::arity;
+            static constexpr std::size_t least = arity - storage_t::default_arity;
+
+            if (size < least || size > arity) {
                 return false;
             }
-            std::size_t paramhash =
-                    std::accumulate(paramlist.begin(), paramlist.end(), std::size_t{0},
-                                    [right = std::size_t{1}](const std::size_t acc, const any &item) mutable {
-                                        return acc + (item.type().hash_code() * right++);
-                                    });
-            if (paramhash == storage.param_hash) {
-                return true;
+            if (size == arity) {
+                std::size_t paramhash = std::accumulate(paramlist.begin(), paramlist.end(), std::size_t{0},
+                                                        [right = std::size_t{1}](const std::size_t acc, const any &item) mutable {
+                                                            return acc + (item.type().hash_code() * right++);
+                                                        });
+                if (paramhash == storage_t::param_hash) {
+                    return true;
+                }
+                if (storage.is_compatible(paramlist)) {
+                    return true;
+                }
+                return is_invocable_helper(paramlist, std::make_index_sequence<arity>{});
             }
-            if (storage.is_compatible(paramlist)) {
-                return true;
-            }
-            return is_invocable_helper(paramlist, std::make_index_sequence<storage_t::arity>{
-                                       }
-            );
+            return dispatch_partial(paramlist, size);
         }
 
-        template<std::size_t... I>
-        bool is_invocable_helper(array_range<class typeinfo> paramlist,
-                                 std::index_sequence<I...>) const noexcept {
-            return (... && any_converter<typename helper::type_at<I, typelist>::type
-                >
-                ::is_convertible(
-                    paramlist[I])
-            );
+        template <std::size_t N>
+        bool is_invocable_partial(array_range<class typeinfo> paramlist) const noexcept {
+            return is_invocable_helper(paramlist, std::make_index_sequence<N>{});
         }
 
-        template<std::size_t... I>
-        bool is_invocable_helper(array_range<any> paramlist,
-                                 std::index_sequence<I...>) const noexcept {
-            return (... && any_converter<typename helper::type_at<I, typelist>::type
-                >
-                ::is_convertible(
-                    paramlist[I].type())
-            );
+        template <std::size_t N>
+        bool is_invocable_partial(array_range<any> paramlist) const noexcept {
+            return is_invocable_helper(paramlist, std::make_index_sequence<N>{});
+        }
+
+        template <std::size_t... I>
+        bool is_invocable_helper(array_range<class typeinfo> paramlist, std::index_sequence<I...>) const noexcept {
+            return (... && any_converter<typename helper::type_at<I, typelist>::type>::is_convertible(paramlist[I]));
+        }
+
+        template <std::size_t... I>
+        bool is_invocable_helper(array_range<any> paramlist, std::index_sequence<I...>) const noexcept {
+            return (... && any_converter<typename helper::type_at<I, typelist>::type>::is_convertible(paramlist[I].type()));
+        }
+
+        template <typename ParamList>
+        bool dispatch_partial(ParamList &paramlist, std::size_t size) const noexcept {
+            if constexpr (storage_t::arity == 0) {
+                return false;
+            } else {
+                static constexpr auto table = []<std::size_t... I>(std::index_sequence<I...>) {
+                    return std::array{+[](const invoker_accessor_impl *self, ParamList &pl) noexcept -> bool {
+                        return self->template is_invocable_partial<I>(pl);
+                    }...};
+                }(std::make_index_sequence<storage_t::arity>{});
+                return table[size](this, paramlist);
+            }
         }
 
         void destruct(const bool local) noexcept override {
@@ -354,32 +361,30 @@ namespace rettr::implements {
         };
     };
 
-    template<typename Fx, typename DefaultArguments, typename Traits,
-        typename TypeList = typename Traits::argument_list>
+    template <typename Fx, typename DefaultArguments, typename Traits, typename TypeList = typename Traits::argument_list>
     struct get_ia_implement_type {
         using unused_type1 = Fx;
         using unused_type2 = DefaultArguments;
         using unused_type3 = TypeList;
     };
 
-    template<typename Fx, typename Traits, typename... DArgs, typename... Args>
-    struct get_ia_implement_type<Fx, default_arguments_store<DArgs...>, Traits, helper::type_list<Args
-                ...> > {
+    template <typename Fx, typename Traits, typename... DArgs, typename... Args>
+    struct get_ia_implement_type<Fx, default_arguments_store<DArgs...>, Traits, helper::type_list<Args...>> {
         using memptr_traits = helper::member_pointer_traits<Fx>;
 
-        template<typename FxTraits, bool IsMemptr = FxTraits::valid>
+        template <typename FxTraits, bool IsMemptr = FxTraits::valid>
         struct decl_class {
             using type = void;
             static RETTR_CONSTEXPR_BOOL unused = IsMemptr;
         };
 
-        template<typename FxTraits>
+        template <typename FxTraits>
         struct decl_class<FxTraits, true> {
             using type = typename FxTraits::class_type;
         };
 
         using type = invoker_accessor_impl<Fx, typename decl_class<memptr_traits>::type, typename Traits::return_type,
-            implements::default_arguments_store<DArgs...>, Args...>;
+                                           implements::default_arguments_store<DArgs...>, Args...>;
     };
 }
 

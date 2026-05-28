@@ -719,6 +719,8 @@ namespace rettr::implements {
                     std::add_lvalue_reference_t<Type> >;
         if constexpr (std::is_void_v<helper::remove_cvref_t<Type> >) {
             return false;
+        } else if constexpr(std::is_null_pointer_v<match_t>) {
+          return type.hash_code == raw_type_id(std::nullptr_t);
         } else {
             using ftraits = function_traits<match_t>;
             if constexpr (ftraits::valid) {
