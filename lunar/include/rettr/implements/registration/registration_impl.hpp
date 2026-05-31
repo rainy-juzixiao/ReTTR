@@ -1,5 +1,5 @@
 /*
- * Copyright 2026 rettr-juzixiao
+ * Copyright 2026 rainy-juzixiao
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,13 +31,13 @@ namespace rettr {
 
     template <typename Clazz>
     RETTR_INLINE registration::class_<Clazz>::class_(string_view name) {
+        implements::base_classes<Clazz>::ensure_types_is_register();
         auto t = type::from<Clazz>();
         implements::type_register::custom_name(t, name);
     }
 
     template <typename Clazz>
     registration::class_<Clazz>::~class_() {
-        implements::base_classes<Clazz>::ensure_types_is_register();
     }
 
     template <typename Clazz>

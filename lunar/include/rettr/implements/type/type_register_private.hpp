@@ -1,5 +1,5 @@
 /*
-* Copyright 2026 rainy-juzixiao
+ * Copyright 2026 rainy-juzixiao
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,6 +86,9 @@ namespace rettr::implements {
         static void register_base_class_info(type_private::type_data *info) noexcept;
 
         void update_custom_name(std::string new_name, const rettr::type &t) noexcept;
+
+        template <typename Ty>
+        void update_class_list(const type &t, Ty item_ptr);
 
         void remove_derived_types_from_base_classes(rettr::type &t, const std::vector<rettr::type> &base_types) noexcept;
 

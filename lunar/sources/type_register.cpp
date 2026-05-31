@@ -15,20 +15,26 @@
  */
 
 // NOLINTBEGIN
-#include <iostream>
+
+#include <algorithm>
 #include <rettr/implements/registration/registration_manager.hpp>
 #include <rettr/implements/type/type_register.hpp>
 #include <rettr/implements/type/type_register_private.hpp>
+#include <rettr/implements/type/base_classes.hpp>
 #include <rettr/type.hpp>
 
 // NOLINTEND
-
-#include <algorithm>
 
 namespace rettr::implements {
     type_register_private &type_register_private::get_instance() noexcept {
         static type_register_private inst;
         return inst;
+    }
+
+    template <typename Ty>
+    static array_range<Ty> items_for_type(const type &t, const std::vector<Ty> &vec) {
+        return array_range<Ty>(vec.data(), vec.size(),
+                               default_predicate<Ty>([t](const Ty &item) { return (item.declaring_type() == t); }));
     }
 
     type_register_private::type_register_private() : type_list_({type(type_private::invalid_type_data())}) {
@@ -123,11 +129,13 @@ namespace rettr::implements {
             return false;
         }
         std::lock_guard<std::mutex> lock(mutex_);
-        auto it = type_id_to_type_.find(prop->declaring_type().type_data_->type_info);
+        const auto t = prop->declaring_type();
+        auto it = type_id_to_type_.find(t.type_data_->type_info);
         if (it == type_id_to_type_.end()) {
             return false;
         }
         it->second.type_data_->my_class_data.properties->emplace_back(*prop);
+        update_class_list(t, &type_private::class_data::properties);
         return true;
     }
 
@@ -159,11 +167,13 @@ namespace rettr::implements {
             return false;
         }
         std::lock_guard<std::mutex> lock(mutex_);
-        auto it = type_id_to_type_.find(meth->declaring_type().type_data_->type_info);
+        const auto t = meth->declaring_type();
+        auto it = type_id_to_type_.find(t.type_data_->type_info);
         if (it == type_id_to_type_.end()) {
             return false;
         }
         it->second.type_data_->my_class_data.methods->emplace_back(*meth);
+        update_class_list(t, &type_private::class_data::methods);
         return true;
     }
 
@@ -286,6 +296,10 @@ namespace rettr::implements {
         std::lock_guard<std::mutex> lock(mutex_);
         derived.type_data_->my_class_data.base_types->emplace_back(base);
         base.type_data_->my_class_data.derived_types->emplace_back(derived);
+
+        update_class_list(derived, &type_private::class_data::properties);
+        update_class_list(derived, &type_private::class_data::methods);
+
         return true;
     }
 
@@ -341,6 +355,28 @@ namespace rettr::implements {
 
     std::unordered_map<std::string, rettr::type> &type_register_private::get_custom_name_to_id() noexcept {
         return custom_name_to_id_;
+    }
+
+    template <typename Ty>
+    void type_register_private::update_class_list(const type &t, Ty item_ptr) {
+        auto &all_class_items = *(t.type_data_->my_class_data.*item_ptr);
+        auto item_range = items_for_type(t, all_class_items);
+        helper::remove_cvref_t<decltype(all_class_items)> item_vec(item_range.begin(), item_range.end());
+        all_class_items.reserve(all_class_items.size() + 1);
+        all_class_items.clear();
+        for (const auto &base_type: t.base_classes()) {
+            auto base_properties = items_for_type(base_type, *(base_type.type_data_->my_class_data.*item_ptr));
+            if (base_properties.empty()) {
+                continue;
+            }
+            all_class_items.reserve(all_class_items.size() + base_properties.size());
+            all_class_items.insert(all_class_items.end(), base_properties.begin(), base_properties.end());
+        }
+        all_class_items.reserve(all_class_items.size() + item_vec.size());
+        all_class_items.insert(all_class_items.end(), item_vec.begin(), item_vec.end());
+        for (const auto &derived_type: t.derived_classes()) {
+            update_class_list<Ty>(derived_type, item_ptr);
+        }
     }
 }
 
@@ -412,5 +448,4 @@ namespace rettr::implements {
     void type_register::unregister_type(type_private::type_data *info) noexcept {
         type_register_private::get_instance().unregister_type(info);
     }
-
 }

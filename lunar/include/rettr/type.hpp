@@ -88,6 +88,8 @@ namespace rettr {
 
         RETTR_NODISCARD RETTR_INLINE type wrapped_type() const noexcept;
 
+        RETTR_NODISCARD const typeinfo& type_info() const noexcept;
+
         template <typename T>
         RETTR_LOCAL_API static type from() noexcept;
 

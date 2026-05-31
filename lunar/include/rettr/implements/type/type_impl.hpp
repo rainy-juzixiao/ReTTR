@@ -288,13 +288,13 @@ namespace rettr {
             if (meth.empty()) {
                 return {};
             }
-            return meth.invoke(std::forward<Args>(args)...);
+            return meth.static_invoke(std::forward<Args>(args)...);
         } else {
             const auto meth = this->method(name, implements::make_nondynamic_paramlist<Args...>{}.get());
             if (meth.empty()) {
                 return {};
             }
-            return meth.invoke(std::forward<Args>(args)...);
+            return meth.static_invoke(std::forward<Args>(args)...);
         }
     }
 

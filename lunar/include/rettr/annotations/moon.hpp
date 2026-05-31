@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef RAINY_ANNOTATIONS_MOON_HPP
-#define RAINY_ANNOTATIONS_MOON_HPP
+#ifndef RETTR_ANNOTATIONS_MOON_HPP
+#define RETTR_ANNOTATIONS_MOON_HPP
 #include <rettr/core/prerequisites.hpp>
 
-#if RAINY_HAS_CXX26 && RAINY_HAS_CXX26_STATIC_REFLECTION
+#if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
 
 // reference https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3394r4.html
-namespace rainy::annotations::moon {
+namespace rettr::annotations::moon {
     // clang-format off
 
     struct rename_tag { char const* new_name; };
@@ -71,11 +71,11 @@ namespace rainy::annotations::moon {
     inline static constexpr auto ignore = ignore_tag{};
 }
 
-namespace rainy::meta::moon::implements {
+namespace rettr::moon::implements {
     // 预定义：通用处理工具
 
     template <typename Ty, std::meta::info Member>
-    RAINY_CONSTEVAL rain_fn try_apply_prefix_and_suffix_tag(std::string_view &name) -> void {
+    RETTR_CONSTEVAL rettr_fn try_apply_prefix_and_suffix_tag(std::string_view &name) -> void {
         constexpr auto type_anno = annotations::make_type_anno<Ty>();
         constexpr auto member_anno = annotations::make_member_anno(Member);
 
@@ -109,7 +109,7 @@ namespace rainy::meta::moon::implements {
     }
 
     template <std::meta::info Member>
-    RAINY_CONSTEVAL rain_fn try_apply_rename(std::string_view &name) noexcept -> void {
+    RETTR_CONSTEVAL rettr_fn try_apply_rename(std::string_view &name) noexcept -> void {
         constexpr auto anno = annotations::make_member_anno(Member);
         if constexpr (anno.has<annotations::moon::rename_tag>()) {
             name = anno.fetch<annotations::moon::rename_tag>().new_name;
@@ -117,7 +117,7 @@ namespace rainy::meta::moon::implements {
     }
 
     template <typename Ty, std::meta::info Member>
-    RAINY_CONSTEVAL rain_fn try_apply_name_style(std::string_view &name) noexcept -> void {
+    RETTR_CONSTEVAL rettr_fn try_apply_name_style(std::string_view &name) noexcept -> void {
         using annotations::moon::named_style;
         using annotations::moon::use_name_style;
         constexpr auto style = []() consteval -> named_style {

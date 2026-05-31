@@ -300,6 +300,13 @@ namespace rettr {
         return array_range<rettr::method>(meth_list.data(), meth_list.size());
     }
 
+    const typeinfo &type::type_info() const noexcept {
+        if (empty()) {
+            return rettr_typeid(void);
+        }
+        return type_data_->raw_type_data->type_info;
+    }
+
     type type::from_name(string_view name) noexcept {
         auto &custom_name_to_id = implements::type_register_private::get_instance().get_custom_name_to_id();
         const auto ret = custom_name_to_id.find(std::string{name.data(), name.size()});
