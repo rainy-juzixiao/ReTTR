@@ -72,6 +72,9 @@ namespace rettr {
 
         RETTR_INLINE any(const any &right) {
             using namespace implements;
+            if (!right.has_value()) {
+                return;
+            }
             switch (right.get_representation()) {
                 case any_representation::_small:
                     right.storage.small_any_raii_manager->copy_(&storage.buffer, &right.storage.buffer);
