@@ -107,10 +107,10 @@ namespace rettr {
          */
         template <typename... Args>
         RETTR_INLINE any invoke(object_view instance, Args &&...args) const {
-#if RETTR_ENABLE_DEBUG
             if (empty()) {
                 return {};
             }
+#if RETTR_ENABLE_DEBUG
             if (instance.type().is_const()) {
                 if (!is_const()) {
                     errno = ECANCELED;

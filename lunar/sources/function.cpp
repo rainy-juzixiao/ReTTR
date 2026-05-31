@@ -85,6 +85,7 @@ namespace rettr {
     }
 
     function &function::operator=(const function &right) noexcept {
+        reset();
         if (this == std::addressof(right) || right.empty()) {
             return *this;
         }
@@ -93,6 +94,7 @@ namespace rettr {
     }
 
     function &function::operator=(function &&right) noexcept {
+        reset();
         if (this == std::addressof(right) || right.empty()) {
             return *this;
         }
@@ -235,27 +237,9 @@ namespace rettr {
 
     any function::invoke_variadic(object_view instance,
                                                const array_range<any> args) const {
-#if RETTR_ENABLE_DEBUG
         if (empty()) {
             return {};
         }
-        if (instance.type().is_const()) {
-            if (!is_const()) {
-                errno = ECANCELED;
-                return {};
-            }
-        } else if (instance.type().has_traits(traits::is_volatile)) {
-            if (!is_volatile()) {
-                errno = ECANCELED;
-                return {};
-            }
-        } else if (instance.type().is_rvalue_reference()) {
-            if (!is_invoke_for_rvalue()) {
-                errno = ECANCELED;
-                return {};
-            }
-        }
-#endif
         return invoke_accessor()->dynamic_invoke(instance, args);
     }
 }
