@@ -179,7 +179,6 @@ TEST_CASE("method - invoke - lambda", "[method]") {
     auto parainfos = t.method("func_9").parameter_infos();
     CHECK(parainfos.size() == 1);
     any var = t.invoke(static_invoke, "func_9", 23);
-    std::cout << var.type().name() << '\n';
     REQUIRE(var.is<int>());
     CHECK(var.as<int>() == 23);
 }

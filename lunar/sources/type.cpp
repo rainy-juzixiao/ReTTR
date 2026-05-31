@@ -198,7 +198,7 @@ namespace rettr {
         global_property(name)(non_exists_instance) = arg;
     }
 
-    const rettr::method &type::method(const std::string_view name) const noexcept {
+    const rettr::method &type::method(const string_view name) const noexcept {
         static const rettr::method empty;
         if (this->empty()) {
             return empty;
@@ -207,15 +207,16 @@ namespace rettr {
 
         const auto &vec = raw_t.type_data_->my_class_data.methods;
 
-        if (const auto ret = std::find_if(vec->begin(), vec->end(), [name](const class method &item) { return item.name() == name; });
-            ret != vec->end()) {
+        if (const auto ret =
+                std::find_if(vec->rbegin(), vec->rend(), [name](const class method &item) { return item.name() == name; });
+            ret != vec->rend()) {
             return *ret;
         }
 
         return empty;
     }
 
-    const rettr::method &type::method(const std::string_view name, const array_range<typeinfo> &overload_version_paramlist,
+    const rettr::method &type::method(const string_view name, const array_range<typeinfo> &overload_version_paramlist,
                                       const method_flags filter_method_flag) const noexcept {
         static const class method empty;
         if (this->empty()) {
@@ -233,10 +234,10 @@ namespace rettr {
             filter &= ~(method_flags::noexcept_specified);
             return candidate == filter;
         };
-        for (const auto &item: *vec) {
-            if (item.name() == name) {
-                if (item.is_invocable(overload_version_paramlist) && match_method_type(item.type(), filter_method_flag)) {
-                    return item;
+        for (auto mit = vec->crbegin(); mit != vec->crend(); ++mit) {
+            if (mit->name() == name) {
+                if (mit->is_invocable(overload_version_paramlist) && match_method_type(mit->type(), filter_method_flag)) {
+                    return *mit;
                 }
             }
         }
@@ -283,7 +284,7 @@ namespace rettr {
         return {};
     }
 
-    rettr::method type::global_method(const std::string_view name, const array_range<typeinfo> &overload_version_paramlist) noexcept {
+    rettr::method type::global_method(const string_view name, const array_range<typeinfo> &overload_version_paramlist) noexcept {
         const auto &meth_list = implements::type_register_private::get_instance().get_global_methods();
         for (const auto &method: meth_list) {
             if (method.name() == name) {

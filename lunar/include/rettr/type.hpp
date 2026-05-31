@@ -178,9 +178,9 @@ namespace rettr {
 
         static void property_value(string_view name, any arg);
 
-        RETTR_NODISCARD const rettr::method &method(const std::string_view name) const noexcept;
+        RETTR_NODISCARD const rettr::method &method(const string_view name) const noexcept;
 
-        RETTR_NODISCARD const rettr::method &method(const std::string_view name,
+        RETTR_NODISCARD const rettr::method &method(const string_view name,
                                                     const array_range<typeinfo> &overload_version_paramlist,
                                                     const method_flags filter_method_flag = method_flags::none) const noexcept;
 
@@ -190,19 +190,19 @@ namespace rettr {
 
         static rettr::method global_method(string_view name) noexcept;
 
-        static rettr::method global_method(const std::string_view name,
+        static rettr::method global_method(const string_view name,
                                            const array_range<typeinfo> &overload_version_paramlist) noexcept;
 
         static array_range<rettr::method> global_methods() noexcept;
 
         template <typename... Args>
-        any invoke(std::string_view name, object_view instance, Args &&...args) const;
+        any invoke(string_view name, object_view instance, Args &&...args) const;
 
         template <typename... Args>
-        any invoke(static_invoke_tag, std::string_view name, Args &&...args) const;
+        any invoke(static_invoke_tag, string_view name, Args &&...args) const;
 
         template <typename... Args>
-        static any global_invoke(std::string_view name, Args &&...args);
+        static any global_invoke(string_view name, Args &&...args);
 
     private:
         RETTR_INLINE type(implements::type_private::type_data *data) noexcept;

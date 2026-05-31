@@ -255,7 +255,7 @@ namespace rettr {
     }
 
     template <typename... Args>
-    any type::invoke(std::string_view name, object_view instance, Args &&...args) const {
+    any type::invoke(string_view name, object_view instance, Args &&...args) const {
         if (empty()) {
             return {};
         }
@@ -277,7 +277,7 @@ namespace rettr {
     }
 
     template <typename... Args>
-    any type::invoke(static_invoke_tag, std::string_view name, Args &&...args) const {
+    any type::invoke(static_invoke_tag, string_view name, Args &&...args) const {
         if (empty()) {
             return {};
         }
@@ -299,7 +299,7 @@ namespace rettr {
     }
 
     template <typename... Args>
-    any type::global_invoke(std::string_view name, Args &&...args) {
+    any type::global_invoke(string_view name, Args &&...args) {
         constexpr bool has_dynamic =
             (implements::is_dynamic_object<Args> || ...) || helper::is_any_of_v<object_view, std::decay_t<Args>...>;
         if constexpr (has_dynamic) {
