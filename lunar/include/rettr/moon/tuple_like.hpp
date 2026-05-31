@@ -21,6 +21,7 @@
 #include <functional>
 #include <rettr/core/marco_gen.hpp>
 #include <rettr/core/prerequisites.hpp>
+#include <rettr/core/basic_constexpr_string.hpp>
 #include <rettr/typeinfo.hpp>
 #include <tuple>
 #include <variant>
@@ -189,7 +190,7 @@ namespace rettr::implements {
     struct refl_to_tuple_impl {
         static constexpr rettr_fn make() noexcept -> auto {
             using namespace std::meta;
-            auto &fake = std::get_fake_object<helper::remove_cvref_t<Ty>>();
+            auto &fake = helper::get_fake_object<helper::remove_cvref_t<Ty>>();
             constexpr auto filtered = []() consteval {
                 std::vector<info> result;
                 template for (constexpr auto m: member_array<Ty>) {
@@ -222,7 +223,7 @@ namespace rettr::implements {
             }(std::make_index_sequence<filtered.size()>{});
         }
 
-        template <typename UTy, std::enable_if_t<type_traits::type_relations::is_same_v<helper::remove_cvref_t<UTy>, Ty>, int> = 0>
+        template <typename UTy, std::enable_if_t<std::is_same_v<helper::remove_cvref_t<UTy>, Ty>, int> = 0>
         static constexpr rettr_fn make_ptr(UTy &&obj) noexcept -> auto {
             constexpr auto pmembers = get_memptr_tuple();
             return [&]<std::size_t... Is>(std::index_sequence<Is...>) {
@@ -327,8 +328,8 @@ namespace rettr::implements {
     template <typename Ty, std::size_t Size>
     RETTR_CONSTEVAL rettr_fn get_member_names_compositor(std::array<std::string_view, Size> &array) noexcept -> void {
         using namespace std::meta;
-        auto &fake = std::get_fake_object<Ty>();
-        auto tp = moon::struct_to_tuple<Ty>();
+        auto &fake = helper::get_fake_object<Ty>();
+        auto tp = struct_to_tuple<Ty>();
 
         [&]<std::size_t... Idx>(std::index_sequence<Idx...>) consteval {
             (
@@ -396,7 +397,7 @@ namespace rettr {
             if constexpr (std::is_empty_v<type>) {
                 return std::array<std::string_view, 0>{};
             } else if constexpr (!has_get_private_ptrs_v) {
-                constexpr size_t count = meta::moon::member_count_v<type>;
+                constexpr size_t count = member_count_v<type>;
                 std::array<std::string_view, count> array{}; // 创建对应的数组
                 constexpr auto tp = struct_to_tuple<type>();
 #if RETTR_USING_MSVC
@@ -405,7 +406,7 @@ namespace rettr {
                 }(std::make_index_sequence<member_count_v<Ty>>{});
 #else
                 [&array, &tp]<std::size_t... I>(std::index_sequence<I...>) mutable {
-                    ((array[I] = foundation::ctti::variable_name<(std::get<I>(tp))>()), ...);
+                    ((array[I] = variable_name<(std::get<I>(tp))>()), ...);
                 }(std::make_index_sequence<member_count_v<Ty>>{});
 #endif
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
@@ -422,7 +423,7 @@ namespace rettr {
                 }(std::make_index_sequence<tuple_size>{});
 #else
                 [&array, &tp]<std::size_t... I>(std::index_sequence<I...>) mutable {
-                    ((array[I] = foundation::ctti::variable_name<(std::get<I>(tp))>()), ...);
+                    ((array[I] = variable_name<(std::get<I>(tp))>()), ...);
                 }(std::make_index_sequence<tuple_size>{});
 #endif
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
@@ -764,9 +765,9 @@ namespace rettr::implements {
     template <typename Ty>
     inline constexpr auto member_offset_arr_cache = []() consteval {
         using type = helper::remove_cvref_t<Ty>;
-        constexpr size_t count = meta::moon::member_count_v<type>;
-        auto &fake = std::get_fake_object<type>();
-        auto tp = moon::struct_to_tuple<type>();
+        constexpr size_t count = member_count_v<type>;
+        auto &fake = helper::get_fake_object<type>();
+        auto tp = struct_to_tuple<type>();
         std::array<std::size_t, count> result{};
         [&]<std::size_t... Is>(std::index_sequence<Is...>) consteval {
             ((result[Is] = [&]() consteval -> std::size_t {
@@ -780,7 +781,7 @@ namespace rettr::implements {
                          return std::meta::offset_of(m).bytes;
                      }
                  }
-                 return utility::numeric_limits<std::size_t>::max();
+                 return (std::numeric_limits<std::size_t>::max)();
              }()),
              ...);
         }(std::make_index_sequence<count>{});
@@ -815,7 +816,7 @@ namespace rettr {
         using type = helper::remove_cvref_t<Ty>;
         constexpr size_t count = member_count_v<type>;
 #if RETTR_HAS_CXX26_STATIC_REFLECTION
-        utility::ignore = t;
+        std::ignore = t;
         return implements::member_offset_arr_cache<Ty>;
 #else
         auto tp = struct_bind_tuple(std::forward<Ty>(t));
@@ -888,7 +889,7 @@ namespace rettr {
     }
 
 #if RETTR_HAS_CXX20
-    template <typename Ty, std::basic_constexpr_string String>
+    template <typename Ty, helper::basic_constexpr_string String>
     constexpr rettr_fn index_of() noexcept -> std::size_t {
         return index_of<Ty>({String.data(), String.length()});
     }
@@ -924,7 +925,7 @@ namespace rettr {
     }
 
 #if RETTR_HAS_CXX20
-    template <std::basic_constexpr_string String, typename Ty>
+    template <helper::basic_constexpr_string String, typename Ty>
     constexpr rettr_fn get(Ty &&object) noexcept -> decltype(auto) {
         constexpr std::size_t index = index_of<Ty, String>();
         return get<index>(std::forward<Ty>(object));

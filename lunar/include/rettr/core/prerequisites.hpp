@@ -1,5 +1,5 @@
 /*
-* Copyright 2026 rainy-juzixiao
+* Copyright 2026 RETTR-juzixiao
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 #ifndef RETTR_CORE_PREREQUISITES_HPP
 #define RETTR_CORE_PREREQUISITES_HPP
+
+// NOLINTBEGIN
 
 #include <cassert>
 #include <cstddef>
@@ -36,6 +38,8 @@
 #include <linux/version.h>
 #include <unistd.h>
 #endif
+
+// NOLINTEND
 
 #ifdef _MSC_VER
 // 为MSVC编译器提供支持
@@ -276,7 +280,7 @@
 #define RETTR_IS_ARM64 0
 #define RETTR_IS_X86_PLATFORM 1
 #else
-static_assert(false, "Detected invalid architecture,rainy-toolkit is not support on your compile architecture");
+static_assert(false, "Detected invalid architecture,rettr is not support on your compile architecture");
 #endif
 
 #if RETTR_CURRENT_STANDARD_VERSION < 201703L
@@ -494,5 +498,97 @@ namespace rettr::implements {
 
     struct invalid_type {};
 }
+
+
+#if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
+
+namespace rettr::annotations {
+    struct member_anno {
+        template <typename Ty>
+        RETTR_NODISCARD consteval auto has() const noexcept -> bool {
+            using namespace std::meta;
+            for (auto attn: std::span{attns, num_attns}) {
+                if (remove_const(type_of(attn)) == ^^Ty) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        template <typename Ty>
+        RETTR_NODISCARD consteval auto fetch() const -> Ty {
+            using namespace std::meta;
+            for (auto attn: std::span{attns, num_attns}) {
+                if (remove_const(type_of(attn)) == ^^Ty) {
+                    return extract<Ty>(attn);
+                }
+            }
+            std::unreachable();
+        }
+
+        template <typename Ty>
+        RETTR_NODISCARD consteval auto get_or(Ty default_val) const noexcept -> Ty {
+            if (has<Ty>()) {
+                return fetch<Ty>();
+            }
+            return default_val;
+        }
+
+        const std::meta::info *attns{nullptr};
+        std::size_t num_attns{0};
+    };
+
+    consteval auto make_member_anno(std::meta::info member) -> member_anno {
+        auto attns = std::meta::annotations_of(member);
+        auto span = std::define_static_array(attns);
+        return member_anno{span.data(), span.size()};
+    }
+}
+
+namespace rettr::annotations {
+    struct type_anno {
+        template <typename Ty>
+        RETTR_NODISCARD consteval auto has() const noexcept -> bool {
+            using namespace std::meta;
+            for (auto attn: std::span{attns, num_attns}) {
+                if (remove_const(type_of(attn)) == ^^Ty) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        template <typename Ty>
+        RETTR_NODISCARD consteval auto fetch() const -> Ty {
+            using namespace std::meta;
+            for (auto attn: std::span{attns, num_attns}) {
+                if (remove_const(type_of(attn)) == ^^Ty) {
+                    return extract<Ty>(attn);
+                }
+            }
+            std::unreachable();
+        }
+
+        template <typename Ty>
+        RETTR_NODISCARD consteval auto get_or(Ty default_val) const noexcept -> Ty {
+            if (has<Ty>()) {
+                return fetch<Ty>();
+            }
+            return default_val;
+        }
+
+        const std::meta::info *attns{nullptr};
+        std::size_t num_attns{0};
+    };
+
+    template <typename Ty>
+    consteval auto make_type_anno() -> type_anno {
+        auto attns = std::meta::annotations_of(^^Ty);
+        auto span = std::define_static_array(attns);
+        return type_anno{span.data(), span.size()};
+    }
+}
+
+#endif
 
 #endif
