@@ -34,14 +34,18 @@ namespace rettr {
 
         template <typename Ty1, typename Ty2>
         metadata_item(Ty1 &&key, Ty2 &&value) {
-            if (std::is_same_v<std::string_view, Ty1>) {
+            if constexpr (std::is_same_v<std::string_view, Ty1>) {
                 this->key_.emplace<std::string_view>(std::forward<Ty1>(key));
             } else if constexpr (std::is_constructible_v<std::string, Ty1>) {
                 this->key_.emplace<std::string>(std::forward<Ty1>(key));
             } else {
                 this->key_.emplace<std::decay_t<Ty1>>(key);
             }
-            this->value_.emplace<std::decay_t<Ty2>>(std::forward<Ty2>(value));
+            if constexpr (std::is_constructible_v<std::string, Ty2>) {
+                this->value_.emplace<std::string>(std::forward<Ty2>(value));
+            } else {
+                this->value_.emplace<std::decay_t<Ty2>>(std::forward<Ty2>(value));
+            }
         }
 
         RETTR_NODISCARD const any &key() const noexcept {
