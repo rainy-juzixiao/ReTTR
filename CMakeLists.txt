@@ -26,10 +26,11 @@ project(ReTTR VERSION ${VERSION} LANGUAGES CXX C)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-option(RETTR_BUILD_WITH_DYNAMIC "Use u." on)
-option(RETTR_USE_CROSSCOMPILE "Use u." off)
+option(RETTR_BUILD_WITH_DYNAMIC "This option allows you build rettr as a dynamic libraray." on)
+option(RETTR_USE_CROSSCOMPILE "Enable for cross compile." off)
 option(RETTR_USING_UTF8_INPUT_FOR_MSVC "Use utf-8 encoding for input. Reason: we need avoid mutilangauge problems." on)
 option(RETTR_USING_UTF8_OUTPUT_FOR_MSVC "Use utf-8 encoding for output. Reason: we need avoid mutilangauge problems." on)
+option(RETTR_USE_CXX26_RELFECTION_TS "Allows rettr to use c++ 26 reflection ts features." on)
 
 include(${PROJECT_SOURCE_DIR}/cmake/utility.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/config.cmake)
