@@ -1,5 +1,5 @@
 /*
-* Copyright 2026 rainy-juzixiao
+ * Copyright 2026 rainy-juzixiao
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,14 @@
 
 #include <ostream>
 
-#include <rettr/core/prerequisites.hpp>
 #include <rettr/core/function_traits.hpp>
-#include <rettr/implements/any/fwd.hpp>
+#include <rettr/core/prerequisites.hpp>
 #include <rettr/implements/any/cast.hpp>
 #include <rettr/implements/any/execution_policy.hpp>
+#include <rettr/implements/any/fwd.hpp>
 #include <rettr/implements/any/iteator.hpp>
-#include <rettr/implements/any/raii_manager.hpp>
 #include <rettr/implements/any/matcher.hpp>
+#include <rettr/implements/any/raii_manager.hpp>
 
 // NOLINTEND
 
@@ -102,33 +102,27 @@ namespace rettr {
             move_from(right);
         }
 
-        template <typename ValueType, std::enable_if_t<
-                                          std::conjunction_v<
-                                              std::negation<helper::is_any_of<
-                                                  std::decay_t<ValueType>, any, reference>>,
-                                              std::negation<is_specialization<
-                                                  std::decay_t<ValueType>, std::in_place_type_t>>,
-                                              std::is_copy_constructible<ValueType>,
-                                              std::negation<std::is_same<ValueType, any>>>,
-                                          int> = 0>
+        template <
+            typename ValueType,
+            std::enable_if_t<std::conjunction_v<std::negation<helper::is_any_of<std::decay_t<ValueType>, any, reference>>,
+                                                std::negation<is_specialization<std::decay_t<ValueType>, std::in_place_type_t>>,
+                                                std::is_copy_constructible<ValueType>, std::negation<std::is_same<ValueType, any>>>,
+                             int> = 0>
         any(ValueType &&value) { // NOLINT
             emplace_<ValueType>(std::forward<ValueType>(value));
         }
 
-        template <typename ValueType, typename... Types,
-                  std::enable_if_t<
-                      std::is_constructible_v<ValueType, Types...> &&
-                          !helper::is_any_of_v<ValueType, any, reference>,
-                      int> = 0>
+        template <
+            typename ValueType, typename... Types,
+            std::enable_if_t<std::is_constructible_v<ValueType, Types...> && !helper::is_any_of_v<ValueType, any, reference>, int> = 0>
         any(std::in_place_type_t<ValueType>, Types &&...args) { // NOLINT
             emplace_<ValueType>(std::forward<Types>(args)...);
         }
 
         template <typename ValueType, typename Elem, typename... Types,
-                  std::enable_if_t<
-                      std::is_constructible_v<ValueType, std::initializer_list<Elem> &, Types...> &&
-                          !helper::is_any_of_v<ValueType, any, reference>,
-                      int> = 0>
+                  std::enable_if_t<std::is_constructible_v<ValueType, std::initializer_list<Elem> &, Types...> &&
+                                       !helper::is_any_of_v<ValueType, any, reference>,
+                                   int> = 0>
         explicit any(std::in_place_type_t<ValueType>, std::initializer_list<Elem> ilist, Types &&...args) {
             emplace_<ValueType>(ilist, std::forward<Types>(args)...);
         }
@@ -158,27 +152,22 @@ namespace rettr {
             return *this;
         }
 
-        template <typename ValueType, std::enable_if_t<
-                                          !helper::is_any_of_v<std::decay_t<ValueType>,
-                                                                                    any, reference, const_reference>,
-                                          int> = 0>
+        template <typename ValueType,
+                  std::enable_if_t<!helper::is_any_of_v<std::decay_t<ValueType>, any, reference, const_reference>, int> = 0>
         any &operator=(ValueType &&value) {
             any tmp = std::forward<ValueType>(value);
             reset_and_move_from(tmp);
             return *this;
         }
 
-        template <
-            typename ValueType, typename... Types,
-            std::enable_if_t<std::is_constructible_v<ValueType, Types...>, int> = 0>
+        template <typename ValueType, typename... Types, std::enable_if_t<std::is_constructible_v<ValueType, Types...>, int> = 0>
         decltype(auto) emplace(Types &&...args) {
             reset();
             return emplace_<ValueType>(std::forward<Types>(args)...);
         }
 
         template <typename ValueType, typename Elem, typename... Types,
-                  std::enable_if_t<
-                      std::is_constructible_v<ValueType, std::initializer_list<Elem> &, Types...>, int> = 0>
+                  std::enable_if_t<std::is_constructible_v<ValueType, std::initializer_list<Elem> &, Types...>, int> = 0>
         decltype(auto) emplace(std::initializer_list<Elem> ilist, Types &&...args) {
             reset();
             return emplace_<ValueType>(ilist, std::forward<Types>(args)...);
@@ -248,13 +237,10 @@ namespace rettr {
         }
 
         template <typename Decayed>
-        RETTR_ANY_CAST_TO_POINTER_NODISCARD rettr_fn cast_to_pointer() const noexcept
-            -> std::add_pointer_t<std::add_const_t<
-                std::conditional_t<std::is_reference_v<Decayed>,
-                                                        std::remove_reference_t<Decayed> *, Decayed *>>> {
+        RETTR_ANY_CAST_TO_POINTER_NODISCARD rettr_fn cast_to_pointer() const noexcept -> std::add_pointer_t<
+            std::add_const_t<std::conditional_t<std::is_reference_v<Decayed>, std::remove_reference_t<Decayed> *, Decayed *>>> {
             using namespace helper;
-            using type = std::conditional_t<std::is_reference_v<Decayed>,
-                                                    std::remove_reference_t<Decayed>, Decayed>;
+            using type = std::conditional_t<std::is_reference_v<Decayed>, std::remove_reference_t<Decayed>, Decayed>;
             if (!rettr::implements::is_as_runnable<type>(this->type())) {
                 return nullptr;
             }
@@ -262,12 +248,10 @@ namespace rettr {
         }
 
         template <typename Decayed>
-        RETTR_ANY_CAST_TO_POINTER_NODISCARD rettr_fn cast_to_pointer() noexcept -> std::add_pointer_t<
-            std::conditional_t<std::is_reference_v<Decayed>,
-                                                    std::remove_reference_t<Decayed>, Decayed>> {
+        RETTR_ANY_CAST_TO_POINTER_NODISCARD rettr_fn cast_to_pointer() noexcept
+            -> std::add_pointer_t<std::conditional_t<std::is_reference_v<Decayed>, std::remove_reference_t<Decayed>, Decayed>> {
             using namespace helper;
-            using type = std::conditional_t<std::is_reference_v<Decayed>,
-                                                    std::remove_reference_t<Decayed>, Decayed>;
+            using type = std::conditional_t<std::is_reference_v<Decayed>, std::remove_reference_t<Decayed>, Decayed>;
             if (!rettr::implements::is_as_runnable<type>(this->type())) {
                 return nullptr;
             }
@@ -323,7 +307,7 @@ namespace rettr {
             return is_any_convertible<TargetType>(this->type());
         }
 
-        RETTR_NODISCARD bool is_convertible(const typeinfo& type) const noexcept {
+        RETTR_NODISCARD bool is_convertible(const typeinfo &type) const noexcept {
             return is_convertible_to(this->type(), type);
         }
 
@@ -342,32 +326,50 @@ namespace rettr {
         }
 
         friend bool operator<(const any &left, const any &right) {
-            std::tuple tuple{&left, &right, implements::any_compare_operation::less};
-            return left.storage.executer->invoke(implements::any_operation::compare, &tuple);
+            if (left.has_value() && right.has_value()) {
+                std::tuple tuple{&left, &right, implements::any_compare_operation::less};
+                return left.storage.executer->invoke(implements::any_operation::compare, &tuple);
+            }
+            return false;
         }
 
         friend bool operator<=(const any &left, const any &right) {
-            std::tuple tuple{&left, &right, implements::any_compare_operation::less_eq};
-            return left.storage.executer->invoke(implements::any_operation::compare, &tuple);
+            if (left.has_value() && right.has_value()) {
+                std::tuple tuple{&left, &right, implements::any_compare_operation::less_eq};
+                return left.storage.executer->invoke(implements::any_operation::compare, &tuple);
+            }
+            return false;
         }
 
         friend bool operator==(const any &left, const any &right) {
-            std::tuple tuple{&left, &right, implements::any_compare_operation::eq};
-            return left.storage.executer->invoke(implements::any_operation::compare, &tuple);
+            if (left.has_value() && right.has_value()) {
+                std::tuple tuple{&left, &right, implements::any_compare_operation::eq};
+                return left.storage.executer->invoke(implements::any_operation::compare, &tuple);
+            }
+            return false;
         }
 
         friend bool operator>=(const any &left, const any &right) {
-            std::tuple tuple{&left, &right, implements::any_compare_operation::greater_eq};
-            return left.storage.executer->invoke(implements::any_operation::compare, &tuple);
+            if (left.has_value() && right.has_value()) {
+                std::tuple tuple{&left, &right, implements::any_compare_operation::greater_eq};
+                return left.storage.executer->invoke(implements::any_operation::compare, &tuple);
+            }
+            return false;
         }
 
         friend bool operator>(const any &left, const any &right) {
-            std::tuple tuple{&left, &right, implements::any_compare_operation::greater};
-            return left.storage.executer->invoke(implements::any_operation::compare, &tuple);
+            if (left.has_value() && right.has_value()) {
+                std::tuple tuple{&left, &right, implements::any_compare_operation::greater};
+                return left.storage.executer->invoke(implements::any_operation::compare, &tuple);
+            }
+            return false;
         }
 
         friend bool operator!=(const any &left, const any &right) {
-            return !(left == right);
+            if (left.has_value() && right.has_value()) {
+                return !(left == right);
+            }
+            return false;
         }
 
         friend any operator+(const any &left, const any &right) {
@@ -561,8 +563,7 @@ namespace rettr {
         template <typename... Fx>
         auto match_for(auto_deduce_t, Fx &&...funcs) const -> std::variant<function_return_type<Fx>...> {
             using namespace std;
-            static_assert((!std::is_void_v<function_return_type<Fx>> && ...),
-                          "Cannot accept a void-ret type functions.");
+            static_assert((!std::is_void_v<function_return_type<Fx>> && ...), "Cannot accept a void-ret type functions.");
             using auto_deduce_type_list = helper::type_list<function_return_type<Fx>...>;
             using variant_type = typename helper::type_list_to_tuple_like<auto_deduce_type_list, std::variant>::type;
             auto res = match(std::forward<Fx>(funcs)...);
@@ -593,9 +594,7 @@ namespace rettr {
             return ret;
         }
 
-        template <typename CharType, typename Any,
-                  std::enable_if_t<
-                      std::is_same_v<std::decay_t<Any>, any>, int> = 0>
+        template <typename CharType, typename Any, std::enable_if_t<std::is_same_v<std::decay_t<Any>, any>, int> = 0>
         friend std::basic_ostream<CharType> &operator<<(std::basic_ostream<CharType> &left, const Any &right) {
             if (!right.has_value()) {
                 return left;
@@ -669,7 +668,7 @@ namespace rettr {
             storage.executer->invoke(implements::any_operation::swap_value, &tuple);
         }
 
-        const_iterator insert(const const_iterator &pos, const any& value) {
+        const_iterator insert(const const_iterator &pos, const any &value) {
             const_iterator iterator;
             std::tuple tuple{this, &iterator, &pos, &value};
             storage.executer->invoke(implements::any_operation::container_insert_seq_like, &tuple);
@@ -822,16 +821,13 @@ namespace rettr {
 
 namespace rettr {
     template <typename Ty, typename... Args,
-              std::enable_if_t<
-                  std::is_constructible_v<any, std::in_place_type_t<Ty>, Args...>, int> = 0>
+              std::enable_if_t<std::is_constructible_v<any, std::in_place_type_t<Ty>, Args...>, int> = 0>
     RETTR_NODISCARD any make_any(Args &&...args) {
         return any{std::in_place_type<Ty>, std::forward<Args>(args)...};
     }
 
     template <typename Ty, typename U, typename... Args,
-              std::enable_if_t<
-                  std::is_constructible_v<any, std::in_place_type_t<Ty>, std::initializer_list<U> &, Args...>,
-                  int> = 0>
+              std::enable_if_t<std::is_constructible_v<any, std::in_place_type_t<Ty>, std::initializer_list<U> &, Args...>, int> = 0>
     RETTR_NODISCARD any make_any(std::initializer_list<U> initializer_list, Args &&...args) {
         return any{std::in_place_type<Ty>, initializer_list, std::forward<Args>(args)...};
     }
@@ -843,9 +839,7 @@ namespace rettr {
 
 namespace rettr {
     template <typename TargetType>
-    struct any_converter<TargetType,
-                         std::enable_if_t<std::is_reference_v<TargetType> ||
-                                                               helper::is_pointer_reference_v<TargetType>>> {
+    struct any_converter<TargetType, std::enable_if_t<std::is_reference_v<TargetType> || helper::is_pointer_reference_v<TargetType>>> {
         static decltype(auto) basic_convert(const void *target_pointer, const typeinfo &type) {
             return implements::as_impl<TargetType>(target_pointer, type);
         }

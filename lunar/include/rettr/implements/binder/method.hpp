@@ -107,7 +107,7 @@ namespace rettr::implements {
 
         template <std::size_t I, std::size_t Offset, std::size_t NumDefaults, typename Impl, typename DefaultsTuple>
         void apply_one_default_(Impl *impl, DefaultsTuple &vals) {
-            constexpr std::size_t param_index = Offset + NumDefaults - 1 - I;
+            constexpr std::size_t param_index = Offset + I;
             any value(std::in_place_type<std::decay_t<std::tuple_element_t<I, DefaultsTuple>>>, std::get<I>(vals));
             parameter_wrappers_[param_index]->set_default_value(value);
         }
