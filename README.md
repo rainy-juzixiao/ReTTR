@@ -15,3 +15,7 @@ ReTTR并非RTTR的衍生作品，其发行许可证采用Apache 2.0，而RTTR使
 - instance （由object_view取代）
 
 根据情况再进行删减
+
+## 另注
+
+ReTTR的代码依赖了rainy-toolkit项目中的源代码，按照Apache 2.0许可证分发。
