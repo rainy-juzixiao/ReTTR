@@ -253,7 +253,10 @@ namespace rettr {
         const auto &vec = raw_t.type_data_->my_class_data.methods;
 
         if (!vec->empty()) {
-            return array_range<rettr::method>(vec->data(), vec->size());
+            return array_range<rettr::method>(vec->data(), vec->size(),
+                                              default_predicate<rettr::method>([](const rettr::method &item) {
+                                                  return (item.access_level() == access_levels::public_access);
+                                              }));
         }
 
         return {};
