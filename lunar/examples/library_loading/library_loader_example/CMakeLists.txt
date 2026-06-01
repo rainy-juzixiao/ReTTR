@@ -24,8 +24,10 @@ target_link_libraries(library_loader_example rainy-juzixiao::rettr)
 add_dependencies(library_loader_example plugin_example)
 
 set_target_properties(library_loader_example PROPERTIES
-                      DEBUG_POSTFIX "_d"
-                      "Examples/library_loading"
-                      CXX_STANDARD ${MAX_CXX_STANDARD})
+        DEBUG_POSTFIX "_d"
+        "Examples/library_loading"
+        CXX_STANDARD ${MAX_CXX_STANDARD}
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+)
 
 add_dependencies(examples library_loader_example)
