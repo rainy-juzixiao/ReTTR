@@ -850,6 +850,37 @@ namespace rettr {
     };
 
     template <typename TargetType>
+    struct any_converter<TargetType, std::enable_if_t<std::is_pointer_v<TargetType> || helper::is_pointer_reference_v<TargetType>>> {
+        static rettr_fn basic_convert(const void *target_pointer, const typeinfo &type) -> TargetType {
+            if (type.is_nullptr()) {
+                return nullptr;
+            }
+            return implements::as_impl<TargetType>(target_pointer, type);
+        }
+
+        static bool is_convertible(const typeinfo &type) {
+            if (type.is_nullptr()) {
+                return true;
+            }
+            return implements::is_as_runnable<TargetType>(type);
+        }
+    };
+
+    template <typename TargetType>
+    struct any_converter<TargetType, std::enable_if_t<std::is_same_v<std::nullptr_t, std::remove_reference_t<TargetType>>>> {
+        static rettr_fn basic_convert(const void *target_pointer, const typeinfo &type) -> TargetType {
+            if (type.is_pointer() || type.is_nullptr()) {
+                return nullptr;
+            }
+            throw std::bad_cast{};
+        }
+
+        static bool is_convertible(const typeinfo &type) {
+            return type.is_pointer() || type.is_nullptr();
+        }
+    };
+
+    template <typename TargetType>
     struct any_converter<TargetType, std::enable_if_t<std::is_arithmetic_v<TargetType>>>
         : enable_for_type_convert<any_converter<TargetType>> {
         static TargetType basic_convert(const void *target_pointer, const typeinfo &type) {
