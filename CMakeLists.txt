@@ -40,6 +40,7 @@ enable_testing()
 add_subdirectory(${PROJECT_SOURCE_DIR}/third_party)
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/lunar/tests)
+add_subdirectory(${PROJECT_SOURCE_DIR}/lunar/benchmarks)
 
 add_executable(test_program ${PROJECT_SOURCE_DIR}/test_programs/main.cpp)
 
