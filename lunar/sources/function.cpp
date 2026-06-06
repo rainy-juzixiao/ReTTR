@@ -213,9 +213,9 @@ namespace rettr {
         return has(method_flags::rvalue_qualified);
     }
 
-    bool function::is_invocable(const array_range<typeinfo> paramlist) const noexcept {
+    invocable_result function::is_invocable(const array_range<typeinfo> paramlist) const noexcept {
         if (empty()) {
-            return false;
+            return invocable_result::failed;
         }
         return invoke_accessor()->is_invocable(paramlist);
     }
@@ -230,7 +230,7 @@ namespace rettr {
         return invoke_accessor()->paramlists().at(static_cast<std::ptrdiff_t>(idx));
     }
 
-    bool function::is_variadic_invocable_with(const array_range<any> args) const {
+    invocable_result function::is_variadic_invocable_with(const array_range<any> args) const {
         assert(!empty()&& "You're trying to get the arg type of a empty object!");
         return invoke_accessor()->is_invocable_with(args);
     }

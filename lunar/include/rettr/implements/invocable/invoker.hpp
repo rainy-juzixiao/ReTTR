@@ -27,6 +27,15 @@
 #endif
 
 namespace rettr {
+    enum class invocable_result {
+        failed = 0,
+        need_convert = 1,
+        need_default_argument = 1,
+        direct_callable = 2,
+    };
+}
+
+namespace rettr {
     class function;
     
     template <typename Fx, typename... Args>

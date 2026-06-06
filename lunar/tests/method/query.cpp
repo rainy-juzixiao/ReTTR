@@ -17,8 +17,6 @@
 #include <rettr/rettr.hpp>
 
 using namespace rettr;
-using namespace std;
-
 
 struct method_query_test_base {
     method_query_test_base() {

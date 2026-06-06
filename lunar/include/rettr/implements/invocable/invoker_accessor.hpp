@@ -69,9 +69,9 @@ namespace rettr::implements {
 
         virtual bool equal_with(const invoker_accessor *impl) const noexcept = 0;
 
-        RETTR_NODISCARD virtual bool is_invocable(array_range<class typeinfo> paramlist) const noexcept = 0;
+        RETTR_NODISCARD virtual invocable_result is_invocable(array_range<rettr::typeinfo> paramlist) const noexcept = 0;
 
-        RETTR_NODISCARD virtual bool is_invocable_with(array_range<any> paramlist) const noexcept = 0;
+        RETTR_NODISCARD virtual invocable_result is_invocable_with(array_range<any> paramlist) const noexcept = 0;
 
         virtual void destruct(bool local) noexcept = 0;
     };
@@ -167,7 +167,6 @@ namespace rettr::implements {
                     assert(ptr != nullptr && "Failure to convert the instance to the target pointer type during runtime");
                     return access_invoke(std::forward<Fx>(storage.fn), ptr);
                 } else {
-                    assert(object.type().is_compatible(rettr_typeid(Class)) || object.type().is_void());
                     return access_invoke(std::forward<Fx>(storage.fn), object.target_as_void_ptr());
                 }
             } else {
@@ -220,10 +219,9 @@ namespace rettr::implements {
                 */
                 if (args_hash == storage_t::param_hash) {
                     return storage.invoke_impl(ptr, arg_view, std::make_index_sequence<arity>{});
-                } else {
-                    // 如果参数一致，我们或许可以尝试转换参数类型来进行fallback处理
-                    return storage.invoke_with_conv_impl(ptr, arg_view, std::make_index_sequence<arity>{});
                 }
+                // 如果参数一致，我们或许可以尝试转换参数类型来进行fallback处理
+                return storage.invoke_with_conv_impl(ptr, arg_view, std::make_index_sequence<arity>{});
             }
             if (size < least || size > arity) {
                 errno = EINVAL;
@@ -253,9 +251,8 @@ namespace rettr::implements {
                                     });
                 if (args_hash == storage_t::param_hash) {
                     return storage.invoke_impl(ptr, arg_view, std::make_index_sequence<arity>{});
-                } else {
-                    return storage.invoke_with_conv_impl(ptr, arg_view, std::make_index_sequence<arity>{});
                 }
+                return storage.invoke_with_conv_impl(ptr, arg_view, std::make_index_sequence<arity>{});
             }
             if (size < least || size > arity) {
                 errno = EINVAL;
@@ -264,12 +261,12 @@ namespace rettr::implements {
             return storage.invoke_with_defaults(ptr, arg_view);
         }
 
-        RETTR_NODISCARD bool is_invocable(array_range<class typeinfo> paramlist) const noexcept override {
+        RETTR_NODISCARD invocable_result is_invocable(array_range<rettr::typeinfo> paramlist) const noexcept override {
             const std::size_t size = paramlist.size();
             static constexpr std::size_t arity = storage_t::arity;
             static constexpr std::size_t least = arity - storage_t::default_arity;
             if (size < least || size > arity) {
-                return false;
+                return invocable_result::failed;
             }
             if (size == arity) {
                 std::size_t paramhash =
@@ -278,23 +275,28 @@ namespace rettr::implements {
                                         return acc + (item.hash_code() * right++);
                                     });
                 if (paramhash == storage_t::param_hash) {
-                    return true;
+                    return invocable_result::direct_callable;
                 }
                 if (storage.is_compatible(paramlist)) {
-                    return true;
+                    return invocable_result::direct_callable;
                 }
-                return is_invocable_helper(paramlist, std::make_index_sequence<arity>{});
+                if (is_invocable_helper(paramlist, std::make_index_sequence<arity>{})) {
+                    return invocable_result::need_convert;
+                }
             }
-            return dispatch_partial(paramlist, size);
+            if (dispatch_partial(paramlist, size)) {
+                return invocable_result::need_default_argument;
+            }
+            return invocable_result::failed;
         }
 
-        RETTR_NODISCARD bool is_invocable_with(array_range<any> paramlist) const noexcept override {
+        RETTR_NODISCARD invocable_result is_invocable_with(array_range<any> paramlist) const noexcept override {
             const std::size_t size = paramlist.size();
             static constexpr std::size_t arity = storage_t::arity;
             static constexpr std::size_t least = arity - storage_t::default_arity;
 
             if (size < least || size > arity) {
-                return false;
+                return invocable_result::failed;
             }
             if (size == arity) {
                 std::size_t paramhash = std::accumulate(paramlist.begin(), paramlist.end(), std::size_t{0},
@@ -302,14 +304,19 @@ namespace rettr::implements {
                                                             return acc + (item.type().hash_code() * right++);
                                                         });
                 if (paramhash == storage_t::param_hash) {
-                    return true;
+                    return invocable_result::direct_callable;
                 }
                 if (storage.is_compatible(paramlist)) {
-                    return true;
+                    return invocable_result::direct_callable;
                 }
-                return is_invocable_helper(paramlist, std::make_index_sequence<arity>{});
+                if (is_invocable_helper(paramlist, std::make_index_sequence<arity>{})) {
+                    return invocable_result::need_convert;
+                }
             }
-            return dispatch_partial(paramlist, size);
+            if (dispatch_partial(paramlist, size)) {
+                return invocable_result::need_default_argument;
+            }
+            return invocable_result::failed;
         }
 
         template <std::size_t N>
@@ -334,15 +341,16 @@ namespace rettr::implements {
 
         template <typename ParamList>
         bool dispatch_partial(ParamList &paramlist, std::size_t size) const noexcept {
-            if constexpr (storage_t::arity == 0) {
+            if constexpr (storage_t::arity == 0 || storage_t::default_arity == 0) {
                 return false;
             } else {
+                static constexpr std::size_t least = storage_t::arity - storage_t::default_arity;
                 static constexpr auto table = []<std::size_t... I>(std::index_sequence<I...>) {
                     return std::array{+[](const invoker_accessor_impl *self, ParamList &pl) noexcept -> bool {
-                        return self->template is_invocable_partial<I>(pl);
+                        return self->template is_invocable_partial<least + I>(pl);
                     }...};
-                }(std::make_index_sequence<storage_t::arity>{});
-                return table[size](this, paramlist);
+                }(std::make_index_sequence<storage_t::default_arity>{});
+                return table[size - least](this, paramlist);
             }
         }
 

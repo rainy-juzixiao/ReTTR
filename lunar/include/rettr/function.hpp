@@ -333,7 +333,7 @@ namespace rettr {
          * @param paramlist 参数列表。
          * @return 如果可以调用，则返回true；否则返回false。
          */
-        RETTR_NODISCARD bool is_invocable(array_range<typeinfo> paramlist) const noexcept;
+        RETTR_NODISCARD invocable_result is_invocable(array_range<typeinfo> paramlist) const noexcept;
 
         /**
          * @brief 检查当前函数对象是否可以调用给定的参数类型。
@@ -341,9 +341,9 @@ namespace rettr {
          * @return 如果可以调用，则返回true；否则返回false。
          */
         template <typename... Args>
-        RETTR_NODISCARD bool is_invocable() const noexcept {
+        RETTR_NODISCARD invocable_result is_invocable() const noexcept {
             if (empty()) {
-                return false;
+                return invocable_result::failed;
             }
             if constexpr (sizeof...(Args) == 0) {
                 return invoke_accessor()->is_invocable({});
@@ -354,12 +354,12 @@ namespace rettr {
         }
 
         template <typename... Args>
-        RETTR_NODISCARD bool is_invocable_with(Args &&...args) const noexcept {
+        RETTR_NODISCARD invocable_result is_invocable_with(Args &&...args) const noexcept {
             implements::make_paramlist paramlist{std::forward<Args>(args)...};
             return is_invocable(paramlist.get());
         }
 
-        RETTR_NODISCARD bool is_variadic_invocable_with(array_range<any> args) const;
+        RETTR_NODISCARD invocable_result is_variadic_invocable_with(array_range<any> args) const;
 
         /**
          * @brief 获取函数对象的目标函数指针。
