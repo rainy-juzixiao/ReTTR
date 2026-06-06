@@ -28,7 +28,10 @@ public:                                                                         
     virtual RETTR_INLINE const rettr::typeinfo &rettr_private_stub_for_type() {                                                       \
         return rettr_typeid(std::decay_t<decltype(*this)>);                                                                           \
     }                                                                                                                                 \
-    using base_class_list = STUB_RETTR_CAST_TYPELIST(rettr::helper::type_list<__VA_ARGS__>);                                          \
+    virtual RETTR_INLINE rettr::type reflect_this() {                                                                                 \
+        return rettr::type::from<std::decay_t<decltype(*this)>>();                                                                    \
+    }                                                                                                                                 \
+    using base_class_list = STUB_RETTR_CAST_TYPELIST(__VA_ARGS__);                                                                    \
                                                                                                                                       \
 private:
 
