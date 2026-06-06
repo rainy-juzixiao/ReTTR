@@ -56,10 +56,8 @@ namespace rettr::implements {
         static void register_reg_manager(registration_manager *manager) noexcept;
         static void unregister_reg_manager(registration_manager *manager) noexcept;
 
-        static type_private::type_data *register_type(
-            type_private::type_data *info) noexcept;
-        static void unregister_type(
-            type_private::type_data *info) noexcept;
+        static type_private::type_data<type> *register_type(type_private::type_data<type> *info) noexcept;
+        static void unregister_type(type_private::type_data<type> *info) noexcept;
 
     private:
         type_register() = default;

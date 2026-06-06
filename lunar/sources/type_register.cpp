@@ -50,7 +50,7 @@ namespace rettr::implements {
         registration_manager_list_.erase(manager);
     }
 
-    type_private::type_data *type_register_private::register_id_if_necessary(type_private::type_data *info) noexcept {
+    type_private::type_data<type> *type_register_private::register_id_if_necessary(type_private::type_data<type> *info) noexcept {
         auto it = type_id_to_type_.find(info->type_info);
         if (it != type_id_to_type_.end()) {
             return it->second.type_data_;
@@ -59,7 +59,7 @@ namespace rettr::implements {
         return info;
     }
 
-    type_private::type_data *type_register_private::register_type(type_private::type_data *info) noexcept {
+    type_private::type_data<type> *type_register_private::register_type(type_private::type_data<type> *info) noexcept {
         if (!info) {
             return nullptr;
         }
@@ -75,14 +75,14 @@ namespace rettr::implements {
         return info;
     }
 
-    void type_register_private::unregister_type(type_private::type_data *info) noexcept {
+    void type_register_private::unregister_type(type_private::type_data<type> *info) noexcept {
         if (!info) {
             return;
         }
         std::lock_guard<std::mutex> lock(mutex_);
         rettr::type t{info};
-        remove_derived_types_from_base_classes(t, *info->my_class_data.base_types);
-        remove_base_types_from_derived_classes(t, *info->my_class_data.derived_types);
+        remove_derived_types_from_base_classes(t, info->my_class_data.base_types);
+        remove_base_types_from_derived_classes(t, info->my_class_data.derived_types);
         type_id_to_type_.erase(info->type_info);
         auto it1 = std::remove(type_data_storage_.begin(), type_data_storage_.end(), info);
         type_data_storage_.erase(it1, type_data_storage_.end());
@@ -90,10 +90,10 @@ namespace rettr::implements {
         type_list_.erase(it2, type_list_.end());
     }
 
-    void type_register_private::register_base_class_info(type_private::type_data *info) noexcept {
-        for (auto &base: *info->my_class_data.base_types) {
+    void type_register_private::register_base_class_info(type_private::type_data<type> *info) noexcept {
+        for (auto &base: info->my_class_data.base_types) {
             if (base.type_data_) {
-                base.type_data_->my_class_data.derived_types->emplace_back(rettr::type{info});
+                base.type_data_->my_class_data.derived_types.emplace_back(rettr::type{info});
             }
         }
     }
@@ -107,7 +107,7 @@ namespace rettr::implements {
         if (it == type_id_to_type_.end()) {
             return false;
         }
-        it->second.type_data_->my_class_data.ctors->emplace_back(*ctor);
+        it->second.type_data_->my_class_data.ctors.emplace_back(*ctor);
         return true;
     }
 
@@ -120,7 +120,7 @@ namespace rettr::implements {
         if (it == type_id_to_type_.end()) {
             return false;
         }
-        *it->second.type_data_->my_class_data.dtor = *dtor;
+        it->second.type_data_->my_class_data.dtor = *dtor;
         return true;
     }
 
@@ -134,8 +134,8 @@ namespace rettr::implements {
         if (it == type_id_to_type_.end()) {
             return false;
         }
-        it->second.type_data_->my_class_data.properties->emplace_back(*prop);
-        update_class_list(t, &type_private::class_data::properties);
+        it->second.type_data_->my_class_data.properties.emplace_back(*prop);
+        update_class_list(t, &type_private::class_data<>::properties);
         return true;
     }
 
@@ -172,8 +172,8 @@ namespace rettr::implements {
         if (it == type_id_to_type_.end()) {
             return false;
         }
-        it->second.type_data_->my_class_data.methods->emplace_back(*meth);
-        update_class_list(t, &type_private::class_data::methods);
+        it->second.type_data_->my_class_data.methods.emplace_back(*meth);
+        update_class_list(t, &type_private::class_data<>::methods);
         return true;
     }
 
@@ -293,12 +293,56 @@ namespace rettr::implements {
         if (derived.empty() || base.empty()) {
             return false;
         }
-        std::lock_guard<std::mutex> lock(mutex_);
-        derived.type_data_->my_class_data.base_types->emplace_back(base);
-        base.type_data_->my_class_data.derived_types->emplace_back(derived);
 
-        update_class_list(derived, &type_private::class_data::properties);
-        update_class_list(derived, &type_private::class_data::methods);
+        if (derived == base) {
+            return false;
+        }
+
+        std::lock_guard<std::mutex> lock(mutex_);
+
+        auto &derived_class_data = derived.type_data_->my_class_data;
+        auto &base_class_data    = base.type_data_->my_class_data;
+
+        auto it = std::find_if(
+            derived_class_data.base_types.begin(),
+            derived_class_data.base_types.end(),
+            [&base](const rettr::type &t) {
+                return t == base;
+            }
+        );
+        if (it != derived_class_data.base_types.end()) {
+            return false;
+        }
+
+        derived_class_data.base_types.emplace_back(base);
+        std::sort(
+            derived_class_data.base_types.begin(),
+            derived_class_data.base_types.end(),
+            [](const rettr::type &lhs, const rettr::type &rhs) {
+                return lhs.id() < rhs.id();
+            }
+        );
+
+        auto it2 = std::find_if(
+            base_class_data.derived_types.begin(),
+            base_class_data.derived_types.end(),
+            [&derived](const rettr::type &t) {
+                return t == derived;
+            }
+        );
+        if (it2 == base_class_data.derived_types.end()) {
+            base_class_data.derived_types.emplace_back(derived);
+            std::sort(
+                base_class_data.derived_types.begin(),
+                base_class_data.derived_types.end(),
+                [](const rettr::type &lhs, const rettr::type &rhs) {
+                    return lhs.id() < rhs.id();
+                }
+            );
+        }
+
+        update_class_list(derived, &type_private::class_data<>::properties);
+        update_class_list(derived, &type_private::class_data<>::methods);
 
         return true;
     }
@@ -310,7 +354,7 @@ namespace rettr::implements {
                 continue;
             }
             auto &derived = base.type_data_->my_class_data.derived_types;
-            derived->erase(std::remove(derived->begin(), derived->end(), t), derived->end());
+            derived.erase(std::remove(derived.begin(), derived.end(), t), derived.end());
         }
     }
 
@@ -321,7 +365,7 @@ namespace rettr::implements {
                 continue;
             }
             auto &bases = derived.type_data_->my_class_data.base_types;
-            bases->erase(std::remove(bases->begin(), bases->end(), t), bases->end());
+            bases.erase(std::remove(bases.begin(), bases.end(), t), bases.end());
         }
     }
 
@@ -341,7 +385,7 @@ namespace rettr::implements {
         return global_methods_;
     }
 
-    std::vector<type_private::type_data *> &type_register_private::get_type_data_storage() noexcept {
+    std::vector<type_private::type_data<type> *> &type_register_private::get_type_data_storage() noexcept {
         return type_data_storage_;
     }
 
@@ -359,13 +403,13 @@ namespace rettr::implements {
 
     template <typename Ty>
     void type_register_private::update_class_list(const type &t, Ty item_ptr) {
-        auto &all_class_items = *(t.type_data_->my_class_data.*item_ptr);
+        auto &all_class_items = (t.type_data_->my_class_data.*item_ptr);
         auto item_range = items_for_type(t, all_class_items);
         helper::remove_cvref_t<decltype(all_class_items)> item_vec(item_range.begin(), item_range.end());
         all_class_items.reserve(all_class_items.size() + 1);
         all_class_items.clear();
         for (const auto &base_type: t.base_classes()) {
-            auto base_properties = items_for_type(base_type, *(base_type.type_data_->my_class_data.*item_ptr));
+            auto base_properties = items_for_type(base_type, (base_type.type_data_->my_class_data.*item_ptr));
             if (base_properties.empty()) {
                 continue;
             }
@@ -441,11 +485,11 @@ namespace rettr::implements {
         type_register_private::get_instance().unregister_reg_manager(manager);
     }
 
-    type_private::type_data *type_register::register_type(type_private::type_data *info) noexcept {
+    type_private::type_data<type> *type_register::register_type(type_private::type_data<type> *info) noexcept {
         return type_register_private::get_instance().register_type(info);
     }
 
-    void type_register::unregister_type(type_private::type_data *info) noexcept {
+    void type_register::unregister_type(type_private::type_data<type> *info) noexcept {
         type_register_private::get_instance().unregister_type(info);
     }
 }

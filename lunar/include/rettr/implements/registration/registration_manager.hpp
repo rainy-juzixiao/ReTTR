@@ -39,7 +39,7 @@ namespace rettr::implements {
         registration_manager(const registration_manager &) = delete;
         registration_manager &operator=(const registration_manager &) = delete;
 
-        type_private::type_data *add_item(std::unique_ptr<type_private::type_data> obj) {
+        type_private::type_data<type> *add_item(std::unique_ptr<type_private::type_data<type>> obj) {
             auto *reg_type = type_register::register_type(obj.get());
             if (reg_type == obj.get()) {
                 type_data_list_.push_back(std::move(obj));
@@ -113,7 +113,7 @@ namespace rettr::implements {
 
     private:
         bool should_unregister_{true};
-        std::vector<std::unique_ptr<type_private::type_data>> type_data_list_;
+        std::vector<std::unique_ptr<type_private::type_data<type>>> type_data_list_;
         std::vector<constructor> constructors_;
         std::vector<destructor> destructors_;
         std::vector<property> properties_;

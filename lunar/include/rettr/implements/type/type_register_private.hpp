@@ -36,8 +36,8 @@ namespace rettr::implements {
         void register_reg_manager(registration_manager *manager) noexcept;
         void unregister_reg_manager(registration_manager *manager) noexcept;
 
-        type_private::type_data *register_type(type_private::type_data *info) noexcept;
-        void unregister_type(type_private::type_data *info) noexcept;
+        type_private::type_data<type> *register_type(type_private::type_data<type> *info) noexcept;
+        void unregister_type(type_private::type_data<type> *info) noexcept;
 
         bool register_constructor(const constructor *ctor) noexcept;
         bool register_destructor(const destructor *dtor) noexcept;
@@ -69,7 +69,7 @@ namespace rettr::implements {
         std::vector<rettr::property> &get_global_properties() noexcept;
         std::vector<rettr::method> &get_global_methods() noexcept;
 
-        std::vector<type_private::type_data *> &get_type_data_storage() noexcept;
+        std::vector<type_private::type_data<type> *> &get_type_data_storage() noexcept;
         std::vector<rettr::type> &get_type_storage() noexcept;
 
         std::unordered_map<rettr::typeinfo, rettr::type> &get_orig_name_to_id() noexcept;
@@ -81,9 +81,9 @@ namespace rettr::implements {
         type_register_private();
         ~type_register_private() = default;
 
-        type_private::type_data *register_id_if_necessary(type_private::type_data *info) noexcept;
+        type_private::type_data<type> *register_id_if_necessary(type_private::type_data<type> *info) noexcept;
 
-        static void register_base_class_info(type_private::type_data *info) noexcept;
+        static void register_base_class_info(type_private::type_data<type> *info) noexcept;
 
         void update_custom_name(std::string new_name, const rettr::type &t) noexcept;
 
@@ -98,7 +98,7 @@ namespace rettr::implements {
         std::unordered_map<std::string, rettr::type> custom_name_to_id_;
         std::unordered_map<rettr::typeinfo, rettr::type> type_id_to_type_;
         std::vector<rettr::type> type_list_;
-        std::vector<type_private::type_data *> type_data_storage_;
+        std::vector<type_private::type_data<type> *> type_data_storage_;
         std::multimap<string_view, rettr::property> global_property_storage_;
         std::multimap<string_view, rettr::method> global_method_storage_;
         std::vector<rettr::property> global_properties_;

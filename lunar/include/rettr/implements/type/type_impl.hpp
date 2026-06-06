@@ -15,14 +15,23 @@
  */
 #ifndef RETTR_IMPLEMENTS_TYPE_TYPE_IMPL_HPP
 #define RETTR_IMPLEMENTS_TYPE_TYPE_IMPL_HPP
-#include <rettr/implements/type/type_data.hpp>
 #include <rettr/implements/registration/registration_manager.hpp>
+#include <rettr/implements/type/type_data.hpp>
+
+namespace rettr::implements {
+    template <typename Ty, typename = void>
+    struct has_reflect_this_func : std::false_type {};
+
+    template <typename Ty>
+    struct has_reflect_this_func<Ty, std::void_t<decltype(std::declval<Ty>().reflect_this())>> : std::true_type {};
+}
 
 namespace rettr::implements::type_private {
     template <typename T>
     using is_complete_type = std::integral_constant<bool, !std::is_function<T>::value && !std::is_same<T, void>::value>;
 
-    RETTR_INLINE type create_type(type_data* data) noexcept {
+    template <typename Type>
+    RETTR_INLINE type create_type(type_data<Type> *data) noexcept {
         return data ? type(data) : type();
     }
 
@@ -31,19 +40,73 @@ namespace rettr::implements::type_private {
         if constexpr (is_complete_type<T>::value) {
             using type_must_be_complete = char[sizeof(T) ? 1 : -1];
             (void) sizeof(type_must_be_complete);
-            static const type val = create_type(get_registration_manager().add_item(make_type_data<T>()));
+            static const type val = create_type(get_registration_manager().add_item(make_type_data<T, type>()));
             return val;
         } else {
-            static const type val = create_type(get_registration_manager().add_item(make_type_data<T>()));
+            static const type val = create_type(get_registration_manager().add_item(make_type_data<T, type>()));
             return val;
         }
+    }
+}
+
+namespace rettr::implements::type_private {
+    template <typename T, bool>
+    struct type_from_instance;
+
+    template <typename T>
+    struct type_from_instance<T, false> {
+        static RETTR_INLINE type invoke(T &&) noexcept {
+            using non_ref_type = std::remove_cv_t<std::remove_reference_t<T>>;
+            return create_or_get_type<non_ref_type>();
+        }
+    };
+
+    template <typename T>
+    struct type_from_instance<T, true> {
+        static RETTR_INLINE type invoke(T &&object) noexcept {
+            return object.reflect_this();
+        }
+    };
+}
+
+namespace rettr::implements::type_private {
+    template <typename Ty, typename Type>
+    RETTR_LOCAL_API std::unique_ptr<type_private::type_data<Type>> make_type_data() {
+        auto obj = std::make_unique<type_private::type_data<Type>>(
+            /* raw_type_data       = */ raw_type_info<Ty>::extract().type_data_,
+            /* array_raw_type      = */ array_raw_type<Ty>::extract().type_data_,
+            /* pointer_dimension   = */ helper::pointer_rank_v<Ty>,
+            /* type_info           = */ typeinfo::create<Ty>(),
+            /* enumeration_data    = */ nullptr,
+            /* valid               = */ true,
+            /* my_class_data       = */ class_data<type>{std::vector<type>(template_arguments<struct invalid_type>::extract())},
+            /* metadata            = */ &metadata_func_impl<Ty>);
+        return obj;
+    }
+
+    template <typename Type>
+    RETTR_LOCAL_API RETTR_INLINE struct type_data<Type> *invalid_type_data() noexcept {
+        static auto obj = std::make_unique<struct type_data<Type>>(
+            /* raw_type_data       = */ nullptr,
+            /* array_raw_type      = */ nullptr,
+            /* pointer_dimension   = */ 0,
+            /* type_info           = */ typeinfo::create<struct invalid_type>(),
+            /* enumeration_data    = */ nullptr,
+            /* valid               = */ false,
+            /* my_class_data       = */
+            class_data{std::vector<type>(template_arguments<struct invalid_type>::extract())},
+            /* metadata            = */ nullptr);
+        obj->array_raw_type = obj.get();
+        obj->raw_type_data = obj.get();
+        return obj.get();
     }
 }
 
 namespace rettr {
     RETTR_INLINE type::type() noexcept = default;
 
-    RETTR_INLINE type::type(implements::type_private::type_data *data) noexcept : type_data_(data) {
+    template <typename Type>
+    RETTR_INLINE type::type(implements::type_private::type_data<Type> *data) noexcept : type_data_(data) {
     }
 
     RETTR_INLINE type::type(const type &right) noexcept = default;
@@ -73,7 +136,10 @@ namespace rettr {
     }
 
     RETTR_INLINE bool type::empty() const noexcept {
-        return !type_data_ || !type_data_->valid;
+        if (!type_data_) {
+            return true;
+        }
+        return !type_data_->valid;
     }
 
     RETTR_INLINE type::operator bool() const noexcept {
@@ -106,7 +172,9 @@ namespace rettr {
 
     template <typename Ty>
     type type::from(Ty &&object) noexcept {
-        return type::from<std::decay_t<Ty>>();
+        using remove_ref = std::remove_reference_t<Ty>;
+        return implements::type_private::type_from_instance < Ty,
+               implements::has_reflect_this_func<Ty>::value && !std::is_pointer_v < remove_ref >> ::invoke(std::forward<Ty>(object));
     }
 
     RETTR_INLINE type type::from_typeid(const typeinfo &ti) noexcept {
@@ -139,14 +207,14 @@ namespace rettr {
         if (empty()) {
             return false;
         }
-        return !type_data_->my_class_data.template_arguments_types->empty();
+        return !type_data_->my_class_data.template_arguments_types.empty();
     }
 
     RETTR_INLINE array_range<type> type::template_arguments() const noexcept {
         if (empty()) {
             return {};
         }
-        auto &args = *type_data_->my_class_data.template_arguments_types;
+        auto &args = type_data_->my_class_data.template_arguments_types;
         return {args.data(), args.size()};
     }
 
@@ -234,7 +302,7 @@ namespace rettr {
         if (empty() || base.empty()) {
             return false;
         }
-        auto &bases = *type_data_->my_class_data.base_types;
+        auto &bases = type_data_->my_class_data.base_types;
         for (auto &b: bases) {
             if (b == base) {
                 return true;
@@ -256,46 +324,22 @@ namespace rettr {
 
     template <typename... Args>
     any type::invoke(string_view name, object_view instance, Args &&...args) const {
-        if (empty()) {
-            return {};
-        }
-        constexpr bool has_dynamic =
-            (implements::is_dynamic_object<Args> || ...) || helper::is_any_of_v<object_view, std::decay_t<Args>...>;
-        if constexpr (has_dynamic) {
-            const auto meth = this->method(name, implements::make_paramlist<sizeof...(Args)>(std::forward<Args>(args)...)).get();
-            if (meth.empty()) {
-                return {};
-            }
-            return meth.invoke(instance, std::forward<Args>(args)...);
-        } else {
-            const auto meth = this->method(name, implements::make_nondynamic_paramlist<Args...>{}.get());
-            if (meth.empty()) {
-                return {};
-            }
-            return meth.invoke(instance, std::forward<Args>(args)...);
-        }
+        return invoke_helper<false>(name, instance, std::forward<Args>(args)...);
+    }
+
+    template <typename... Args>
+    any type::invoke(follow_cpp_rule_tag, string_view name, object_view instance, Args &&...args) const {
+        return invoke_helper<true>(name, instance, std::forward<Args>(args)...);
     }
 
     template <typename... Args>
     any type::invoke(static_invoke_tag, string_view name, Args &&...args) const {
-        if (empty()) {
-            return {};
-        }
-        constexpr bool has_dynamic =
-            (implements::is_dynamic_object<Args> || ...) || helper::is_any_of_v<object_view, std::decay_t<Args>...>;
-        if constexpr (has_dynamic) {
-            const auto meth = this->method(name, implements::make_paramlist<sizeof...(Args)>(std::forward<Args>(args)...)).get();
-            if (meth.empty()) {
-                return {};
-            }
-            return meth.static_invoke(std::forward<Args>(args)...);
-        } else {
-            const auto meth = this->method(name, implements::make_nondynamic_paramlist<Args...>{}.get());
-            if (meth.empty()) {
-                return {};
-            }
-            return meth.static_invoke(std::forward<Args>(args)...);
-        }
+        return static_invoke_helper<false>(name, std::forward<Args>(args)...);
+    }
+
+    template <typename... Args>
+    any type::invoke(static_invoke_tag, follow_cpp_rule_tag, string_view name, Args &&...args) const {
+        return static_invoke_helper<true>(name, std::forward<Args>(args)...);
     }
 
     template <typename... Args>
@@ -318,21 +362,131 @@ namespace rettr {
         }
     }
 
+    template <bool FollowCppRule, typename... Args>
+    any type::invoke_helper(string_view name, object_view instance, Args &&...args) const {
+        if (empty()) {
+            return {};
+        }
+        auto flag = method_flags::memfn_specified;
+        if (instance.type().has_traits(traits::is_const)) {
+            flag = flag | method_flags::const_qualified;
+        }
+        if (instance.type().has_traits(traits::is_volatile)) {
+            flag = flag | method_flags::volatile_qualified;
+        }
+        if (instance.type().has_traits(traits::is_rref)) {
+            flag = flag | method_flags::rvalue_qualified;
+        }
+        constexpr bool has_dynamic =
+            (implements::is_dynamic_object<Args> || ...) || helper::is_any_of_v<object_view, std::decay_t<Args>...>;
+        if constexpr (has_dynamic) {
+            if constexpr (FollowCppRule) {
+                const auto meth = this->method(follow_cpp_rule, name,
+                                               implements::make_paramlist<sizeof...(Args)>(std::forward<Args>(args)...).get(), flag);
+                if (meth.empty()) {
+                    return {};
+                }
+                return meth.invoke(instance, std::forward<Args>(args)...);
+            } else {
+                const auto meth =
+                    this->method(name, implements::make_paramlist<sizeof...(Args)>(std::forward<Args>(args)...).get(), flag);
+                if (meth.empty()) {
+                    return {};
+                }
+                return meth.invoke(instance, std::forward<Args>(args)...);
+            }
+        } else {
+            if constexpr (FollowCppRule) {
+                const auto meth = this->method(follow_cpp_rule, name, implements::make_nondynamic_paramlist<Args...>{}.get(), flag);
+                if (meth.empty()) {
+                    return {};
+                }
+                return meth.invoke(instance, std::forward<Args>(args)...);
+            } else {
+                const auto meth = this->method(name, implements::make_nondynamic_paramlist<Args...>{}.get(), flag);
+                if (meth.empty()) {
+                    return {};
+                }
+                return meth.invoke(instance, std::forward<Args>(args)...);
+            }
+        }
+    }
+
+    template <bool IgnoreCppRule, typename... Args>
+    any type::static_invoke_helper(string_view name, Args &&...args) const {
+        if (empty()) {
+            return {};
+        }
+        constexpr bool has_dynamic =
+            (implements::is_dynamic_object<Args> || ...) || helper::is_any_of_v<object_view, std::decay_t<Args>...>;
+        if constexpr (has_dynamic) {
+            if constexpr (IgnoreCppRule) {
+                const auto meth =
+                    this->method(follow_cpp_rule, name, implements::make_paramlist<sizeof...(Args)>(std::forward<Args>(args)...).get(),
+                                 method_flags::none);
+                if (meth.empty()) {
+                    return {};
+                }
+                return meth.static_invoke(std::forward<Args>(args)...);
+            } else {
+                const auto meth = this->method(name, implements::make_paramlist<sizeof...(Args)>(std::forward<Args>(args)...).get(),
+                                               method_flags::none);
+                if (meth.empty()) {
+                    return {};
+                }
+                return meth.static_invoke(std::forward<Args>(args)...);
+            }
+        } else {
+            if constexpr (IgnoreCppRule) {
+                const auto meth = this->method(follow_cpp_rule, name, implements::make_nondynamic_paramlist<Args...>{}.get(),
+                                               method_flags::none, IgnoreCppRule);
+                if (meth.empty()) {
+                    return {};
+                }
+                return meth.static_invoke(std::forward<Args>(args)...);
+            } else {
+                const auto meth = this->method(name, implements::make_nondynamic_paramlist<Args...>{}.get(), method_flags::none);
+                if (meth.empty()) {
+                    return {};
+                }
+                return meth.static_invoke(std::forward<Args>(args)...);
+            }
+        }
+    }
+
     template <typename... Args>
     RETTR_NODISCARD any type::create(Args &&...args) const {
         if (!this->type_data_) {
             return {};
         }
         constexpr bool has_dynamic =
-          (implements::is_dynamic_object<Args> || ...) || helper::is_any_of_v<object_view, std::decay_t<Args>...>;
+            (implements::is_dynamic_object<Args> || ...) || helper::is_any_of_v<object_view, std::decay_t<Args>...>;
         if constexpr (has_dynamic) {
-            const auto ctor =
-                type::constructor(implements::make_paramlist<sizeof...(Args)>(std::forward<Args>(args)...)).get();
+            const auto ctor = type::constructor(implements::make_paramlist<sizeof...(Args)>(std::forward<Args>(args)...)).get();
             return ctor.construct(std::forward<Args>(args)...);
         } else {
             const auto ctor = type::constructor(implements::make_nondynamic_paramlist<Args...>{}.get());
             return ctor.construct(std::forward<Args>(args)...);
         }
+    }
+}
+
+namespace rettr {
+    inline const rettr::method &type::method(const string_view name) const noexcept {
+        static const rettr::method empty;
+        if (rettr_unlikely(this->empty())) {
+            return empty;
+        }
+        const auto raw_t = get_raw_type();
+
+        const auto &vec = raw_t.type_data_->my_class_data.methods;
+
+        if (const auto ret = std::find_if(vec.rbegin(), vec.rend(), [name](const rettr::method &item) { return item.name() == name; });
+            ret != vec.rend()) {
+            return *ret;
+        }
+
+        return empty;
     }
 }
 
