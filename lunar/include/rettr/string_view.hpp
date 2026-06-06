@@ -632,6 +632,10 @@ namespace rettr {
             return result;
         }
 
+        operator std::basic_string_view<value_type, traits_type> () const noexcept {
+            return {data(), size()};
+        }
+
     private:
         static constexpr bool equal_(CharType const *begin, CharType const *end, CharType const *first,
                                      CharType const *last) noexcept {
