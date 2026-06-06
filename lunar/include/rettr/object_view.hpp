@@ -138,6 +138,8 @@ namespace rettr::implements {
                 volatile auto *ptr = &arg;
                 void *addr = const_cast<void *>(static_cast<const volatile void *>(ptr));
                 return object_view{implements::as_array{}, addr, typeinfo::of<std::decay_t<Ty>>()};
+            } else if constexpr (std::is_function_v<std::remove_pointer_t<std::remove_reference_t<Ty>>>) {
+                return object_view{const_cast<void *>(reinterpret_cast<const void *>(&arg)), typeinfo::of<std::remove_reference_t<Ty>>()};
             } else if constexpr (helper::is_pointer_reference_v<Ty>) { // NOLINT
                 return object_view{implements::as_reference{}, const_cast<void *>(static_cast<const void *>(&arg)),
                                    typeinfo::of<Ty>()};
@@ -174,6 +176,8 @@ namespace rettr::implements {
         static class typeinfo make_paramlist_helper(Ty &&arg) noexcept {
             if constexpr (std::is_array_v<std::remove_reference_t<Ty>>) {
                 return typeinfo::of<std::decay_t<Ty>>();
+            } else if constexpr (std::is_function_v<std::remove_pointer_t<std::remove_reference_t<Ty>>>) {
+                return typeinfo::of<std::remove_reference_t<Ty>>();
             } else if constexpr (helper::is_pointer_reference_v<Ty>) { // NOLINT
                 return typeinfo::of<Ty>();
             } else if constexpr (std::is_pointer_v<Ty>) {
@@ -208,6 +212,8 @@ namespace rettr::implements {
         static class typeinfo make_paramlist_helper() noexcept {
             if constexpr (std::is_array_v<std::remove_reference_t<Ty>>) {
                 return typeinfo::of<std::decay_t<Ty>>();
+            } else if constexpr (std::is_function_v<std::remove_pointer_t<std::remove_reference_t<Ty>>>) {
+                return typeinfo::of<std::remove_reference_t<Ty>>();
             } else if constexpr (helper::is_pointer_reference_v<Ty>) { // NOLINT
                 return typeinfo::of<Ty>();
             } else if constexpr (std::is_pointer_v<Ty>) {
