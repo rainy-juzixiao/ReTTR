@@ -16,20 +16,18 @@
 #ifndef RETTR_BIND_TYPES_HPP
 #define RETTR_BIND_TYPES_HPP
 
-namespace rettr {
-    namespace implements {
-        struct ctor {};
+namespace rettr::implements {
+    struct ctor {};
 
-        struct ctor_func {};
+    struct ctor_func {};
 
-        struct prop {};
+    struct prop {};
 
-        struct prop_readonly {};
+    struct prop_readonly {};
 
-        struct meth {};
+    struct meth {};
 
-        struct enum_ {};
-    }
+    struct enum_ {};
 }
 
 #endif

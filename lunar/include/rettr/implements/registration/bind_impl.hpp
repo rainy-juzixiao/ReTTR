@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef RETTR_IMPLEMENTS_PARAMETER_INFO_IMPL_HPP
-#define RETTR_IMPLEMENTS_PARAMETER_INFO_IMPL_HPP
+#ifndef RETTR_IMPLEMENTS_REGISTRATION_BIND_IMPL_HPP
+#define RETTR_IMPLEMENTS_REGISTRATION_BIND_IMPL_HPP
 
 #include <rettr/constructor.hpp>
 #include <rettr/implements/binder/constructor.hpp>
@@ -22,6 +22,7 @@
 #include <rettr/implements/binder/method.hpp>
 #include <rettr/implements/binder/property.hpp>
 #include <rettr/implements/registration/bind_types.hpp>
+#include <rettr/implements/registration/register_base_class_from_accessor.hpp>
 #include <rettr/registration.hpp>
 
 namespace rettr::implements {
@@ -143,6 +144,7 @@ namespace rettr {
                                                       });
                                                   }},
             reg_exec_(std::move(reg_exec)) {
+            implements::register_accessor_class_type_when_needed<Clazz, Acc>();
             reg_exec_->add_registration_func(static_cast<const void *>(this));
         }
 
@@ -178,6 +180,7 @@ namespace rettr {
                                                      [p = std::move(prop)]() mutable { implements::store_item<Clazz>(std::move(p)); });
                 }},
             reg_exec_(std::move(reg_exec)) {
+            implements::register_accessor_class_type_when_needed<Clazz, Acc>();
             reg_exec_->add_registration_func(static_cast<const void *>(this), [] {});
         }
 
@@ -213,6 +216,7 @@ namespace rettr {
                                                   [m = std::move(meth)]() mutable { implements::store_item<Clazz>(std::move(m)); });
                                           }},
             reg_exec_(std::move(reg_exec)) {
+            implements::register_accessor_class_type_when_needed<Clazz, Func>();
             reg_exec_->add_registration_func(static_cast<const void *>(this));
         }
 
