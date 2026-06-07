@@ -1068,7 +1068,7 @@ struct std::hash<rettr::typeinfo> {
 };
 
 namespace rettr::implements {
-    using converter_func = void *(*)(void *);
+    using converter_func = void *(*) (void *);
 
     struct conversion_key {
         std::size_t source_hash;
@@ -1084,8 +1084,8 @@ namespace rettr::implements {
         }
     };
 
-    using conversion_map_t  = std::unordered_map<conversion_key, converter_func, conversion_key_hash>;
-    using adjacency_map_t   = std::unordered_map<std::size_t, std::vector<std::pair<std::size_t, converter_func>>>;
+    using conversion_map_t = std::unordered_map<conversion_key, converter_func, conversion_key_hash>;
+    using adjacency_map_t = std::unordered_map<std::size_t, std::vector<std::pair<std::size_t, converter_func>>>;
 
     RETTR_INLINE conversion_map_t &get_conversion_map() {
         static conversion_map_t instance;
@@ -1104,41 +1104,30 @@ namespace rettr::implements {
 
     RETTR_INLINE converter_func find_converter(const std::size_t src, const std::size_t tgt) {
         auto &map = get_conversion_map();
-        if (const auto it = map.find(conversion_key{src, tgt}); it != map.end())
+        if (const auto it = map.find(conversion_key{src, tgt}); it != map.end()) {
             return it->second;
+        }
         return nullptr;
     }
 }
 
 namespace rettr::implements {
-    template<typename Derived, typename Base>
+    template <typename Derived, typename Base>
     void register_base() {
         static_assert(std::is_base_of_v<Base, Derived>, "Base must be base of Derived");
 
         // Derived* → Base*（upcast，永远安全）
-        implements::register_conversion(
-            typeinfo::get_type_hash<Derived>(),
-            typeinfo::get_type_hash<Base>(),
-            [](void *ptr) -> void * {
-                return static_cast<Base *>(static_cast<Derived *>(ptr));
-            });
+        implements::register_conversion(typeinfo::get_type_hash<Derived>(), typeinfo::get_type_hash<Base>(),
+                                        [](void *ptr) -> void * { return static_cast<Base *>(static_cast<Derived *>(ptr)); });
 
         // Base* → Derived*（downcast，仅多态类型）
         if constexpr (std::is_polymorphic_v<Base>) {
-            implements::register_conversion(
-                typeinfo::get_type_hash<Base>(),
-                typeinfo::get_type_hash<Derived>(),
-                [](void *ptr) -> void * {
-                    return dynamic_cast<Derived *>(static_cast<Base *>(ptr));
-                });
+            implements::register_conversion(typeinfo::get_type_hash<Base>(), typeinfo::get_type_hash<Derived>(),
+                                            [](void *ptr) -> void * { return dynamic_cast<Derived *>(static_cast<Base *>(ptr)); });
         }
     }
 
-    RETTR_INLINE void *apply_offset(
-        void                  *ptr,
-        const rettr::typeinfo &source,
-        const rettr::typeinfo &target)
-    {
+    RETTR_INLINE void *apply_offset(void *ptr, const rettr::typeinfo &source, const rettr::typeinfo &target) {
         if (!ptr || source.hash_code() == target.hash_code()) {
             return ptr;
         }
@@ -1162,16 +1151,19 @@ namespace rettr::implements {
                 continue;
             }
 
-            for (auto &[next_hash, fn] : it->second) {
-                if (visited.count(next_hash))
+            for (auto &[next_hash, fn]: it->second) {
+                if (visited.count(next_hash)) {
                     continue;
+                }
 
                 void *next_ptr = fn(cur_ptr);
-                if (!next_ptr)
+                if (!next_ptr) {
                     continue;
+                }
 
-                if (next_hash == target.hash_code())
+                if (next_hash == target.hash_code()) {
                     return next_ptr;
+                }
 
                 visited.insert(next_hash);
                 queue.push({next_hash, next_ptr});
