@@ -93,7 +93,7 @@ namespace rettr::implements::type_private {
     struct template_arguments_impl<helper::type_list<Types...>, Type> {
         static std::vector<Type> extract_impl() {
             std::vector<Type> types ={
-                Type::template from<Types>...
+                Type::template from<Types>()...
             };
             return types;
         }
