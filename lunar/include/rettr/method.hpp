@@ -23,6 +23,8 @@
 #include <unordered_map>
 #include <vector>
 
+RETTR_MSVC_WARNING_DISABLE_C4251_BEGIN
+
 namespace rettr {
     class RETTR_API method : function {
     public:
@@ -127,5 +129,7 @@ namespace rettr {
         friend class implements::method_bind;
     };
 }
+
+RETTR_MSVC_WARNING_DISABLE_C4251_END
 
 #endif

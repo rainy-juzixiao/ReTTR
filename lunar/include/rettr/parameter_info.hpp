@@ -17,6 +17,8 @@
 #define RETTR_PARAMETER_INFO_HPP
 #include <rettr/implements/parameter_info/parameter_info_base.hpp>
 
+RETTR_MSVC_WARNING_DISABLE_C4251_BEGIN
+
 namespace rettr {
     class RETTR_API parameter_info {
     public:
@@ -50,4 +52,7 @@ namespace rettr {
         const implements::parameter_info_base *base_{nullptr};
     };
 }
+
+RETTR_MSVC_WARNING_DISABLE_C4251_END
+
 #endif

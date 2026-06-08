@@ -35,7 +35,10 @@ endif ()
 if (RETTR_BUILD_WITH_DYNAMIC AND NOT RETTR_USE_CROSSCOMPILE)
     message("Build dynamic library target")
     add_library(rettr SHARED ${RETTR_FILES_LIST})
-    set_target_properties(rettr PROPERTIES OUTPUT_NAME ${rettr_libraryname})
+    set_target_properties(rettr PROPERTIES 
+        OUTPUT_NAME ${rettr_libraryname}
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/rettr_project
+    )
     target_compile_definitions(rettr PRIVATE RETTR_DYNAMIC_EXPORTS=1)
     target_compile_definitions(rettr PUBLIC RETTR_USING_DYNAMIC=1)    
 else ()

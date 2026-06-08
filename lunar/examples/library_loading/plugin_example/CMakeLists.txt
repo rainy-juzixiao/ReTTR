@@ -26,9 +26,9 @@ set_target_properties(plugin_example PROPERTIES
         DEBUG_POSTFIX "_d"
         "Examples/library_loading"
         CXX_STANDARD ${MAX_CXX_STANDARD}
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
-        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
-        ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/rettr_project
+        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/rettr_project
+        ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/rettr_project)
 
 if (CMAKE_COMPILER_IS_GNUCXX)
     target_compile_options(plugin_example PRIVATE "-fno-gnu-unique") # 不要省略该编译选项！否则，卸载机制将会失效

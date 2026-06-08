@@ -591,4 +591,16 @@ namespace rettr::annotations {
 
 #endif
 
+#if RETTR_USING_MSVC
+
+#define RETTR_MSVC_WARNING_DISABLE_C4251_BEGIN __pragma(warning(push)) __pragma(warning(disable:4251))
+#define RETTR_MSVC_WARNING_DISABLE_C4251_END __pragma(warning(pop))
+
+#else
+
+#define RETTR_MSVC_WARNING_DISABLE_C4251_BEGIN
+#define RETTR_MSVC_WARNING_DISABLE_C4251_END
+
+#endif
+
 #endif

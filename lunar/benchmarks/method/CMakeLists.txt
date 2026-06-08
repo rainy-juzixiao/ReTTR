@@ -32,5 +32,9 @@ set_target_properties(bench_method PROPERTIES
         DEBUG_POSTFIX "_d"
         "Benchmarks/bench_method"
         CXX_STANDARD ${MAX_CXX_STANDARD}
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/rettr_project
 )
+
+if (COMPILER_ID MATCHES "MSVC")
+    target_compile_options(bench_method PRIVATE /bigobj) # 确保可以被编译
+endif ()

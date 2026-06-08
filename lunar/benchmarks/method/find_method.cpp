@@ -3,19 +3,14 @@
 #include <rettr/rettr.hpp>
 #include "methods.h"
 
-void unit_1(ankerl::nanobench::Bench bench) {
-    {
-        ns_foo::method_class_d_1 obj_1;
-        ns_foo::method_class& obj_base = obj_1;
-        volatile std::size_t value = 0;
-        rettr::method m = rettr::type::from(nullptr).method("");
-        bench.run("rettr single hierarchy - Lvl. 1", [&]() {
-            if ((m = rettr::type::from(obj_base).method("method_1"))) {
-                value = 1;
-            }
-            ankerl::nanobench::doNotOptimizeAway(value);
-        });
-    }
+template <typename T>
+void DoNotOptimize(T &&arg) {
+#ifdef _MSC_VER
+    volatile auto *ptr = &arg;
+    (void) ptr;
+#else
+    asm volatile("" : : "r,m"(arg) : "memory");
+#endif
 }
 
 void bench_find_method()
@@ -32,11 +27,22 @@ void bench_find_method()
             if (dynamic_cast<ns_foo::method_class_d_1*>(&obj_base)) {
                 value = 1;
             }
-            ankerl::nanobench::doNotOptimizeAway(value);
+            DoNotOptimize(value);
         });
     }
 
-    unit_1(bench);
+    {
+        ns_foo::method_class_d_1 obj_1;
+        ns_foo::method_class &obj_base = obj_1;
+        volatile std::size_t value = 0;
+        rettr::method m = rettr::type::from(nullptr).method("");
+        bench.run("rettr single hierarchy - Lvl. 1", [&]() {
+            if ((m = rettr::type::from(obj_base).method("method_1"))) {
+                value = 1;
+            }
+            DoNotOptimize(value);
+        });
+    }
 
     {
         ns_foo::method_class_d_3 obj_3;
@@ -46,7 +52,7 @@ void bench_find_method()
             if (dynamic_cast<ns_foo::method_class_d_3*>(&obj_base)) {
                 value = 1;
             }
-            ankerl::nanobench::doNotOptimizeAway(value);
+            DoNotOptimize(value);
         });
     }
 
@@ -59,7 +65,7 @@ void bench_find_method()
             if ((m = rettr::type::from(obj_base).method("method_3"))) {
                 value = 1;
             }
-            ankerl::nanobench::doNotOptimizeAway(value);
+            DoNotOptimize(value);
         });
     }
 
@@ -71,7 +77,7 @@ void bench_find_method()
             if (dynamic_cast<ns_foo::method_class_d_6*>(&obj_base)) {
                 value = 1;
             }
-            ankerl::nanobench::doNotOptimizeAway(value);
+            DoNotOptimize(value);
         });
     }
 
@@ -84,7 +90,7 @@ void bench_find_method()
             if ((m = rettr::type::from(obj_base).method("method_6"))) {
                 value = 1;
             }
-            ankerl::nanobench::doNotOptimizeAway(value);
+            DoNotOptimize(value);
         });
     }
 
@@ -96,7 +102,7 @@ void bench_find_method()
             if (dynamic_cast<ns_foo::class_multiple_1C*>(&obj_base)) {
                 value = 1;
             }
-            ankerl::nanobench::doNotOptimizeAway(value);
+            DoNotOptimize(value);
         });
     }
 
@@ -109,7 +115,7 @@ void bench_find_method()
             if ((m = rettr::type::from(obj_base).method("method_13"))) {
                 value = 1;
             }
-            ankerl::nanobench::doNotOptimizeAway(value);
+            DoNotOptimize(value);
         });
     }
 
@@ -121,7 +127,7 @@ void bench_find_method()
             if (dynamic_cast<ns_foo::class_multiple_3C*>(&obj_base)) {
                 value = 1;
             }
-            ankerl::nanobench::doNotOptimizeAway(value);
+            DoNotOptimize(value);
         });
     }
 
@@ -134,7 +140,7 @@ void bench_find_method()
             if ((m = rettr::type::from(obj_base).method("method_15"))) {
                 value = 1;
             }
-            ankerl::nanobench::doNotOptimizeAway(value);
+            DoNotOptimize(value);
         });
     }
 
@@ -146,7 +152,7 @@ void bench_find_method()
             if (dynamic_cast<ns_foo::class_multiple_final*>(&obj_base)) {
                 value = 1;
             }
-            ankerl::nanobench::doNotOptimizeAway(value);
+            DoNotOptimize(value);
         });
     }
 
@@ -159,7 +165,7 @@ void bench_find_method()
             if ((m = rettr::type::from(obj_base).method("method_18"))) {
                 value = 1;
             }
-            ankerl::nanobench::doNotOptimizeAway(value);
+            DoNotOptimize(value);
         });
     }
 
@@ -171,7 +177,7 @@ void bench_find_method()
             if (dynamic_cast<ns_foo::method_class_d_2*>(&obj_base)) {
                 value = 1;
             }
-            ankerl::nanobench::doNotOptimizeAway(value);
+            DoNotOptimize(value);
         });
     }
 
@@ -184,7 +190,7 @@ void bench_find_method()
             if ((m = rettr::type::from(obj_base).method("method_2"))) {
                 value = 1;
             }
-            ankerl::nanobench::doNotOptimizeAway(value);
+            DoNotOptimize(value);
         });
     }
 
@@ -196,7 +202,7 @@ void bench_find_method()
             if (dynamic_cast<ns_foo::method_class_d_4*>(&obj_base)) {
                 value = 1;
             }
-            ankerl::nanobench::doNotOptimizeAway(value);
+            DoNotOptimize(value);
         });
     }
 
@@ -209,7 +215,7 @@ void bench_find_method()
             if ((m = rettr::type::from(obj_base).method("method_4"))) {
                 value = 1;
             }
-            ankerl::nanobench::doNotOptimizeAway(value);
+            DoNotOptimize(value);
         });
     }
 
@@ -221,7 +227,7 @@ void bench_find_method()
             if (dynamic_cast<ns_foo::method_class_d_7*>(&obj_base)) {
                 value = 1;
             }
-            ankerl::nanobench::doNotOptimizeAway(value);
+            DoNotOptimize(value);
         });
     }
 
@@ -234,7 +240,7 @@ void bench_find_method()
             if ((m = rettr::type::from(obj_base).method("method_7"))) {
                 value = 1;
             }
-            ankerl::nanobench::doNotOptimizeAway(value);
+            DoNotOptimize(value);
         });
     }
 
@@ -246,7 +252,7 @@ void bench_find_method()
             if (dynamic_cast<ns_foo::class_multiple_1C*>(&obj_base)) {
                 value = 1;
             }
-            ankerl::nanobench::doNotOptimizeAway(value);
+            DoNotOptimize(value);
         });
     }
 
@@ -259,7 +265,7 @@ void bench_find_method()
             if ((m = rettr::type::from(obj_base).method("method_13"))) {
                 value = 1;
             }
-            ankerl::nanobench::doNotOptimizeAway(value);
+            DoNotOptimize(value);
         });
     }
 
@@ -271,7 +277,7 @@ void bench_find_method()
             if (dynamic_cast<ns_foo::class_multiple_3C*>(&obj_base)) {
                 value = 1;
             }
-            ankerl::nanobench::doNotOptimizeAway(value);
+            DoNotOptimize(value);
         });
     }
 
@@ -284,7 +290,7 @@ void bench_find_method()
             if ((m = rettr::type::from(obj_base).method("method_15"))) {
                 value = 1;
             }
-            ankerl::nanobench::doNotOptimizeAway(value);
+            DoNotOptimize(value);
         });
     }
 
@@ -296,7 +302,7 @@ void bench_find_method()
             if (dynamic_cast<ns_foo::class_multiple_final_D*>(&obj_base)) {
                 value = 1;
             }
-            ankerl::nanobench::doNotOptimizeAway(value);
+            DoNotOptimize(value);
         });
     }
 
@@ -309,7 +315,7 @@ void bench_find_method()
             if ((m = rettr::type::from(obj_base).method("method_19"))) {
                 value = 1;
             }
-            ankerl::nanobench::doNotOptimizeAway(value);
+            DoNotOptimize(value);
         });
     }
 }

@@ -60,14 +60,13 @@ namespace rettr::implements::type_private {
 }
 
 namespace rettr::implements {
+    template <typename Type = type>
     struct base_class_info;
 
     class type_register;
     class type_register_private;
 
-    struct class_data;
-
-    template <typename DerivedClass, typename... T>
+    template <typename Type, typename DerivedClass, typename... T>
     struct RETTR_LOCAL_API type_from_base_classes;
 }
 
@@ -240,10 +239,9 @@ namespace rettr {
         friend class object_view;
         friend class implements::type_register;
         friend class implements::type_register_private;
-        friend struct implements::class_data;
 
-        template <typename DerivedClass, typename... T>
-        friend class implements::type_from_base_classes;
+        template <typename Type, typename DerivedClass, typename... T>
+        friend struct implements::type_from_base_classes;
 
         template <typename Type>
         friend type implements::type_private::create_type(implements::type_private::type_data<Type> *) noexcept;

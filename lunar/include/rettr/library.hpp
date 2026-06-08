@@ -20,6 +20,8 @@
 #include <rettr/core/prerequisites.hpp>
 #include <rettr/string_view.hpp>
 
+RETTR_MSVC_WARNING_DISABLE_C4251_BEGIN
+
 namespace rettr {
     class method;
     class property;
@@ -55,5 +57,7 @@ namespace rettr {
         std::unique_ptr<library_private> private_;
     };
 }
+
+RETTR_MSVC_WARNING_DISABLE_C4251_END
 
 #endif

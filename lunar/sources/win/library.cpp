@@ -44,14 +44,6 @@ static std::vector<std::string> platform_suffixes(const std::string &version) {
     return result;
 }
 
-static bool file_exists(const std::string &path) noexcept {
-    if (auto *file = std::fopen(path.c_str(), "r")) {
-        std::fclose(file);
-        return true;
-    }
-    return false;
-}
-
 static std::string win_error() noexcept {
     DWORD error_code = ::GetLastError();
     if (error_code == 0) {

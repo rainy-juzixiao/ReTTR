@@ -16,7 +16,6 @@
 #ifndef RETTR_RETTR_CAST_HPP
 #define RETTR_RETTR_CAST_HPP
 #include <rettr/core/meta_traits.hpp>
-#include <rettr/implements/type/raw_type.hpp>
 #include <rettr/typeinfo.hpp>
 
 namespace rettr::implements {
@@ -47,6 +46,7 @@ namespace rettr {
         static_assert(
             implements::has_rettr_private_stub_for_this_pointer<arg_type>::value &&
             implements::has_rettr_private_stub_for_type<arg_type>::value &&
+            implements::has_reflect_this_func<arg_type>::value &&
             implements::has_base_class_list<arg_type>::value
             , "Didn't detect the ENABLE_RETTR_CAST stub, Did you define it correctly?");
 
@@ -59,6 +59,10 @@ namespace rettr {
                           (!std::is_const_v<arg_type> && std::is_const_v<return_type>) ||
                           (!std::is_const_v<arg_type> && !std::is_const_v<return_type>),
                       "Return type must have const qualifier");
+
+        {
+            object->reflect_this();
+        }
 
         using source_type_no_cv = std::remove_cv_t<std::remove_pointer_t<SourceType>>;
         return static_cast<TargetType>(implements::apply_offset(const_cast<source_type_no_cv *>(object)->rettr_private_stub_for_this_pointer(),

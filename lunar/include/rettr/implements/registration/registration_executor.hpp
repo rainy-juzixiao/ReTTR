@@ -19,6 +19,8 @@
 #include <functional>
 #include <rettr/core/prerequisites.hpp>
 
+RETTR_MSVC_WARNING_DISABLE_C4251_BEGIN
+
 namespace rettr::implements {
     class RETTR_API registration_executer {
     public:
@@ -34,5 +36,7 @@ namespace rettr::implements {
         register_list list;
     };
 }
+
+RETTR_MSVC_WARNING_DISABLE_C4251_END
 
 #endif

@@ -18,9 +18,9 @@
 
 #include <algorithm>
 #include <rettr/implements/registration/registration_manager.hpp>
+#include <rettr/implements/type/base_classes.hpp>
 #include <rettr/implements/type/type_register.hpp>
 #include <rettr/implements/type/type_register_private.hpp>
-#include <rettr/implements/type/base_classes.hpp>
 #include <rettr/type.hpp>
 
 // NOLINTEND
@@ -63,15 +63,23 @@ namespace rettr::implements {
         if (!info) {
             return nullptr;
         }
-        std::lock_guard<std::mutex> lock(mutex_);
         auto *existing = register_id_if_necessary(info);
         if (existing != info) {
             return existing;
         }
         info->raw_type_data = (!info->raw_type_data || !info->raw_type_data->valid) ? info : info->raw_type_data;
-        type_data_storage_.emplace_back(info);
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            type_data_storage_.emplace_back(info);
+        }
         type_list_.emplace_back(rettr::type{info});
         register_base_class_info(info);
+
+        const auto t = type(info);
+
+        update_class_list(t, &type_private::class_data<>::properties);
+        update_class_list(t, &type_private::class_data<>::methods);
+
         return info;
     }
 
@@ -91,9 +99,24 @@ namespace rettr::implements {
     }
 
     void type_register_private::register_base_class_info(type_private::type_data<type> *info) noexcept {
-        for (auto &base: info->my_class_data.base_types) {
-            if (base.type_data_) {
-                base.type_data_->my_class_data.derived_types.emplace_back(rettr::type{info});
+        auto base_classes = info->ensure_types_is_register();
+        std::unordered_set<type> double_entries;
+        for (auto itr = base_classes.rbegin(); itr != base_classes.rend();) {
+            if (double_entries.find(itr->m_base_type) == double_entries.end()) {
+                double_entries.insert(itr->m_base_type);
+                ++itr;
+            } else {
+                itr = std::vector<base_class_info<>>::reverse_iterator(base_classes.erase((++itr).base()));
+            }
+        }
+
+        if (!base_classes.empty()) {
+            auto &class_data = info->my_class_data;
+            for (const auto &t: base_classes) {
+                class_data.base_types.push_back(t.m_base_type);
+
+                auto r_type = t.m_base_type.get_raw_type();
+                r_type.type_data_->my_class_data.derived_types.push_back(type(info));
             }
         }
     }
@@ -264,7 +287,6 @@ namespace rettr::implements {
     }
 
     void type_register_private::update_custom_name(std::string new_name, const rettr::type &t) noexcept {
-        // 清除旧的 custom name 映射
         std::string old_name;
         for (auto it = custom_name_to_id_.begin(); it != custom_name_to_id_.end(); ++it) {
             if (it->second.type_data_ == t.type_data_) {
@@ -298,47 +320,21 @@ namespace rettr::implements {
             return false;
         }
 
-        std::lock_guard<std::mutex> lock(mutex_);
-
         auto &derived_class_data = derived.type_data_->my_class_data;
-        auto &base_class_data    = base.type_data_->my_class_data;
+        auto &base_class_data = base.type_data_->my_class_data;
 
-        auto it = std::find_if(
-            derived_class_data.base_types.begin(),
-            derived_class_data.base_types.end(),
-            [&base](const rettr::type &t) {
-                return t == base;
-            }
-        );
+        auto it = std::find_if(derived_class_data.base_types.begin(), derived_class_data.base_types.end(),
+                               [&base](const rettr::type &t) { return t == base; });
         if (it != derived_class_data.base_types.end()) {
             return false;
         }
 
         derived_class_data.base_types.emplace_back(base);
-        std::sort(
-            derived_class_data.base_types.begin(),
-            derived_class_data.base_types.end(),
-            [](const rettr::type &lhs, const rettr::type &rhs) {
-                return lhs.id() < rhs.id();
-            }
-        );
 
-        auto it2 = std::find_if(
-            base_class_data.derived_types.begin(),
-            base_class_data.derived_types.end(),
-            [&derived](const rettr::type &t) {
-                return t == derived;
-            }
-        );
+        auto it2 = std::find_if(base_class_data.derived_types.begin(), base_class_data.derived_types.end(),
+                                [&derived](const rettr::type &t) { return t == derived; });
         if (it2 == base_class_data.derived_types.end()) {
             base_class_data.derived_types.emplace_back(derived);
-            std::sort(
-                base_class_data.derived_types.begin(),
-                base_class_data.derived_types.end(),
-                [](const rettr::type &lhs, const rettr::type &rhs) {
-                    return lhs.id() < rhs.id();
-                }
-            );
         }
 
         update_class_list(derived, &type_private::class_data<>::properties);

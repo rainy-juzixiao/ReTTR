@@ -339,17 +339,22 @@ namespace rettr::implements {
             return (... && any_converter<typename helper::type_at<I, typelist>::type>::is_convertible(paramlist[I].type()));
         }
 
+        template <std::size_t Least, typename ParamList, std::size_t... I>
+        static constexpr auto make_dispatch_table(std::index_sequence<I...>) {
+            return std::array<bool (*)(const invoker_accessor_impl *, ParamList &) noexcept, sizeof...(I)>{
+                +[](const invoker_accessor_impl *self, ParamList &pl) noexcept -> bool {
+                    return self->template is_invocable_partial<Least + I>(pl);
+                }...};
+        }
+
         template <typename ParamList>
         bool dispatch_partial(ParamList &paramlist, std::size_t size) const noexcept {
             if constexpr (storage_t::arity == 0 || storage_t::default_arity == 0) {
                 return false;
             } else {
                 static constexpr std::size_t least = storage_t::arity - storage_t::default_arity;
-                static constexpr auto table = []<std::size_t... I>(std::index_sequence<I...>) {
-                    return std::array{+[](const invoker_accessor_impl *self, ParamList &pl) noexcept -> bool {
-                        return self->template is_invocable_partial<least + I>(pl);
-                    }...};
-                }(std::make_index_sequence<storage_t::default_arity>{});
+                static constexpr auto table =
+                    make_dispatch_table<least, ParamList>(std::make_index_sequence<storage_t::default_arity>{});
                 return table[size - least](this, paramlist);
             }
         }

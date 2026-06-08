@@ -17,6 +17,7 @@
 #define RETTR_RETTR_ENABLE_HPP
 
 #include <rettr/core/prerequisites.hpp>
+#include <rettr/typeinfo.hpp>
 
 #define STUB_RETTR_CAST_TYPELIST(...) rettr::helper::type_list<__VA_ARGS__>
 

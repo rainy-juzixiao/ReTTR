@@ -144,7 +144,7 @@ namespace rettr::implements {
         : std::negation<is_associative_container<T>> {};
 
     template <typename T>
-    inline constexpr bool is_sequential_container_v = is_associative_container<T>::value;
+    inline constexpr bool is_sequential_container_v = is_sequential_container<T>::value;
 }
 
 namespace rettr::implements {
@@ -1116,11 +1116,11 @@ namespace rettr::implements {
     void register_base() {
         static_assert(std::is_base_of_v<Base, Derived>, "Base must be base of Derived");
 
-        // Derived* → Base*（upcast，永远安全）
+        // Derived* → Base*
         implements::register_conversion(typeinfo::get_type_hash<Derived>(), typeinfo::get_type_hash<Base>(),
                                         [](void *ptr) -> void * { return static_cast<Base *>(static_cast<Derived *>(ptr)); });
 
-        // Base* → Derived*（downcast，仅多态类型）
+        // Base* → Derived*
         if constexpr (std::is_polymorphic_v<Base>) {
             implements::register_conversion(typeinfo::get_type_hash<Base>(), typeinfo::get_type_hash<Derived>(),
                                             [](void *ptr) -> void * { return dynamic_cast<Derived *>(static_cast<Base *>(ptr)); });

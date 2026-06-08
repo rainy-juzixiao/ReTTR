@@ -22,6 +22,8 @@
 #include <rettr/parameter_info.hpp>
 #include <vector>
 
+RETTR_MSVC_WARNING_DISABLE_C4251_BEGIN
+
 namespace rettr::implements {
     template <typename T, typename... Args>
     struct constructor_invoker {
@@ -124,5 +126,7 @@ namespace rettr {
         friend class implements::constructor_func_bind;
     };
 }
+
+RETTR_MSVC_WARNING_DISABLE_C4251_END
 
 #endif

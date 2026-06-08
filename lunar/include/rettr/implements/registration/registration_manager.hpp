@@ -25,6 +25,8 @@
 #include <rettr/property.hpp>
 #include <vector>
 
+RETTR_MSVC_WARNING_DISABLE_C4251_BEGIN
+
 namespace rettr::implements {
     class RETTR_API registration_manager {
     public:
@@ -140,5 +142,7 @@ namespace rettr::implements {
         }
     }
 }
+
+RETTR_MSVC_WARNING_DISABLE_C4251_END
 
 #endif

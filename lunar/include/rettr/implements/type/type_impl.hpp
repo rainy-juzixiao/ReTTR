@@ -15,6 +15,7 @@
  */
 #ifndef RETTR_IMPLEMENTS_TYPE_TYPE_IMPL_HPP
 #define RETTR_IMPLEMENTS_TYPE_TYPE_IMPL_HPP
+#include <mutex>
 #include <rettr/implements/registration/registration_manager.hpp>
 #include <rettr/implements/type/type_data.hpp>
 
@@ -69,6 +70,78 @@ namespace rettr::implements::type_private {
     };
 }
 
+namespace rettr::implements {
+    template <typename T>
+    class has_base_class_list_impl {
+        typedef char YesType[1];
+        typedef char NoType[2];
+
+        template <typename C>
+        static YesType &test(typename C::base_class_list *);
+
+        template <typename>
+        static NoType &test(...);
+
+    public:
+        static constexpr bool value = (sizeof(YesType) == sizeof(test<T>(0)));
+    };
+
+    template <typename T>
+    using has_base_class_list = std::bool_constant<has_base_class_list_impl<T>::value>;
+
+    template <typename Type, typename DerivedClass, typename... T>
+    struct RETTR_LOCAL_API type_from_base_classes;
+
+    template <typename Type, typename DerivedClass>
+    struct RETTR_LOCAL_API type_from_base_classes<Type, DerivedClass> {
+        static RETTR_INLINE void fill(info_container<Type> &) {
+        }
+    };
+
+    template <typename DerivedType, typename BaseType>
+    static void *rettr_cast_impl(void *ptr) {
+        return static_cast<void *>(static_cast<BaseType *>(static_cast<DerivedType *>(ptr)));
+    }
+
+    template <typename Type, typename DerivedClass, typename BaseClass, typename... U>
+    struct RETTR_LOCAL_API type_from_base_classes<Type, DerivedClass, BaseClass, U...> {
+        static RETTR_INLINE void fill(info_container<Type> &vec) {
+            static_assert(has_base_class_list<BaseClass>::value,
+                          "The parent class has no base class list defined - please use the macro RETTR_ENABLE");
+            vec.emplace_back(type::from<BaseClass>());
+            register_base<DerivedClass, BaseClass>();
+            type_from_base_classes<Type, DerivedClass, typename BaseClass::base_class_list>::fill(vec);
+            type_from_base_classes<Type, DerivedClass, U...>::fill(vec);
+        }
+    };
+
+    template <typename Type, typename DerivedClass, class... BaseClassList>
+    struct type_from_base_classes<Type, DerivedClass, helper::type_list<BaseClassList...>>
+        : type_from_base_classes<Type, DerivedClass, BaseClassList...> {};
+
+    template <typename T, typename Enable = void, typename Type = type>
+    struct RETTR_LOCAL_API base_classes {
+        static RETTR_INLINE info_container<Type> ensure_types_is_register() {
+            info_container<Type> result;
+            return result;
+        }
+    };
+
+    template <typename T, typename Type>
+    struct RETTR_LOCAL_API base_classes<T, std::enable_if_t<has_base_class_list<T>::value>, Type> {
+        static RETTR_INLINE info_container<Type> ensure_types_is_register() {
+            info_container<Type> result;
+            type_from_base_classes<Type, T, typename T::base_class_list>::fill(result);
+            return result;
+        }
+    };
+
+    template <typename T, typename Type = type>
+    info_container<Type> base_classes_is_register_fn() {
+        return base_classes<T>::ensure_types_is_register();
+    }
+}
+
 namespace rettr::implements::type_private {
     template <typename Ty, typename Type>
     RETTR_LOCAL_API std::unique_ptr<type_private::type_data<Type>> make_type_data() {
@@ -79,8 +152,9 @@ namespace rettr::implements::type_private {
             /* type_info           = */ typeinfo::create<Ty>(),
             /* enumeration_data    = */ nullptr,
             /* valid               = */ true,
-            /* my_class_data       = */ class_data<type>{std::vector<type>(template_arguments<struct invalid_type>::extract())},
-            /* metadata            = */ &metadata_func_impl<Ty>);
+            /* my_class_data       = */ class_data<type>{std::vector<type>(template_arguments<Ty>::extract())},
+            /* metadata            = */ &metadata_func_impl<Ty>,
+            /*ensure_types_is_register=*/&base_classes_is_register_fn<Ty>);
         return obj;
     }
 
@@ -95,7 +169,8 @@ namespace rettr::implements::type_private {
             /* valid               = */ false,
             /* my_class_data       = */
             class_data{std::vector<type>(template_arguments<struct invalid_type>::extract())},
-            /* metadata            = */ nullptr);
+            /* metadata            = */ nullptr,
+            /*ensure_types_is_register = */ &base_classes_is_register_fn<struct invalid_type>);
         obj->array_raw_type = obj.get();
         obj->raw_type_data = obj.get();
         return obj.get();
@@ -222,7 +297,10 @@ namespace rettr {
         if (empty()) {
             return false;
         }
-        return type_data_->enumeration_data_ != nullptr;
+        if (type_data_->enumeration_data_ != nullptr) {
+            return true;
+        }
+        return type_data_->type_info.has_traits(traits::is_enum);
     }
 
     RETTR_INLINE rettr::enumeration type::enumeration() const noexcept {

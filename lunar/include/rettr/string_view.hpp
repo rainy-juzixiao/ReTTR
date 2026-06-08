@@ -18,6 +18,8 @@
 #include <rettr/core/prerequisites.hpp>
 #include <rettr/core/meta_traits.hpp>
 
+RETTR_MSVC_WARNING_DISABLE_C4251_BEGIN
+
 namespace rettr {
     template<typename CharType, typename Traits = std::char_traits<CharType> >
     class basic_string_view {
@@ -682,5 +684,7 @@ namespace rettr {
         return left.write(right.data(), right.size());
     }
 }
+
+RETTR_MSVC_WARNING_DISABLE_C4251_END
 
 #endif

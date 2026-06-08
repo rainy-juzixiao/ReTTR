@@ -23,6 +23,8 @@
 #include <rettr/method.hpp>
 #include <rettr/property.hpp>
 
+RETTR_MSVC_WARNING_DISABLE_C4251_BEGIN
+
 namespace rettr::implements::type_private {
     template <typename Type>
     struct type_data;
@@ -49,7 +51,22 @@ namespace rettr::implements::type_private {
         destructor dtor{destructor::make<struct invalid_type>()};
     };
 
-    using get_metadata_func = std::vector<metadata_item> &(*) (void);
+    using get_metadata_func = std::vector<metadata_item> &(*) ();
+}
+
+namespace rettr::implements {
+    template <typename Type>
+    struct base_class_info {
+        base_class_info(Type t) : m_base_type(t) {}
+
+        Type m_base_type;
+    };
+
+    template <typename Type>
+    using info_container = std::vector<implements::base_class_info<Type>>;
+
+    template <typename Type>
+    using base_classes_is_register = info_container<Type> (*)();
 }
 
 namespace rettr::implements::type_private {
@@ -58,9 +75,10 @@ namespace rettr::implements::type_private {
         // generate stub...
         type_data(type_data *raw_type_data, type_data *array_raw_type, std::size_t pointer_dimension,
                   const class rettr::typeinfo &type_info, enumeration_data *enumeration_data, bool valid, class_data<> my_class_data,
-                  get_metadata_func metadata) :
+                  get_metadata_func metadata, base_classes_is_register<type> ensure_types_is_register) :
             raw_type_data(raw_type_data), array_raw_type(array_raw_type), pointer_dimension(pointer_dimension), type_info(type_info),
-            enumeration_data_(enumeration_data), valid(valid), my_class_data(std::move(my_class_data)), metadata(metadata) {
+            enumeration_data_(enumeration_data), valid(valid), my_class_data(std::move(my_class_data)), metadata(metadata),
+            ensure_types_is_register(ensure_types_is_register) {
         }
 
         type_data *raw_type_data;
@@ -75,6 +93,8 @@ namespace rettr::implements::type_private {
         class_data<> my_class_data;
 
         get_metadata_func metadata;
+
+        base_classes_is_register<type> ensure_types_is_register;
     };
 
     template <typename Ty>
@@ -116,5 +136,7 @@ namespace rettr::implements::type_private {
 
     // clang-format on
 }
+
+RETTR_MSVC_WARNING_DISABLE_C4251_END
 
 #endif
