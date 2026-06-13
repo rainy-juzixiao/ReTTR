@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef RETTR_ALL_HPP
-#define RETTR_ALL_HPP
-
-// NOLINTBEGIN
-
-#include <rettr/registration.hpp>
-#include <rettr/rettr_enable.hpp>
-#include <rettr/rettr_cast.hpp>
-
 #include <rettr/object.hpp>
+#include <rettr/shared_object.hpp>
 
-// NOLINTEND
+namespace rettr {
+    object object::clone() const {
+        const auto cloned = std::make_shared<impl>(impl{*this->pimpl});
+        return {cloned, type_data_};
+    }
 
-#endif
+    shared_object object::share_this() {
+        shared_object res{implements::internal_construct_tag, std::move(*this->pimpl), type_data_};
+        this->reset();
+        return res;
+    }
+
+    object::object(const std::shared_ptr<impl> &impl, const rettr::type &type) noexcept {
+    }
+}

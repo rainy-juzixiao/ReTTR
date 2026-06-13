@@ -1,8 +1,10 @@
 #include <iostream>
+#include <random>
 #include <rettr/registration.hpp>
 #include <rettr/rettr_cast.hpp>
 #include <rettr/rettr_enable.hpp>
-#include <random>
+
+#include <rettr/object.hpp>
 
 class MyClass {
 public:
@@ -68,7 +70,8 @@ public:
 class GrandBase {
     ENABLE_RETTR_CAST()
 public:
-    virtual ~GrandBase() {}
+    virtual ~GrandBase() {
+    }
     int grandData = 1;
 };
 
@@ -85,7 +88,7 @@ public:
 };
 
 class Derived : public Base1, public Base2 {
-    ENABLE_RETTR_CAST(Base2)  // 应该只能转换到Base2
+    ENABLE_RETTR_CAST(Base2) // 应该只能转换到Base2
 public:
     int derivedData = 100;
 };
@@ -93,7 +96,8 @@ public:
 class VBase {
     ENABLE_RETTR_CAST()
 public:
-    virtual ~VBase() {}
+    virtual ~VBase() {
+    }
 };
 
 class VLevel1 : virtual public VBase {
@@ -104,7 +108,7 @@ class VLevel2 : virtual public VLevel1 {
     ENABLE_RETTR_CAST(VLevel1)
 };
 
-class VLevel3 : public VLevel2 {  // 混合
+class VLevel3 : public VLevel2 { // 混合
     ENABLE_RETTR_CAST(VLevel2)
 };
 
@@ -139,28 +143,28 @@ RETTR_REGISTRATION {
 
 int main() {
     {
-        Derived* derivedObj = new Derived();
-        GrandBase* grandPtr = derivedObj;
+        Derived *derivedObj = new Derived();
+        GrandBase *grandPtr = derivedObj;
 
-        Base2* p2 = rettr::rettr_cast<Base2*>(grandPtr);
+        Base2 *p2 = rettr::rettr_cast<Base2 *>(grandPtr);
         std::cout << "1. GrandBase -> Base2 (已注册): " << (p2 ? "成功" : "失败") << '\n';
 
-        Base1* p1 = rettr::rettr_cast<Base1*>(grandPtr);
+        Base1 *p1 = rettr::rettr_cast<Base1 *>(grandPtr);
         std::cout << "2. GrandBase -> Base1 (未注册但有路径): " << (p1 ? "成功" : "失败") << '\n';
 
-        Derived* d1 = rettr::rettr_cast<Derived*>(grandPtr);
+        Derived *d1 = rettr::rettr_cast<Derived *>(grandPtr);
         std::cout << "3. GrandBase -> Derived (反向转换): " << (d1 ? "成功" : "失败") << '\n';
 
-        Base1* b1 = derivedObj;
-        Base2* cross = rettr::rettr_cast<Base2*>(b1);
+        Base1 *b1 = derivedObj;
+        Base2 *cross = rettr::rettr_cast<Base2 *>(b1);
         std::cout << "4. Base1 -> Base2 (交叉转换，通过虚基类): " << (cross ? "成功" : "失败") << '\n';
 
-        Level5* level5 = new Level5();
-        Base* baseToLevel3 = rettr::rettr_cast<Base*>(level5);
-        Level3* level3Back = rettr::rettr_cast<Level3*>(baseToLevel3);
+        Level5 *level5 = new Level5();
+        Base *baseToLevel3 = rettr::rettr_cast<Base *>(level5);
+        Level3 *level3Back = rettr::rettr_cast<Level3 *>(baseToLevel3);
         std::cout << "5. Level5 -> Base -> Level3 (多级跳转): " << (level3Back ? "成功" : "失败") << '\n';
 
-        Level3* wrong = rettr::rettr_cast<Level3*>(derivedObj);
+        Level3 *wrong = rettr::rettr_cast<Level3 *>(derivedObj);
         std::cout << "6. Derived -> Level3 (无关类型): " << (wrong ? "不该成功" : "正确失败") << '\n';
 
         delete derivedObj;
@@ -208,5 +212,34 @@ int main() {
 
     auto obj = t.create();
     std::cout << obj.type().name() << '\n';
+
+    rettr::object o = t.create_object();
+
+    std::cout << o("field") << '\n';
+
+    o("field") = 100;
+
+    std::cout << (o("field") + 200) << '\n';
+
+    o("field") += 100;
+
+    o("field").prop() -= 100;
+
+    std::cout << o("field") << '\n';
+
+    o("hello")();
+
+    rettr::object_view obj_view = o;
+
+    obj_view("hello")();
+
+    obj_view("field") = 666;
+
+    std::cout << o("field") << '\n';
+
+    obj_view("field") = 3.14f;
+
+    std::cout << o("field") << '\n';
+
     return 0;
 }
