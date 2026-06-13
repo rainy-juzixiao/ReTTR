@@ -131,7 +131,7 @@ namespace rettr::implements {
     }
 
     template <typename Ty>
-    using is_global_item = std::is_same<Ty, invalid_type>;
+    using is_global_item = std::is_same<Ty, invalid_type_t>;
 
     template <typename Ty, typename Item>
     RETTR_LOCAL_API RETTR_INLINE void store_item(Item item) {

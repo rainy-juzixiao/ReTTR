@@ -23,6 +23,8 @@ namespace rettr {
 }
 
 namespace rettr::implements::type_private {
+    type invalid_type() noexcept;
+
     template <typename Ty, typename Enable = void>
     struct raw_type {
         using type = std::remove_cv_t<Ty>;
@@ -68,4 +70,4 @@ namespace rettr::implements::type_private {
     };
 }
 
-#endif // RETTR_RAW_TYPE_HPP
+#endif

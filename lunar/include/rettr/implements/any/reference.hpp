@@ -20,7 +20,7 @@
 
 #if RETTR_USING_MSVC
 #pragma warning(push)
-#pragma warning(disable: 26439)
+#pragma warning(disable : 26439)
 #endif
 
 #define RETTR_GENERATE_BASIC_ANY_REFERENCE_COMPARE_STUB(use_operator)                                                                 \
@@ -47,14 +47,14 @@
         return pred{}(a, static_cast<const BasicAny &>(b));                                                                           \
     }
 
-#define RETTR_GENERATE_BASIC_ANY_REFERENCE_COMPOUND_ARITHMETIC_OPERATOR_STUB(use_operator)                                            \
+#define RETTR_GENERATE_BASIC_ANY_REFERENCE_COMPOUND_ARITHMETIC_OPERATOR_STUB(use_operator, op)                                        \
     any_reference &use_operator(const basic_any &right) {                                                                             \
-        use_operator(*this, right);                                                                                                   \
+        (static_cast<basic_any &>(*this)) op(right);                                                                                  \
         return *this;                                                                                                                 \
     }
 
 namespace rettr::implements {
-    template<typename BasicAny>
+    template <typename BasicAny>
     class any_reference : private BasicAny {
     public:
         using basic_any = BasicAny;
@@ -62,20 +62,16 @@ namespace rettr::implements {
         any_reference() : basic_any{} {
         }
 
-        template<typename ValueType,
-            std::enable_if_t<!helper::is_any_of_v<
-                    std::decay_t<ValueType>, basic_any, any_reference>,
-                int> = 0>
-        any_reference(ValueType &&value) : basic_any{
-            std::in_place_type<decltype(value)>, std::forward<ValueType>(value)
-        } {
+        template <typename ValueType,
+                  std::enable_if_t<!helper::is_any_of_v<std::decay_t<ValueType>, basic_any, any_reference>, int> = 0>
+        any_reference(ValueType &&value) : basic_any{std::in_place_type<decltype(value)>, std::forward<ValueType>(value)} {
         }
 
         any_reference(const any_reference &) = default;
 
         any_reference(any_reference &&) = default;
 
-        template<typename ValueType>
+        template <typename ValueType>
         any_reference &operator=(ValueType &&value) {
             auto tuple = std::make_tuple(this, BasicAny{std::forward<ValueType>(value)});
             this->storage.executer->invoke(any_operation::assign, &tuple);
@@ -126,10 +122,8 @@ namespace rettr::implements {
             return any;
         }
 
-        template<
-            typename CharType, typename AnyReference,
-            std::enable_if_t<
-                helper::is_any_of_v<std::decay_t<AnyReference>, any_reference>, int> = 0>
+        template <typename CharType, typename AnyReference,
+                  std::enable_if_t<helper::is_any_of_v<std::decay_t<AnyReference>, any_reference>, int> = 0>
         friend std::basic_ostream<CharType> &operator<<(std::basic_ostream<CharType> &left, const AnyReference &right) {
             return left << static_cast<const basic_any &>(right);
         }
@@ -147,31 +141,31 @@ namespace rettr::implements {
         RETTR_GENERATE_BASIC_ANY_REFERENCE_BINARY_OPERATOR_STUB(operator%, std::modulus);
         RETTR_GENERATE_BASIC_ANY_REFERENCE_BINARY_OPERATOR_STUB(operator/, std::divides);
 
-        RETTR_GENERATE_BASIC_ANY_REFERENCE_COMPOUND_ARITHMETIC_OPERATOR_STUB(operator+=);
-        RETTR_GENERATE_BASIC_ANY_REFERENCE_COMPOUND_ARITHMETIC_OPERATOR_STUB(operator-=);
-        RETTR_GENERATE_BASIC_ANY_REFERENCE_COMPOUND_ARITHMETIC_OPERATOR_STUB(operator%=);
-        RETTR_GENERATE_BASIC_ANY_REFERENCE_COMPOUND_ARITHMETIC_OPERATOR_STUB(operator*=);
-        RETTR_GENERATE_BASIC_ANY_REFERENCE_COMPOUND_ARITHMETIC_OPERATOR_STUB(operator/=);
+        RETTR_GENERATE_BASIC_ANY_REFERENCE_COMPOUND_ARITHMETIC_OPERATOR_STUB(operator+=, +=);
+        RETTR_GENERATE_BASIC_ANY_REFERENCE_COMPOUND_ARITHMETIC_OPERATOR_STUB(operator-=, -=);
+        RETTR_GENERATE_BASIC_ANY_REFERENCE_COMPOUND_ARITHMETIC_OPERATOR_STUB(operator%=, %=);
+        RETTR_GENERATE_BASIC_ANY_REFERENCE_COMPOUND_ARITHMETIC_OPERATOR_STUB(operator*=, *=);
+        RETTR_GENERATE_BASIC_ANY_REFERENCE_COMPOUND_ARITHMETIC_OPERATOR_STUB(operator/=, /=);
 
-        using basic_any::is;
-        using basic_any::is_one_of;
-        using basic_any::is_convertible;
-        using basic_any::is_one_of_convertible;
-        using basic_any::target_as_void_ptr;
         using basic_any::as;
-        using basic_any::type;
-        using basic_any::convert;
         using basic_any::begin;
+        using basic_any::convert;
+        using basic_any::destructure;
         using basic_any::end;
         using basic_any::has_value;
-        using basic_any::destructure;
+        using basic_any::hash_code;
+        using basic_any::inner_decleartion_type;
+        using basic_any::insert;
+        using basic_any::is;
+        using basic_any::is_convertible;
+        using basic_any::is_one_of;
+        using basic_any::is_one_of_convertible;
         using basic_any::match;
         using basic_any::match_for;
-        using basic_any::hash_code;
-        using basic_any::insert;
-        using basic_any::swap_value;
         using basic_any::resize;
-        using basic_any::inner_decleartion_type;
+        using basic_any::swap_value;
+        using basic_any::target_as_void_ptr;
+        using basic_any::type;
         using basic_any::operator[];
     };
 }

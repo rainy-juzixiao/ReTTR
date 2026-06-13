@@ -95,26 +95,26 @@ namespace rettr {
     }
 
     template <typename Acc>
-    registration::bind<implements::prop, struct implements::invalid_type, Acc, implements::registration_private::public_access>
+    registration::bind<implements::prop, struct implements::invalid_type_t, Acc, implements::registration_private::public_access>
     registration::property(string_view name, Acc accessor) {
         return {std::make_shared<implements::registration_executer>(), name, accessor};
     }
 
     template <typename Acc>
-    registration::bind<implements::prop_readonly, struct implements::invalid_type, Acc,
+    registration::bind<implements::prop_readonly, struct implements::invalid_type_t, Acc,
                        implements::registration_private::public_access>
     registration::property_readonly(string_view name, Acc accessor) {
         return {std::make_shared<implements::registration_executer>(), name, accessor};
     }
 
     template <typename Func>
-    registration::bind<implements::meth, struct implements::invalid_type, Func, implements::registration_private::public_access>
+    registration::bind<implements::meth, struct implements::invalid_type_t, Func, implements::registration_private::public_access>
     registration::method(string_view name, Func func) {
         return {std::make_shared<implements::registration_executer>(), name, func};
     }
 
     template <typename EnumType>
-    registration::bind<implements::enum_, struct implements::invalid_type, EnumType> registration::enumeration(string_view name) {
+    registration::bind<implements::enum_, struct implements::invalid_type_t, EnumType> registration::enumeration(string_view name) {
         return {std::make_shared<implements::registration_executer>(), name};
     }
 }

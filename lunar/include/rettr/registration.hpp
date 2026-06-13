@@ -107,19 +107,19 @@ namespace rettr {
         static const implements::registration_private::private_access private_access;
 
         template <typename Acc>
-        static bind<implements::prop, struct implements::invalid_type, Acc, implements::registration_private::public_access> property(
+        static bind<implements::prop, struct implements::invalid_type_t, Acc, implements::registration_private::public_access> property(
             string_view name, Acc accessor);
 
         template <typename Acc>
-        static bind<implements::prop_readonly, struct implements::invalid_type, Acc, implements::registration_private::public_access>
+        static bind<implements::prop_readonly, struct implements::invalid_type_t, Acc, implements::registration_private::public_access>
         property_readonly(string_view name, Acc accessor);
 
         template <typename Func>
-        static bind<implements::meth, struct implements::invalid_type, Func, implements::registration_private::public_access> method(
+        static bind<implements::meth, struct implements::invalid_type_t, Func, implements::registration_private::public_access> method(
             string_view name, Func func);
 
         template <typename EnumType>
-        static bind<implements::enum_, struct implements::invalid_type, EnumType> enumeration(string_view name);
+        static bind<implements::enum_, struct implements::invalid_type_t, EnumType> enumeration(string_view name);
     };
 }
 

@@ -48,7 +48,7 @@ namespace rettr::implements::type_private {
         std::vector<method> methods;
         std::vector<constructor> ctors;
         std::vector<Type> template_arguments_types;
-        destructor dtor{destructor::make<struct invalid_type>()};
+        destructor dtor{destructor::make<struct invalid_type_t>()};
     };
 
     using get_metadata_func = std::vector<metadata_item> &(*) ();

@@ -496,7 +496,7 @@ namespace rettr::implements {
      */
     RETTR_INLINE_CONSTEXPR internal_construct_tag_t internal_construct_tag{};
 
-    struct invalid_type {};
+    struct invalid_type_t {};
 }
 
 
@@ -602,5 +602,19 @@ namespace rettr::annotations {
 #define RETTR_MSVC_WARNING_DISABLE_C4251_END
 
 #endif
+
+namespace rettr {
+    struct static_invoke_tag {
+        constexpr explicit static_invoke_tag() = default;
+    };
+
+    static constexpr inline static_invoke_tag static_invoke{};
+
+    struct follow_cpp_rule_tag {
+        constexpr explicit follow_cpp_rule_tag() = default;
+    };
+
+    static constexpr inline follow_cpp_rule_tag follow_cpp_rule{};
+}
 
 #endif

@@ -17,6 +17,7 @@
 #define RETTR_IMPLEMENTS_TYPE_TYPE_IMPL_HPP
 #include <mutex>
 #include <rettr/implements/registration/registration_manager.hpp>
+#include <rettr/implements/functor_syntax_support.hpp>
 #include <rettr/implements/type/type_data.hpp>
 
 namespace rettr::implements {
@@ -164,13 +165,13 @@ namespace rettr::implements::type_private {
             /* raw_type_data       = */ nullptr,
             /* array_raw_type      = */ nullptr,
             /* pointer_dimension   = */ 0,
-            /* type_info           = */ typeinfo::create<struct invalid_type>(),
+            /* type_info           = */ typeinfo::create<struct invalid_type_t>(),
             /* enumeration_data    = */ nullptr,
             /* valid               = */ false,
             /* my_class_data       = */
-            class_data{std::vector<type>(template_arguments<struct invalid_type>::extract())},
+            class_data{std::vector<type>(template_arguments<struct invalid_type_t>::extract())},
             /* metadata            = */ nullptr,
-            /*ensure_types_is_register = */ &base_classes_is_register_fn<struct invalid_type>);
+            /*ensure_types_is_register = */ &base_classes_is_register_fn<struct invalid_type_t>);
         obj->array_raw_type = obj.get();
         obj->raw_type_data = obj.get();
         return obj.get();
@@ -241,11 +242,11 @@ namespace rettr {
     }
 
     template <>
-    RETTR_INLINE type type::from<struct implements::invalid_type>() noexcept {
+    RETTR_INLINE type type::from<struct implements::invalid_type_t>() noexcept {
         return implements::type_private::invalid_type();
     }
 
-    template <typename Ty>
+    template <typename Ty, std::enable_if_t<!std::is_same_v<Ty, rettr::typeinfo>, int>>
     type type::from(Ty &&object) noexcept {
         using remove_ref = std::remove_reference_t<Ty>;
         return implements::type_private::type_from_instance < Ty,
@@ -253,7 +254,7 @@ namespace rettr {
     }
 
     RETTR_INLINE type type::from_typeid(const typeinfo &ti) noexcept {
-        if (ti == rettr_typeid(implements::invalid_type)) {
+        if (ti == rettr_typeid(implements::invalid_type_t)) {
             return implements::type_private::invalid_type();
         }
         for (auto &t: types()) {
@@ -547,10 +548,20 @@ namespace rettr {
             return ctor.construct(std::forward<Args>(args)...);
         }
     }
+
+    template <typename... Args, typename Ty, std::enable_if_t<std::is_same_v<Ty, object>, int>>
+    Ty type::create_object(Args &&...args) const {
+        return create_object_impl(this->create(std::forward<Args>(args)...));
+    }
+
+    template <typename... Args, typename Ty, std::enable_if_t<std::is_same_v<Ty, shared_object>, int>>
+    Ty type::create_shared(Args &&...args) const {
+        return create_shared_impl(this->create(std::forward<Args>(args)...));
+    }
 }
 
 namespace rettr {
-    inline const rettr::method &type::method(const string_view name) const noexcept {
+    RETTR_INLINE const rettr::method &type::method(const string_view name) const noexcept {
         static const rettr::method empty;
         if (rettr_unlikely(this->empty())) {
             return empty;
@@ -574,5 +585,95 @@ struct std::hash<rettr::type> {
         return t.id();
     }
 };
+
+namespace rettr {
+    RETTR_INLINE rettr::type object_view::reflect_type() const {
+        if (!impl_) {
+            impl_ = type::from_typeid(this->type()).type_data_;
+            if (!impl_) {
+                return {}; // 未注册
+            }
+        }
+        return rettr::type{static_cast<implements::type_private::type_data<rettr::type> *>(impl_)};
+    }
+}
+
+namespace rettr {
+    template <typename... Args>
+    any object_view::invoke(string_view name, Args &&...args) const {
+        return reflect_type().invoke(name, std::forward<Args>(args)...);
+    }
+
+    template <typename... Args>
+    any object_view::invoke(static_invoke_tag, string_view name, Args &&...args) const {
+        return reflect_type().invoke(static_invoke, name, std::forward<Args>(args)...);
+    }
+
+    template <typename... Args>
+    any object_view::invoke(follow_cpp_rule_tag, string_view name, Args &&...args) const {
+        return reflect_type().invoke(follow_cpp_rule, name, std::forward<Args>(args)...);
+    }
+
+    template <typename... Args>
+    any object_view::invoke(follow_cpp_rule_tag, static_invoke_tag, string_view name, Args &&...args) const {
+        return reflect_type().invoke(follow_cpp_rule, static_invoke, name, std::forward<Args>(args)...);
+    }
+    
+    RETTR_INLINE const rettr::method &object_view::method(string_view name) const noexcept {
+        return reflect_type().method(name);    
+    }
+    
+    RETTR_INLINE const rettr::method &object_view::method(follow_cpp_rule_tag, const string_view name) const noexcept {
+        return reflect_type().method(follow_cpp_rule, name);
+    }
+    
+    RETTR_INLINE const rettr::method &object_view::method(const string_view name,
+                                                    const array_range<rettr::typeinfo> &overload_version_paramlist,
+                                                    const method_flags filter_method_flag) const noexcept {
+        return reflect_type().method(name, overload_version_paramlist, filter_method_flag);
+    }
+    
+    RETTR_INLINE const rettr::method &object_view::method(follow_cpp_rule_tag, const string_view name,
+                                                    const array_range<rettr::typeinfo> &overload_version_paramlist,
+                                                    const method_flags filter_method_flag) const noexcept {
+        return reflect_type().method(follow_cpp_rule, name, overload_version_paramlist, filter_method_flag);
+    }
+    
+    RETTR_INLINE array_range<rettr::method> object_view::methods() const noexcept {
+        return reflect_type().methods();
+    }
+    
+    RETTR_INLINE array_range<rettr::method> object_view::methods(filter_items filter) const noexcept {
+        return reflect_type().methods(filter);
+    }
+
+    RETTR_INLINE const rettr::property &object_view::property(string_view name) const noexcept {
+        return reflect_type().property(name);
+    }
+
+    RETTR_INLINE array_range<rettr::property> object_view::properties() const noexcept {
+        return reflect_type().properties();
+    }
+
+    RETTR_INLINE array_range<rettr::property> object_view::properties(filter_items filter) const noexcept {
+        return reflect_type().properties(filter);
+    }
+
+    RETTR_INLINE implements::functor_operation object_view::operator()(string_view name) const {
+        using namespace rettr::implements;
+        const auto meth = method(name);
+        const auto prop = property(name);
+        if (!meth.empty() && !prop.empty()) {
+            return functor_syntax_ambiguous_state;
+        }
+        if (!meth.empty()) {
+            return {functor_method, meth, *this};
+        }
+        if (!prop.empty()) {
+            return {functor_reference, prop, *this};
+        }
+        return invalid_functor;
+    }
+}
 
 #endif

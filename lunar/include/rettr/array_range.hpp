@@ -18,6 +18,11 @@
 #include <functional>
 #include <rettr/core/prerequisites.hpp>
 
+#if RETTR_USING_GCC
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Winit-list-lifetime"
+#endif
+
 namespace rettr {
     class typeinfo;
 
@@ -600,5 +605,9 @@ namespace rettr {
         return array_range<const Ty>(array);
     }
 }
+
+#if RETTR_USING_GCC
+#pragma GCC diagnostic pop
+#endif
 
 #endif

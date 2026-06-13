@@ -18,6 +18,9 @@
 #include <rettr/any.hpp>
 #include <rettr/core/prerequisites.hpp>
 #include <rettr/typeinfo.hpp>
+#include <rettr/string_view.hpp>
+#include <rettr/filter_item.hpp>
+#include <rettr/implements/invocable/method_flags.hpp>
 
 namespace rettr {
     class type;
@@ -25,6 +28,12 @@ namespace rettr {
 
 namespace rettr {
     class object_view;
+    class method;
+    class property;
+}
+
+namespace rettr::implements {
+    class functor_operation;
 }
 
 namespace rettr::implements {
@@ -61,6 +70,11 @@ namespace rettr::implements {
 
     template <typename Type>
     RETTR_CONSTEXPR_BOOL is_dynamic_object = has_target_as_void_ptr<Type> && has_type_query_interface<Type>;
+}
+
+namespace rettr::implements::type_private {
+    template <typename Type>
+    struct type_data;
 }
 
 namespace rettr::implements {
@@ -139,7 +153,8 @@ namespace rettr::implements {
                 void *addr = const_cast<void *>(static_cast<const volatile void *>(ptr));
                 return object_view{implements::as_array{}, addr, typeinfo::of<std::decay_t<Ty>>()};
             } else if constexpr (std::is_function_v<std::remove_pointer_t<std::remove_reference_t<Ty>>>) {
-                return object_view{const_cast<void *>(reinterpret_cast<const void *>(&arg)), typeinfo::of<std::remove_reference_t<Ty>>()};
+                return object_view{const_cast<void *>(reinterpret_cast<const void *>(&arg)),
+                                   typeinfo::of<std::remove_reference_t<Ty>>()};
             } else if constexpr (helper::is_pointer_reference_v<Ty>) { // NOLINT
                 return object_view{implements::as_reference{}, const_cast<void *>(static_cast<const void *>(&arg)),
                                    typeinfo::of<Ty>()};
@@ -421,19 +436,59 @@ namespace rettr {
         template <typename TargetType>
         RETTR_NODISCARD const TargetType *try_dynamic_cast() const noexcept {
             static constexpr typeinfo target_type = typeinfo::create<TargetType>();
-            auto *result = static_cast<const TargetType *>(implements::apply_offset(const_cast<void *>(object_), type(), target_type));
-            if (result) {
+            if (auto *result =
+                    static_cast<const TargetType *>(implements::apply_offset(const_cast<void *>(object_), type(), target_type))) {
                 return result;
             }
             return static_cast<const TargetType *>(
                 implements::apply_offset(const_cast<void *>(object_), type().remove_cvref(), target_type));
         }
 
+        template <typename... Args>
+        any invoke(string_view name, Args &&...args) const;
+
+        template <typename... Args>
+        any invoke(static_invoke_tag, string_view name, Args &&...args) const;
+
+        template <typename... Args>
+        any invoke(follow_cpp_rule_tag, string_view name, Args &&...args) const;
+
+        template <typename... Args>
+        any invoke(follow_cpp_rule_tag, static_invoke_tag, string_view name, Args &&...args) const;
+
+        implements::functor_operation operator()(string_view name) const;
+
+        RETTR_NODISCARD const rettr::method &method(string_view name) const noexcept;
+
+        RETTR_NODISCARD const rettr::method &method(follow_cpp_rule_tag, const string_view name) const noexcept;
+
+        RETTR_NODISCARD const rettr::method &method(const string_view name,
+                                                    const array_range<rettr::typeinfo> &overload_version_paramlist,
+                                                    const method_flags filter_method_flag = method_flags::none) const noexcept;
+
+        RETTR_NODISCARD const rettr::method &method(follow_cpp_rule_tag, const string_view name,
+                                                    const array_range<rettr::typeinfo> &overload_version_paramlist,
+                                                    const method_flags filter_method_flag = method_flags::none) const noexcept;
+
+        RETTR_NODISCARD array_range<rettr::method> methods() const noexcept;
+
+        RETTR_NODISCARD array_range<rettr::method> methods(filter_items filter) const noexcept;
+
+        RETTR_NODISCARD const rettr::property& property(string_view name) const noexcept;
+
+        RETTR_NODISCARD array_range<rettr::property> properties() const noexcept;
+
+        RETTR_NODISCARD array_range<rettr::property> properties(filter_items filter) const noexcept;
+
+
+
     private:
+        rettr::type reflect_type() const;
+
         void *object_{};
         const typeinfo *ctti_{&rettr_typeid(void)};
         void *object_holder_{};
-        void *impl_{};
+        mutable void *impl_{};
     };
 
     template <typename Any, std::enable_if_t<std::is_same_v<helper::remove_cvref_t<Any>, any>, int> = 0>

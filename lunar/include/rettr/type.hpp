@@ -30,18 +30,8 @@ namespace rettr {
     class property;
     class enumeration;
     class type;
-
-    struct static_invoke_tag {
-        constexpr explicit static_invoke_tag() = default;
-    };
-
-    static constexpr inline static_invoke_tag static_invoke{};
-
-    struct follow_cpp_rule_tag {
-        constexpr explicit follow_cpp_rule_tag() = default;
-    };
-
-    static constexpr inline follow_cpp_rule_tag follow_cpp_rule{};
+    class object;
+    class shared_object;
 }
 
 namespace rettr::implements::type_private {
@@ -73,6 +63,8 @@ namespace rettr::implements {
 namespace rettr {
     class RETTR_API type {
     public:
+        friend class object_view;
+
         using type_id = uintptr_t;
 
         type() noexcept;
@@ -102,7 +94,7 @@ namespace rettr {
         template <typename T>
         RETTR_LOCAL_API static type from() noexcept;
 
-        template <typename T>
+        template <typename T, std::enable_if_t<!std::is_same_v<T, rettr::typeinfo>, int> = 0>
         RETTR_LOCAL_API static type from(T &&object) noexcept;
 
         static type from_name(string_view name) noexcept;
@@ -166,11 +158,17 @@ namespace rettr {
         template <typename... Args>
         RETTR_NODISCARD any create(Args &&...args) const;
 
+        template <typename... Args, typename Ty = object, std::enable_if_t<std::is_same_v<Ty, object>,int> = 0>
+        RETTR_NODISCARD Ty create_object(Args &&...args) const;
+
+        template <typename... Args, typename Ty = shared_object, std::enable_if_t<std::is_same_v<Ty, shared_object>,int> = 0>
+        RETTR_NODISCARD Ty create_shared(Args &&...args) const;
+
         RETTR_NODISCARD rettr::destructor destructor() const noexcept;
 
         RETTR_NODISCARD bool destroy(const object_view &obj) const noexcept;
 
-        RETTR_NODISCARD rettr::property property(string_view name) const noexcept;
+        RETTR_NODISCARD const rettr::property& property(string_view name) const noexcept;
 
         RETTR_NODISCARD array_range<rettr::property> properties() const noexcept;
 
@@ -186,7 +184,7 @@ namespace rettr {
 
         void property_value(string_view name, object_view obj, any arg) const;
 
-        static void property_value(string_view name, any arg);
+        static void global_property_value(string_view name, any arg);
 
         RETTR_NODISCARD RETTR_INLINE const rettr::method &method(const string_view name) const noexcept;
         RETTR_NODISCARD const rettr::method &method(follow_cpp_rule_tag, const string_view name) const noexcept;
@@ -231,6 +229,10 @@ namespace rettr {
 
         template <typename Type = type>
         RETTR_INLINE type(implements::type_private::type_data<Type> *data) noexcept;
+
+        RETTR_NODISCARD object create_object_impl(any&& value) const;
+
+        RETTR_NODISCARD shared_object create_shared_impl(any&& value) const;
 
         RETTR_NODISCARD RETTR_INLINE type get_raw_type() const noexcept;
 

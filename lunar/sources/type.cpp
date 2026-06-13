@@ -18,22 +18,8 @@
 #include <rettr/implements/type/type_register_private.hpp>
 #include <rettr/type.hpp>
 
-namespace rettr {
-    template <>
-    struct default_predicate<property> {
-        default_predicate() {
-        }
-
-        default_predicate(std::function<bool(const property &)> func) : func(std::move(func)) {
-        }
-
-        bool operator()(const property &obj) const {
-            return (func ? func(obj) : true);
-        }
-
-        std::function<bool(const property &)> func;
-    };
-}
+#include <rettr/shared_object.hpp>
+#include <rettr/object.hpp>
 
 namespace rettr::implements::type_private {
     type invalid_type() noexcept {
@@ -148,9 +134,10 @@ namespace rettr {
         return true;
     }
 
-    property type::property(string_view name) const noexcept {
+    const rettr::property &type::property(string_view name) const noexcept {
+        static rettr::property empty;
         if (this->empty()) {
-            return {};
+            return empty;
         }
         const auto raw_t = get_raw_type();
 
@@ -161,7 +148,7 @@ namespace rettr {
         if (ret != vec.crend()) {
             return *ret;
         }
-        return {};
+        return empty;
     }
 
     array_range<rettr::property> type::properties() const noexcept {
@@ -170,7 +157,7 @@ namespace rettr {
         }
         auto &vec = get_raw_type().type_data_->my_class_data.properties;
         if (!vec.empty()) {
-            return array_range<rettr::property>(vec.data(), vec.size(),
+            return array_range(vec.data(), vec.size(), // NOLINT(*-return-braced-init-list)
                                                 default_predicate<rettr::property>([](const rettr::property &item) {
                                                     return item.access_level() == access_levels::public_access;
                                                 }));
@@ -185,7 +172,7 @@ namespace rettr {
         const auto raw_t = get_raw_type();
         auto &vec = raw_t.type_data_->my_class_data.properties;
         if (!vec.empty()) {
-            return array_range<rettr::property>(vec.data(), vec.size(),
+            return array_range(vec.data(), vec.size(), // NOLINT(*-return-braced-init-list)
                                                 implements::get_filter_predicate<rettr::property>(raw_t, filter));
         }
         return {};
@@ -217,7 +204,7 @@ namespace rettr {
         property(name)(obj) = arg;
     }
 
-    void type::property_value(const string_view name, any arg) {
+    void type::global_property_value(const string_view name, any arg) {
         global_property(name)(non_exists_instance) = arg;
     }
 
@@ -417,6 +404,7 @@ namespace rettr {
         }
         return *best;
     }
+
     array_range<rettr::method> type::global_methods() noexcept {
         auto &meth_list = implements::type_register_private::get_instance().get_global_methods();
         return array_range<rettr::method>(meth_list.data(), meth_list.size());
@@ -436,5 +424,13 @@ namespace rettr {
             return ret->second;
         }
         return {};
+    }
+
+    object type::create_object_impl(any &&value) const {
+        return object(implements::internal_construct_tag, std::move(value), *this);
+    }
+
+    shared_object type::create_shared_impl(any &&value) const {
+        return shared_object(implements::internal_construct_tag, std::move(value), *this);
     }
 }
