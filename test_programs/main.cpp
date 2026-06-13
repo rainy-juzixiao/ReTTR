@@ -136,6 +136,7 @@ RETTR_REGISTRATION {
     registration::class_<MyClass>("MyClass")(metadata(std::string_view{"Type"}, 111))
         .constructor<int, int, bool>()(parameter_names("left_operand", "right_operand", "add_one"), default_arguments(false))
         .constructor()
+        .constructor<const MyClass&>()
         .method("hello", &MyClass::hello)
         .method("add", &MyClass::add)(parameter_names("left_operand", "right_operand", "add_one"), default_arguments(false))
         .property("field", &MyClass::field)(metadata("attr", 10));
@@ -240,6 +241,10 @@ int main() {
     obj_view("field") = 3.14f;
 
     std::cout << o("field") << '\n';
+
+    auto so = obj_view.create_object();
+
+    std::cout << so.type().name() << '\n';
 
     return 0;
 }

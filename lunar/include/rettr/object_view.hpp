@@ -30,6 +30,8 @@ namespace rettr {
     class object_view;
     class method;
     class property;
+    class shared_object;
+    class object;
 }
 
 namespace rettr::implements {
@@ -306,9 +308,7 @@ namespace rettr {
 
     static constexpr inline non_exists_instance_t non_exists_instance;
 
-    class shared_object;
-
-    class object_view {
+    class RETTR_API object_view {
     public:
         template <typename Ty>
         using enable_if_t = std::enable_if_t<!std::is_same_v<Ty, object_view> && !std::is_same_v<Ty, non_exists_instance_t>, int>;
@@ -480,7 +480,8 @@ namespace rettr {
 
         RETTR_NODISCARD array_range<rettr::property> properties(filter_items filter) const noexcept;
 
-
+        RETTR_NODISCARD shared_object create_shared() const;
+        RETTR_NODISCARD object create_object() const;
 
     private:
         rettr::type reflect_type() const;

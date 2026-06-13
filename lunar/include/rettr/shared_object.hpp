@@ -19,7 +19,7 @@
 #include <rettr/implements/basic_object.hpp>
 
 namespace rettr {
-    class shared_object : public implements::basic_object<true> {
+    class RETTR_API shared_object : public implements::basic_object<true> {
     public:
         friend class object;
         friend class weak_object;

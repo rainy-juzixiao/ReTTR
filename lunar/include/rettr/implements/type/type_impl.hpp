@@ -541,7 +541,7 @@ namespace rettr {
         constexpr bool has_dynamic =
             (implements::is_dynamic_object<Args> || ...) || helper::is_any_of_v<object_view, std::decay_t<Args>...>;
         if constexpr (has_dynamic) {
-            const auto ctor = type::constructor(implements::make_paramlist<sizeof...(Args)>(std::forward<Args>(args)...)).get();
+            const auto ctor = type::constructor(implements::make_paramlist<sizeof...(Args)>(std::forward<Args>(args)...).get());
             return ctor.construct(std::forward<Args>(args)...);
         } else {
             const auto ctor = type::constructor(implements::make_nondynamic_paramlist<Args...>{}.get());

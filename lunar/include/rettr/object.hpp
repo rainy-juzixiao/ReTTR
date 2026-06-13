@@ -21,7 +21,7 @@
 namespace rettr {
     class shared_object;
 
-    class object : public implements::basic_object<false> {
+    class RETTR_API object : public implements::basic_object<false> {
     public:
         friend class shared_object;
 
