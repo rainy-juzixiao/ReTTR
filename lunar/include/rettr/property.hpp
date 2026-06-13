@@ -108,7 +108,7 @@ namespace rettr {
         any::reference value(object_view object = non_exists_instance); // NOLINT
         any::reference value(object_view object = non_exists_instance) const; // NOLINT
 
-        void value(object_view object, const any &val);
+        void value(object_view object, const any &val) const;
 
         rettr::type declaring_type() const noexcept;
 
@@ -293,7 +293,7 @@ namespace rettr {
         string_view name_;
         std::vector<class metadata_item> metadatas_;
         access_levels access_levels_{};
-        bool is_empty_{};
+        bool is_empty_{true};
     };
 }
 

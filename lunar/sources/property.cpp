@@ -116,8 +116,8 @@ namespace rettr {
         return reinterpret_cast<const property_accessor *>(property_storage)->get_property(object);
     }
 
-    void property::value(object_view object, const any &val) { // NOLINT
-        reinterpret_cast<property_accessor *>(property_storage)->set_property(object, val);
+    void property::value(object_view object, const any &val) const { // NOLINT
+        reinterpret_cast<const property_accessor *>(property_storage)->set_property(object, val);
     }
 
     property::property(const property &right) noexcept :
