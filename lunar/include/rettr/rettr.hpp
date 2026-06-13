@@ -24,6 +24,7 @@
 #include <rettr/rettr_cast.hpp>
 
 #include <rettr/object.hpp>
+#include <rettr/shared_object.hpp>
 
 // NOLINTEND
 

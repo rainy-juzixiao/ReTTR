@@ -20,6 +20,10 @@
 #include <rettr/shared_object.hpp>
 
 namespace rettr {
+    rettr::type object_view::info() const noexcept {
+        return reflect_type();
+    }
+
     shared_object object_view::create_shared() const {
         return reflect_type().create_shared(*this);
     }

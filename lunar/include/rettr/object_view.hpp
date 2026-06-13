@@ -343,7 +343,7 @@ namespace rettr {
         object_view(implements::as_reference, void *const object, const typeinfo &ctti) noexcept : object_{object}, ctti_{&ctti} {
         }
 
-        object_view(non_exists_instance_t) noexcept : object_(nullptr), ctti_(&rettr_typeid(void)) {
+        object_view(non_exists_instance_t) noexcept {
         }
 
         object_view(object_view &&right) noexcept : object_(right.object_), ctti_(right.ctti_), object_holder_(right.object_holder_) {
@@ -414,6 +414,8 @@ namespace rettr {
             rettr_assume(ctti_ != nullptr);
             return *ctti_;
         }
+
+        RETTR_NODISCARD rettr::type info() const noexcept;
 
         RETTR_NODISCARD bool valid() const noexcept {
             rettr_assume(ctti_ != nullptr);
