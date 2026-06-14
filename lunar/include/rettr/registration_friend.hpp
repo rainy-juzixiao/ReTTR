@@ -21,7 +21,9 @@ namespace rettr::implements {
     struct constructor_invoker;
 }
 
-#define RTTR_REGISTRATION_FRIEND                                                                                                      \
+static void rettr_auto_register_reflection_function_();
+
+#define RETTR_REGISTRATION_FRIEND                                                                                                     \
     friend void ::rettr_auto_register_reflection_function_();                                                                         \
     template <typename T, typename... Args>                                                                                           \
     friend struct rettr::implements::constructor_invoker;

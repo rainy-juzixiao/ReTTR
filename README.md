@@ -21,3 +21,14 @@ ReTTR并非RTTR的衍生作品，其发行许可证采用Apache 2.0，而RTTR使
 ## 另注
 
 ReTTR的代码依赖了rainy-toolkit项目中的源代码，按照Apache 2.0许可证分发。
+
+## ToDo
+
+测试用例：
+
+- [] object模型的测试用例
+- [] property模型的测试用例
+
+文档：
+
+- [] 完成5分钟入门部分
