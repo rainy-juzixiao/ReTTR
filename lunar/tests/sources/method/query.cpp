@@ -27,7 +27,7 @@ struct method_query_test_base {
     static void func_2() {
     }
 
-    ENABLE_RETTR_CAST()
+    RETTR_ENABLE()
 };
 
 struct method_query_test_derived : method_query_test_base {
@@ -39,7 +39,7 @@ struct method_query_test_derived : method_query_test_base {
     static void func_4() {
     }
 
-    ENABLE_RETTR_CAST(method_query_test_base)
+    RETTR_ENABLE(method_query_test_base)
 };
 
 RETTR_REGISTRATION {

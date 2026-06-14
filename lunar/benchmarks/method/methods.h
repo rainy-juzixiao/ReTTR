@@ -31,7 +31,7 @@ namespace ns_foo {
         }                                                                                                                             \
         virtual void method_v() {                                                                                                     \
         }                                                                                                                             \
-    ENABLE_RETTR_CAST() private : double dummy_double_value;                                                                          \
+    RETTR_ENABLE() private : double dummy_double_value;                                                                          \
         std::string dummy_string_value;                                                                                               \
     };
 #define CLASS_INHERIT(CLASS1, CLASS2, NUMBER)                                                                                         \
@@ -40,7 +40,7 @@ namespace ns_foo {
         }                                                                                                                             \
         virtual void method_v() {                                                                                                     \
         }                                                                                                                             \
-    ENABLE_RETTR_CAST(CLASS2) private : double dummy_double_value;                                                                    \
+    RETTR_ENABLE(CLASS2) private : double dummy_double_value;                                                                    \
         std::string dummy_string_value;                                                                                               \
     };
 
@@ -78,7 +78,7 @@ namespace ns_foo {
         int value_7 = 0;
         int value_8 = 0;
 
-        ENABLE_RETTR_CAST()
+        RETTR_ENABLE()
     };
 
     struct method_class_d_1 : method_class {
@@ -88,7 +88,7 @@ namespace ns_foo {
         virtual void method_v() {
         }
 
-        ENABLE_RETTR_CAST(method_class)
+        RETTR_ENABLE(method_class)
     };
 
 
@@ -101,7 +101,7 @@ namespace ns_foo {
         virtual void method_v() {
         }
 
-        ENABLE_RETTR_CAST(method_class_d_2)
+        RETTR_ENABLE(method_class_d_2)
     };
 
     CLASS_INHERIT(method_class_d_4, method_class_d_3, 4)
@@ -115,7 +115,7 @@ namespace ns_foo {
         virtual void method_v() {
         }
 
-        ENABLE_RETTR_CAST(method_class_d_5)
+        RETTR_ENABLE(method_class_d_5)
     };
 
     struct method_class_d_7 : method_class_d_6 {
@@ -125,7 +125,7 @@ namespace ns_foo {
         virtual void method_v() {
         }
 
-        ENABLE_RETTR_CAST(method_class_d_6)
+        RETTR_ENABLE(method_class_d_6)
     };
 
 
@@ -159,7 +159,7 @@ namespace ns_foo {
         virtual void method_v() {
         }
 
-        ENABLE_RETTR_CAST(class_multiple_5A, class_multiple_5B, class_multiple_5C)
+        RETTR_ENABLE(class_multiple_5A, class_multiple_5B, class_multiple_5C)
     };
 
     struct class_multiple_final_D : class_multiple_final {
@@ -168,7 +168,7 @@ namespace ns_foo {
         virtual void method_v() {
         }
 
-        ENABLE_RETTR_CAST(class_multiple_final)
+        RETTR_ENABLE(class_multiple_final)
     };
 }
 

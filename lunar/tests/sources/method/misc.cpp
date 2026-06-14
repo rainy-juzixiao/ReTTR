@@ -47,11 +47,11 @@ struct base_class_with_methods {
     void some_method() {
     }
 
-    ENABLE_RETTR_CAST()
+    RETTR_ENABLE()
 };
 
 struct derived_class_without_registered_methods : base_class_with_methods {
-    ENABLE_RETTR_CAST(base_class_with_methods)
+    RETTR_ENABLE(base_class_with_methods)
 };
 
 RETTR_REGISTRATION {

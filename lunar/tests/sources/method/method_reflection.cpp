@@ -81,7 +81,7 @@ struct method_test
     void(*m_func_ptr)(int)          = nullptr;
     mutable bool method_with_noexpcet_called= false;
 
-    ENABLE_RETTR_CAST()
+    RETTR_ENABLE()
 };
 
 struct method_test_derived : method_test
@@ -93,7 +93,7 @@ struct method_test_derived : method_test
     bool method_8_derived_called    = false;
     bool method_11_derived_called   = false;
 
-    ENABLE_RETTR_CAST(method_test)
+    RETTR_ENABLE(method_test)
 };
 
 struct method_test_right
@@ -102,7 +102,7 @@ struct method_test_right
     void method_12()                { method_12_right_called = true;}
 
     bool method_12_right_called   = false;
-    ENABLE_RETTR_CAST()
+    RETTR_ENABLE()
 };
 
 struct method_test_final : method_test_derived, method_test_right
@@ -112,7 +112,7 @@ struct method_test_final : method_test_derived, method_test_right
 
     bool method_13_final_called    = false;
 
-    ENABLE_RETTR_CAST(method_test_derived, method_test_right)
+    RETTR_ENABLE(method_test_derived, method_test_right)
 };
 
 // clang-format on
@@ -151,7 +151,7 @@ struct derive_registered : base_not_registered {};
 
 
 struct derive_registered_with_base_class_list : base_not_registered {
-    ENABLE_RETTR_CAST()
+    RETTR_ENABLE()
 };
 
 bool method_test::method_7_called = false;

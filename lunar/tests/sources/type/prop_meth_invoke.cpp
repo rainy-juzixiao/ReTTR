@@ -19,13 +19,13 @@
 struct type_prop_invoke_test_base {
     int p1 = 12;
 
-    ENABLE_RETTR_CAST()
+    RETTR_ENABLE()
 };
 
 struct type_prop_invoke_test : type_prop_invoke_test_base {
     std::string p2 = "text";
 
-    ENABLE_RETTR_CAST(type_prop_invoke_test_base)
+    RETTR_ENABLE(type_prop_invoke_test_base)
 };
 
 static int g_prop_invoke = 42;

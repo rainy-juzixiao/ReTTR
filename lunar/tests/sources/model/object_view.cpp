@@ -22,11 +22,11 @@ struct instance_base {
     virtual ~instance_base() {
     }
 
-    ENABLE_RETTR_CAST()
+    RETTR_ENABLE()
 };
 
 struct instance_derived : instance_base {
-    ENABLE_RETTR_CAST(instance_base)
+    RETTR_ENABLE(instance_base)
 };
 
 TEST_CASE("object_view - empty", "[object_view]") {

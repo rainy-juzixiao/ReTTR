@@ -21,7 +21,7 @@
 
 #define STUB_RETTR_CAST_TYPELIST(...) rettr::helper::type_list<__VA_ARGS__>
 
-#define ENABLE_RETTR_CAST(...)                                                                                                        \
+#define RETTR_ENABLE(...)                                                                                                        \
 public:                                                                                                                               \
     virtual RETTR_INLINE void *rettr_private_stub_for_this_pointer() {                                                                \
         return reinterpret_cast<void *>(this);                                                                                        \

@@ -32,7 +32,7 @@ namespace rettr {
             implements::has_rettr_private_stub_for_type<arg_type>::value &&
             implements::has_reflect_this_func<arg_type>::value &&
             implements::has_base_class_list<arg_type>::value
-            , "Didn't detect the ENABLE_RETTR_CAST stub, Did you define it correctly?");
+            , "Didn't detect the RETTR_ENABLE stub, Did you define it correctly?");
 
         static_assert((std::is_volatile_v<arg_type> && std::is_volatile_v<return_type>) ||
                           (!std::is_volatile_v<arg_type> && std::is_volatile_v<return_type>) ||

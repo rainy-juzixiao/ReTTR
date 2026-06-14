@@ -31,7 +31,7 @@ struct method_order_test_base {
         return "I am a virtual base method";
     }
 
-    ENABLE_RETTR_CAST()
+    RETTR_ENABLE()
 };
 
 struct method_order_test_derived : method_order_test_base {
@@ -46,7 +46,7 @@ struct method_order_test_derived : method_order_test_base {
         return "I am a virtual derived method with same name";
     }
 
-    ENABLE_RETTR_CAST(method_order_test_base)
+    RETTR_ENABLE(method_order_test_base)
 };
 
 RETTR_REGISTRATION {

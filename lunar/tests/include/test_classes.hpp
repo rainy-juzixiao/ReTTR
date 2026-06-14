@@ -22,7 +22,7 @@
     struct CLASS_NAME {                                                                                                               \
         virtual ~CLASS_NAME() {                                                                                                       \
         }                                                                                                                             \
-        ENABLE_RETTR_CAST() virtual int getType() {                                                                                   \
+        RETTR_ENABLE() virtual int getType() {                                                                                   \
             return dummyIntValue;                                                                                                     \
         }                                                                                                                             \
         int dummyIntValue = 0;                                                                                                        \
@@ -33,7 +33,7 @@
         virtual int getType() {                                                                                                       \
             return static_cast<int>(dummyDoubleValue);                                                                                \
         }                                                                                                                             \
-        ENABLE_RETTR_CAST(CLASS2) double dummyDoubleValue = 1;                                                                        \
+        RETTR_ENABLE(CLASS2) double dummyDoubleValue = 1;                                                                        \
     };
 
 #define CLASS_MULTI_INHERIT_2(CLASS1, CLASS2, CLASS3)                                                                                 \
@@ -41,7 +41,7 @@
         virtual int getType() {                                                                                                       \
             return static_cast<int>(dummyBoolValue);                                                                                  \
         }                                                                                                                             \
-        ENABLE_RETTR_CAST(CLASS2, CLASS3) bool dummyBoolValue = false;                                                                \
+        RETTR_ENABLE(CLASS2, CLASS3) bool dummyBoolValue = false;                                                                \
     };
 
 #define CLASS_MULTI_INHERIT_5(CLASS1, CLASS2, CLASS3, CLASS4, CLASS5, CLASS6)                                                         \
@@ -49,7 +49,7 @@
         virtual int getType() {                                                                                                       \
             return static_cast<int>(dummyBoolValue);                                                                                  \
         }                                                                                                                             \
-        ENABLE_RETTR_CAST(CLASS2, CLASS3, CLASS4, CLASS5, CLASS6) bool dummyBoolValue = true;                                         \
+        RETTR_ENABLE(CLASS2, CLASS3, CLASS4, CLASS5, CLASS6) bool dummyBoolValue = true;                                         \
     };
 
 CLASS(ClassSingleBase)
@@ -132,23 +132,23 @@ CLASS_MULTI_INHERIT_5(FinalClass, ClassMultiple6A, ClassMultiple6B, ClassMultipl
 
 struct DiamondTop {
     double foo = 12;
-    ENABLE_RETTR_CAST()
+    RETTR_ENABLE()
 };
 
 struct DiamondLeft : virtual DiamondTop {
     bool _left_var = true;
-    ENABLE_RETTR_CAST(DiamondTop)
+    RETTR_ENABLE(DiamondTop)
 };
 
 struct DiamondRight : virtual DiamondTop {
     std::string _text = "Hello World";
-    ENABLE_RETTR_CAST(DiamondTop)
+    RETTR_ENABLE(DiamondTop)
 };
 
 
 struct DiamondBottom : DiamondLeft, DiamondRight {
     int _finalVar = 42;
-    ENABLE_RETTR_CAST(DiamondLeft, DiamondRight)
+    RETTR_ENABLE(DiamondLeft, DiamondRight)
 };
 
 CLASS(ClassMulti1A)
