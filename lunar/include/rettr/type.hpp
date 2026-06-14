@@ -97,6 +97,12 @@ namespace rettr {
         template <typename T, std::enable_if_t<!std::is_same_v<T, rettr::typeinfo>, int> = 0>
         RETTR_LOCAL_API static type from(T &&object) noexcept;
 
+        static type from_base(void* ptr, type source_type) noexcept;
+        static type from_base(void* ptr, const typeinfo& source_type) noexcept;
+
+        template <typename Ty>
+        static type from_base(Ty * ptr) noexcept;
+
         static type from_name(string_view name) noexcept;
 
         RETTR_NODISCARD static type from_typeid(typeinfo const &type) noexcept;

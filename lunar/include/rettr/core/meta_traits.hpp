@@ -2977,4 +2977,20 @@ namespace rettr::helper {
     inline constexpr std::size_t pointer_rank_v = pointer_rank<Ty>::value;
 }
 
+namespace rettr::implements {
+    template <typename Ty, typename = void>
+    struct has_rettr_private_stub_for_type : std::false_type {};
+
+    template <typename Ty>
+    struct has_rettr_private_stub_for_type<Ty, std::void_t<decltype(std::declval<Ty>().rettr_private_stub_for_type())>>
+        : std::true_type {};
+
+    template <typename Ty, typename = void>
+    struct has_rettr_private_stub_for_this_pointer : std::false_type {};
+
+    template <typename Ty>
+    struct has_rettr_private_stub_for_this_pointer<Ty, std::void_t<decltype(std::declval<Ty>().rettr_private_stub_for_this_pointer())>>
+        : std::true_type {};
+}
+
 #endif

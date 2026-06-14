@@ -24,6 +24,14 @@ namespace rettr {
         return reflect_type();
     }
 
+    const typeinfo &object_view::derived_type() const noexcept {
+        return type::from_base(const_cast<void*>(target_as_void_ptr()), info()).type_info();
+    }
+
+    rettr::type object_view::derived_info() const noexcept {
+        return type::from_base(const_cast<void*>(target_as_void_ptr()), info());
+    }
+
     shared_object object_view::create_shared() const {
         return reflect_type().create_shared(*this);
     }

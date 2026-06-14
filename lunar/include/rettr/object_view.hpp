@@ -322,6 +322,7 @@ namespace rettr {
         template <typename Ty, enable_if_t<Ty> = 0>
         object_view(Ty &object) noexcept : // NOLINT
             object_{const_cast<void *>(static_cast<const void *>(std::addressof(object)))}, ctti_{&rettr_typeid(Ty)} {
+            std::ignore = reflect_type();
         }
 
         template <typename Ty, std::enable_if_t<!std::is_same_v<std::decay_t<Ty>, object_view> &&
@@ -330,13 +331,13 @@ namespace rettr {
                                                 int> = 0>
         object_view(Ty &&object) : // NOLINT
             object_{const_cast<void *>(static_cast<const void *>(std::addressof(object)))}, ctti_{&rettr_typeid(Ty &&)} {
+            std::ignore = reflect_type();
         }
 
         object_view(void *const object, const typeinfo &ctti) noexcept : object_{object}, ctti_{&ctti} {
         }
 
-        object_view(implements::as_array, void *const object, const typeinfo &ctti) noexcept : object_{nullptr}, ctti_{&ctti} {
-            object_holder_ = object;
+        object_view(implements::as_array, void *const object, const typeinfo &ctti) noexcept : ctti_{&ctti}, object_holder_(object) {
             object_ = static_cast<void *>(&object_holder_);
         }
 
@@ -416,6 +417,9 @@ namespace rettr {
         }
 
         RETTR_NODISCARD rettr::type info() const noexcept;
+
+        RETTR_NODISCARD const typeinfo& derived_type() const noexcept;
+        RETTR_NODISCARD rettr::type derived_info() const noexcept;
 
         RETTR_NODISCARD bool valid() const noexcept {
             rettr_assume(ctti_ != nullptr);

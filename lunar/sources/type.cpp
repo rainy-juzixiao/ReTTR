@@ -18,8 +18,8 @@
 #include <rettr/implements/type/type_register_private.hpp>
 #include <rettr/type.hpp>
 
-#include <rettr/shared_object.hpp>
 #include <rettr/object.hpp>
+#include <rettr/shared_object.hpp>
 
 namespace rettr::implements::type_private {
     type invalid_type() noexcept {
@@ -158,9 +158,8 @@ namespace rettr {
         auto &vec = get_raw_type().type_data_->my_class_data.properties;
         if (!vec.empty()) {
             return array_range(vec.data(), vec.size(), // NOLINT(*-return-braced-init-list)
-                                                default_predicate<rettr::property>([](const rettr::property &item) {
-                                                    return item.access_level() == access_levels::public_access;
-                                                }));
+                               default_predicate<rettr::property>(
+                                   [](const rettr::property &item) { return item.access_level() == access_levels::public_access; }));
         }
         return {};
     }
@@ -173,7 +172,7 @@ namespace rettr {
         auto &vec = raw_t.type_data_->my_class_data.properties;
         if (!vec.empty()) {
             return array_range(vec.data(), vec.size(), // NOLINT(*-return-braced-init-list)
-                                                implements::get_filter_predicate<rettr::property>(raw_t, filter));
+                               implements::get_filter_predicate<rettr::property>(raw_t, filter));
         }
         return {};
     }
@@ -322,7 +321,8 @@ namespace rettr {
         };
         for (auto mit = vec.crbegin(); mit != vec.crend(); ++mit) {
             if (mit->name() == name) {
-                if (mit->is_invocable(overload_version_paramlist) != invocable_result::failed && match_method_type(mit->type(), filter_method_flag)) {
+                if (mit->is_invocable(overload_version_paramlist) != invocable_result::failed &&
+                    match_method_type(mit->type(), filter_method_flag)) {
                     return *mit;
                 }
             }
@@ -408,6 +408,19 @@ namespace rettr {
     array_range<rettr::method> type::global_methods() noexcept {
         auto &meth_list = implements::type_register_private::get_instance().get_global_methods();
         return array_range<rettr::method>(meth_list.data(), meth_list.size());
+    }
+
+    type type::from_base(void *ptr, type source_type) noexcept {
+        if (ptr == nullptr) {
+            return type();
+        }
+        auto &src_raw_type = source_type.type_data_->raw_type_data;
+        const auto [_, type] = src_raw_type->my_class_data.derived_info_func(ptr);
+        return type;
+    }
+
+    type type::from_base(void *ptr, const typeinfo &source_type) noexcept {
+        return from_base(ptr, from_typeid(source_type));
     }
 
     const typeinfo &type::type_info() const noexcept {

@@ -29,15 +29,26 @@ namespace rettr::implements::type_private {
     template <typename Type>
     struct type_data;
 
+    template <typename Type>
+    struct derived_info {
+        void *ptr;
+        Type type;
+    };
+
     using cast_func_ptr_t = void *(*) (void *);
+
+    template <typename Type>
+    using derived_func = derived_info<Type> (*)(void *);
 
     template <typename Type>
     RETTR_LOCAL_API RETTR_INLINE struct type_data<Type> *invalid_type_data() noexcept;
 
     template <typename Type = type>
     struct RETTR_API class_data {
-        class_data(std::vector<type> template_arguments_types) : template_arguments_types(template_arguments_types) {
+        class_data(std::vector<type> template_arguments_types, derived_func<Type> func) :
+            template_arguments_types(template_arguments_types), derived_info_func(func) {
         }
+
         class_data(class_data &&right) noexcept = default;
 
         ~class_data() = default;
@@ -49,6 +60,7 @@ namespace rettr::implements::type_private {
         std::vector<constructor> ctors;
         std::vector<Type> template_arguments_types;
         destructor dtor{destructor::make<struct invalid_type_t>()};
+        derived_func<Type> derived_info_func;
     };
 
     using get_metadata_func = std::vector<metadata_item> &(*) ();
@@ -57,7 +69,8 @@ namespace rettr::implements::type_private {
 namespace rettr::implements {
     template <typename Type>
     struct base_class_info {
-        base_class_info(Type t) : m_base_type(t) {}
+        base_class_info(Type t) : m_base_type(t) {
+        }
 
         Type m_base_type;
     };

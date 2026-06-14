@@ -16,8 +16,8 @@
 #ifndef RETTR_IMPLEMENTS_TYPE_TYPE_IMPL_HPP
 #define RETTR_IMPLEMENTS_TYPE_TYPE_IMPL_HPP
 #include <mutex>
-#include <rettr/implements/registration/registration_manager.hpp>
 #include <rettr/implements/functor_syntax_support.hpp>
+#include <rettr/implements/registration/registration_manager.hpp>
 #include <rettr/implements/type/type_data.hpp>
 
 namespace rettr::implements {
@@ -69,6 +69,27 @@ namespace rettr::implements::type_private {
             return object.reflect_this();
         }
     };
+}
+
+namespace rettr::implements {
+    template <typename Ty, typename Type>
+    static type_private::derived_info<Type> get_most_derived_info_impl(void *ptr) {
+        return {static_cast<Ty *>(ptr)->rettr_private_stub_for_this_pointer(), static_cast<Ty *>(ptr)->reflect_this()};
+    }
+
+    template <typename Ty, typename Type>
+    static type_private::derived_info<Type> get_most_derived_info_impl_none(void *ptr) {
+        return {ptr, type::from<Ty>()};
+    }
+
+    template <typename Ty, typename Type>
+    static type_private::derived_func<Type> get_most_derived_info_func() {
+        if constexpr (has_rettr_private_stub_for_this_pointer<Ty>::value && has_reflect_this_func<Ty>::value) {
+            return get_most_derived_info_impl<Ty, Type>;
+        } else {
+            return get_most_derived_info_impl_none<Ty, Type>;
+        }
+    }
 }
 
 namespace rettr::implements {
@@ -153,7 +174,8 @@ namespace rettr::implements::type_private {
             /* type_info           = */ typeinfo::create<Ty>(),
             /* enumeration_data    = */ nullptr,
             /* valid               = */ true,
-            /* my_class_data       = */ class_data<type>{std::vector<type>(template_arguments<Ty>::extract())},
+            /* my_class_data       = */
+            class_data<type>{std::vector<type>(template_arguments<Ty>::extract()), get_most_derived_info_func<Ty, Type>()},
             /* metadata            = */ &metadata_func_impl<Ty>,
             /*ensure_types_is_register=*/&base_classes_is_register_fn<Ty>});
         return obj;
@@ -169,7 +191,8 @@ namespace rettr::implements::type_private {
                             /* enumeration_data    = */ nullptr,
                             /* valid               = */ false,
                             /* my_class_data       = */
-                            class_data{std::vector<type>(template_arguments<struct invalid_type_t>::extract())},
+                            class_data<type>{std::vector<type>(template_arguments<struct invalid_type_t>::extract()),
+                                             get_most_derived_info_func<struct invalid_type_t, type>()},
                             /* metadata            = */ nullptr,
                             /*ensure_types_is_register = */ &base_classes_is_register_fn<struct invalid_type_t>});
         obj->array_raw_type = obj.get();
@@ -441,6 +464,11 @@ namespace rettr {
         }
     }
 
+    template <typename Ty>
+    type type::from_base(Ty *ptr) noexcept {
+        return from_base(ptr, type::from<typename implements::type_private::raw_type<Ty>::type>());
+    }
+
     template <bool FollowCppRule, typename... Args>
     any type::invoke_helper(string_view name, object_view instance, Args &&...args) const {
         if (empty()) {
@@ -618,31 +646,31 @@ namespace rettr {
     any object_view::invoke(follow_cpp_rule_tag, static_invoke_tag, string_view name, Args &&...args) const {
         return reflect_type().invoke(follow_cpp_rule, static_invoke, name, std::forward<Args>(args)...);
     }
-    
+
     RETTR_INLINE const rettr::method &object_view::method(string_view name) const noexcept {
-        return reflect_type().method(name);    
+        return reflect_type().method(name);
     }
-    
+
     RETTR_INLINE const rettr::method &object_view::method(follow_cpp_rule_tag, const string_view name) const noexcept {
         return reflect_type().method(follow_cpp_rule, name);
     }
-    
+
     RETTR_INLINE const rettr::method &object_view::method(const string_view name,
-                                                    const array_range<rettr::typeinfo> &overload_version_paramlist,
-                                                    const method_flags filter_method_flag) const noexcept {
+                                                          const array_range<rettr::typeinfo> &overload_version_paramlist,
+                                                          const method_flags filter_method_flag) const noexcept {
         return reflect_type().method(name, overload_version_paramlist, filter_method_flag);
     }
-    
+
     RETTR_INLINE const rettr::method &object_view::method(follow_cpp_rule_tag, const string_view name,
-                                                    const array_range<rettr::typeinfo> &overload_version_paramlist,
-                                                    const method_flags filter_method_flag) const noexcept {
+                                                          const array_range<rettr::typeinfo> &overload_version_paramlist,
+                                                          const method_flags filter_method_flag) const noexcept {
         return reflect_type().method(follow_cpp_rule, name, overload_version_paramlist, filter_method_flag);
     }
-    
+
     RETTR_INLINE array_range<rettr::method> object_view::methods() const noexcept {
         return reflect_type().methods();
     }
-    
+
     RETTR_INLINE array_range<rettr::method> object_view::methods(filter_items filter) const noexcept {
         return reflect_type().methods(filter);
     }

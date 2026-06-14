@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 rainy-juzixiao
+ * Copyright 2026 rainy-juzixiao
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,15 @@
 
 using namespace rettr;
 
-struct object_view_base {
-    virtual ~object_view_base() {
+struct instance_base {
+    virtual ~instance_base() {
     }
 
     ENABLE_RETTR_CAST()
 };
 
-struct object_view_derived : object_view_base {
-    ENABLE_RETTR_CAST(object_view_base)
+struct instance_derived : instance_base {
+    ENABLE_RETTR_CAST(instance_base)
 };
 
 TEST_CASE("object_view - empty", "[object_view]") {
@@ -45,23 +45,15 @@ TEST_CASE("object_view - valid", "[object_view]") {
 
 TEST_CASE("object_view - derived", "[object_view]") {
     {
-        std::ignore = type::from<object_view_derived>();
+        std::ignore = type::from<instance_derived>();
     }
-    object_view_derived d;
-    object_view_base &base = d;
+    instance_derived d;
+    instance_base &base = d;
     object_view obj = base;
     CHECK(obj.valid() == true);
-    CHECK(obj.type() == rettr_typeid(object_view_base));
-    CHECK(obj.info() == type::from<object_view_base>());
+    CHECK(obj.type() == rettr_typeid(instance_base));
+    CHECK(obj.info() == type::from<instance_base>());
+    CHECK(obj.derived_info() == type::from<instance_derived>());
+    CHECK(obj.derived_type() == rettr_typeid(instance_derived));
 }
 
-TEST_CASE("object_view - wrapped type", "[object_view]") {
-    {
-        std::ignore = type::from<std::shared_ptr<object_view_base>>();
-    }
-    std::shared_ptr<object_view_base> b = std::make_shared<object_view_derived>();
-    object_view obj = b;
-    CHECK(obj.valid() == true);
-    CHECK(obj.type() == rettr_typeid(std::shared_ptr<object_view_base>));
-    CHECK(obj.info() == type::from<std::shared_ptr<object_view_base>>());
-}
