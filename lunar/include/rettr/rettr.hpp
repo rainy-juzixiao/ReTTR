@@ -22,6 +22,7 @@
 #include <rettr/registration.hpp>
 #include <rettr/rettr_enable.hpp>
 #include <rettr/rettr_cast.hpp>
+#include <rettr/registration_friend.hpp>
 
 #include <rettr/object.hpp>
 #include <rettr/shared_object.hpp>
