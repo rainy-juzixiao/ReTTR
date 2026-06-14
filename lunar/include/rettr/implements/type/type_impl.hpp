@@ -146,7 +146,7 @@ namespace rettr::implements {
 namespace rettr::implements::type_private {
     template <typename Ty, typename Type>
     RETTR_LOCAL_API std::unique_ptr<type_private::type_data<Type>> make_type_data() {
-        auto obj = std::make_unique<type_private::type_data<Type>>(
+        auto obj = std::make_unique<type_private::type_data<Type>>(type_data<Type>{
             /* raw_type_data       = */ raw_type_info<Ty>::extract().type_data_,
             /* array_raw_type      = */ array_raw_type<Ty>::extract().type_data_,
             /* pointer_dimension   = */ helper::pointer_rank_v<Ty>,
@@ -155,23 +155,23 @@ namespace rettr::implements::type_private {
             /* valid               = */ true,
             /* my_class_data       = */ class_data<type>{std::vector<type>(template_arguments<Ty>::extract())},
             /* metadata            = */ &metadata_func_impl<Ty>,
-            /*ensure_types_is_register=*/&base_classes_is_register_fn<Ty>);
+            /*ensure_types_is_register=*/&base_classes_is_register_fn<Ty>});
         return obj;
     }
 
     template <typename Type>
     RETTR_LOCAL_API RETTR_INLINE struct type_data<Type> *invalid_type_data() noexcept {
         static auto obj = std::make_unique<struct type_data<Type>>(
-            /* raw_type_data       = */ nullptr,
-            /* array_raw_type      = */ nullptr,
-            /* pointer_dimension   = */ 0,
-            /* type_info           = */ typeinfo::create<struct invalid_type_t>(),
-            /* enumeration_data    = */ nullptr,
-            /* valid               = */ false,
-            /* my_class_data       = */
-            class_data{std::vector<type>(template_arguments<struct invalid_type_t>::extract())},
-            /* metadata            = */ nullptr,
-            /*ensure_types_is_register = */ &base_classes_is_register_fn<struct invalid_type_t>);
+            type_data<Type>{/* raw_type_data       = */ nullptr,
+                            /* array_raw_type      = */ nullptr,
+                            /* pointer_dimension   = */ 0,
+                            /* type_info           = */ typeinfo::create<struct invalid_type_t>(),
+                            /* enumeration_data    = */ nullptr,
+                            /* valid               = */ false,
+                            /* my_class_data       = */
+                            class_data{std::vector<type>(template_arguments<struct invalid_type_t>::extract())},
+                            /* metadata            = */ nullptr,
+                            /*ensure_types_is_register = */ &base_classes_is_register_fn<struct invalid_type_t>});
         obj->array_raw_type = obj.get();
         obj->raw_type_data = obj.get();
         return obj.get();

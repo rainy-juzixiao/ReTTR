@@ -72,15 +72,6 @@ namespace rettr::implements {
 namespace rettr::implements::type_private {
     template <>
     struct RETTR_API type_data<type> {
-        // generate stub...
-        type_data(type_data *raw_type_data, type_data *array_raw_type, std::size_t pointer_dimension,
-                  const class rettr::typeinfo &type_info, enumeration_data *enumeration_data, bool valid, class_data<> my_class_data,
-                  get_metadata_func metadata, base_classes_is_register<type> ensure_types_is_register) :
-            raw_type_data(raw_type_data), array_raw_type(array_raw_type), pointer_dimension(pointer_dimension), type_info(type_info),
-            enumeration_data_(enumeration_data), valid(valid), my_class_data(std::move(my_class_data)), metadata(metadata),
-            ensure_types_is_register(ensure_types_is_register) {
-        }
-
         type_data *raw_type_data;
         type_data *array_raw_type;
 
