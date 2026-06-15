@@ -17,10 +17,10 @@
 #define RETTR_META_REFLECTION_OBJECT_VIEW_HPP
 #include <rettr/any.hpp>
 #include <rettr/core/prerequisites.hpp>
-#include <rettr/typeinfo.hpp>
-#include <rettr/string_view.hpp>
 #include <rettr/filter_item.hpp>
 #include <rettr/implements/invocable/method_flags.hpp>
+#include <rettr/string_view.hpp>
+#include <rettr/typeinfo.hpp>
 
 namespace rettr {
     class type;
@@ -319,19 +319,21 @@ namespace rettr {
 
         object_view &operator=(std::nullptr_t) = delete;
 
-        template <typename Ty, enable_if_t<Ty> = 0>
+        template <typename Ty, enable_if_t<Ty> = 0, typename Type = type>
         object_view(Ty &object) noexcept : // NOLINT
-            object_{const_cast<void *>(static_cast<const void *>(std::addressof(object)))}, ctti_{&rettr_typeid(Ty)} {
-            std::ignore = reflect_type();
+            object_{const_cast<void *>(static_cast<const void *>(std::addressof(object)))}, ctti_{&rettr_typeid(Ty)},
+            impl_(static_cast<void *>(Type::template from<Ty>().type_data_)) {
         }
 
-        template <typename Ty, std::enable_if_t<!std::is_same_v<std::decay_t<Ty>, object_view> &&
-                                                    !std::is_same_v<std::decay_t<Ty>, non_exists_instance_t> &&
-                                                    std::is_rvalue_reference_v<Ty &&> && !std::is_lvalue_reference_v<Ty>,
-                                                int> = 0>
+        template <typename Ty,
+                  std::enable_if_t<!std::is_same_v<std::decay_t<Ty>, object_view> &&
+                                       !std::is_same_v<std::decay_t<Ty>, non_exists_instance_t> && std::is_rvalue_reference_v<Ty &&> &&
+                                       !std::is_lvalue_reference_v<Ty>,
+                                   int> = 0,
+                  typename Type = type>
         object_view(Ty &&object) : // NOLINT
-            object_{const_cast<void *>(static_cast<const void *>(std::addressof(object)))}, ctti_{&rettr_typeid(Ty &&)} {
-            std::ignore = reflect_type();
+            object_{const_cast<void *>(static_cast<const void *>(std::addressof(object)))}, ctti_{&rettr_typeid(Ty &&)},
+            impl_(static_cast<void *>(Type::template from<Ty>().type_data_)) {
         }
 
         object_view(void *const object, const typeinfo &ctti) noexcept : object_{object}, ctti_{&ctti} {
@@ -418,7 +420,7 @@ namespace rettr {
 
         RETTR_NODISCARD rettr::type info() const noexcept;
 
-        RETTR_NODISCARD const typeinfo& derived_type() const noexcept;
+        RETTR_NODISCARD const typeinfo &derived_type() const noexcept;
         RETTR_NODISCARD rettr::type derived_info() const noexcept;
 
         RETTR_NODISCARD bool valid() const noexcept {
@@ -480,7 +482,7 @@ namespace rettr {
 
         RETTR_NODISCARD array_range<rettr::method> methods(filter_items filter) const noexcept;
 
-        RETTR_NODISCARD const rettr::property& property(string_view name) const noexcept;
+        RETTR_NODISCARD const rettr::property &property(string_view name) const noexcept;
 
         RETTR_NODISCARD array_range<rettr::property> properties() const noexcept;
 
