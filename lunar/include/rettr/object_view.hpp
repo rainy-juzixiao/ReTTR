@@ -302,11 +302,6 @@ namespace rettr::implements {
     }
 }
 
-namespace rettr::implements {
-    template <typename Ty, typename Type>
-    static derived_func<Type> get_most_derived_info_func();
-}
-
 namespace rettr {
     // 用于表示不存在的实例
     struct non_exists_instance_t {};
@@ -327,8 +322,7 @@ namespace rettr {
         template <typename Ty, enable_if_t<Ty> = 0, typename Type = type>
         object_view(Ty &object) noexcept : // NOLINT
             object_{const_cast<void *>(static_cast<const void *>(std::addressof(object)))}, ctti_{&rettr_typeid(Ty)},
-            impl_(static_cast<void *>(Type::template from<Ty>().type_data_)),
-            derived_info_p(reinterpret_cast<void *>(implements::get_most_derived_info_func<Ty, rettr::type>())) {
+            impl_(static_cast<void *>(Type::template from<Ty>().type_data_)) {
         }
 
         template <typename Ty,
@@ -339,8 +333,7 @@ namespace rettr {
                   typename Type = type>
         object_view(Ty &&object) : // NOLINT
             object_{const_cast<void *>(static_cast<const void *>(std::addressof(object)))}, ctti_{&rettr_typeid(Ty &&)},
-            impl_(static_cast<void *>(Type::template from<Ty>().type_data_)),
-            derived_info_p(reinterpret_cast<void *>(implements::get_most_derived_info_func<Ty, rettr::type>())) {
+            impl_(static_cast<void *>(Type::template from<Ty>().type_data_)) {
         }
 
         object_view(void *const object, const typeinfo &ctti) noexcept : object_{object}, ctti_{&ctti} {
@@ -519,7 +512,6 @@ namespace rettr {
         const typeinfo *ctti_{&rettr_typeid(void)};
         void *object_holder_{};
         mutable void *impl_{};
-        mutable void *derived_info_p{};
     };
 
     template <typename Any, std::enable_if_t<std::is_same_v<helper::remove_cvref_t<Any>, any>, int> = 0>

@@ -622,7 +622,6 @@ namespace rettr {
                 return {};
             }
             impl_ = t.type_data_;
-            derived_info_p = reinterpret_cast<void*>(&t.type_data_->my_class_data.derived_info_func);
         }
         return rettr::type{static_cast<implements::type_private::type_data<rettr::type> *>(impl_)};
     }
