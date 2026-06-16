@@ -16,5 +16,23 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-add_subdirectory(method)
-add_subdirectory(rettr_cast)
+project(bench_rettr_cast LANGUAGES CXX)
+
+add_executable(bench_rettr_cast
+        "main.cpp"
+        "rettr_cast.cpp"
+)
+
+target_link_libraries(bench_rettr_cast rainy-juzixiao::rettr)
+target_link_libraries(bench_rettr_cast nanobench::nanobench)
+
+set_target_properties(bench_rettr_cast PROPERTIES
+        DEBUG_POSTFIX "_d"
+        "Benchmarks/bench_rettr_cast"
+        CXX_STANDARD ${MAX_CXX_STANDARD}
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/rettr_project
+)
+
+if (COMPILER_ID MATCHES "MSVC")
+    target_compile_options(bench_rettr_cast PRIVATE /bigobj) # 确保可以被编译
+endif ()

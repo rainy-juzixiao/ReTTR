@@ -4,7 +4,7 @@
 #include <rettr/rettr_cast.hpp>
 #include <rettr/rettr_enable.hpp>
 
-#include <rettr/object.hpp>
+#include <rettr/rettr.hpp>
 
 class MyClass {
 public:
@@ -26,49 +26,49 @@ public:
 };
 
 class Base {
-    ENABLE_RETTR_CAST()
+    RETTR_ENABLE()
 public:
     virtual ~Base() {
     }
 };
 
 class Level1 : public Base {
-    ENABLE_RETTR_CAST(Base)
+    RETTR_ENABLE(Base)
 public:
     virtual ~Level1() {
     }
 };
 
 class Level2 : public Level1 {
-    ENABLE_RETTR_CAST(Level1)
+    RETTR_ENABLE(Level1)
 public:
     virtual ~Level2() {
     }
 };
 
 class Level3 : public Level2 {
-    ENABLE_RETTR_CAST(Level2)
+    RETTR_ENABLE(Level2)
 public:
     virtual ~Level3() {
     }
 };
 
 class Level4 : public Level3 {
-    ENABLE_RETTR_CAST(Level3)
+    RETTR_ENABLE(Level3)
 public:
     virtual ~Level4() {
     }
 };
 
 class Level5 : public Level4 {
-    ENABLE_RETTR_CAST(Level4)
+    RETTR_ENABLE(Level4)
 public:
     virtual ~Level5() {
     }
 };
 
 class GrandBase {
-    ENABLE_RETTR_CAST()
+    RETTR_ENABLE()
 public:
     virtual ~GrandBase() {
     }
@@ -76,41 +76,149 @@ public:
 };
 
 class Base1 : virtual public GrandBase {
-    ENABLE_RETTR_CAST(GrandBase)
+    RETTR_ENABLE(GrandBase)
 public:
     int data1 = 10;
 };
 
 class Base2 : virtual public GrandBase {
-    ENABLE_RETTR_CAST(GrandBase)
+    RETTR_ENABLE(GrandBase)
 public:
     int data2 = 20;
 };
 
 class Derived : public Base1, public Base2 {
-    ENABLE_RETTR_CAST(Base2) // 应该只能转换到Base2
+    RETTR_ENABLE(Base2) // 应该只能转换到Base2
 public:
     int derivedData = 100;
 };
 
 class VBase {
-    ENABLE_RETTR_CAST()
+    RETTR_ENABLE()
 public:
     virtual ~VBase() {
     }
 };
 
 class VLevel1 : virtual public VBase {
-    ENABLE_RETTR_CAST(VBase)
+    RETTR_ENABLE(VBase)
 };
 
 class VLevel2 : virtual public VLevel1 {
-    ENABLE_RETTR_CAST(VLevel1)
+    RETTR_ENABLE(VLevel1)
 };
 
 class VLevel3 : public VLevel2 { // 混合
-    ENABLE_RETTR_CAST(VLevel2)
+    RETTR_ENABLE(VLevel2)
 };
+
+namespace ns_3d {
+    class node {
+    public:
+        node(std::string name, node *parent = nullptr) : m_parent(parent), m_name(std::move(name)) {
+            if (m_parent) {
+                m_parent->m_children.push_back(this);
+            }
+        }
+
+        virtual ~node() {
+            if (m_parent) {
+                auto &siblings = m_parent->m_children;
+                siblings.erase(std::remove(siblings.begin(), siblings.end(), this), siblings.end());
+            }
+            for (node *child: m_children) {
+                delete child;
+            }
+        }
+
+        void set_name(const std::string &name) {
+            m_name = name;
+        }
+
+        const std::string &get_name() const {
+            return m_name;
+        }
+
+        std::vector<node *> get_children() const {
+            return m_children;
+        }
+
+        void set_visible(bool visible, bool cascade = true) {
+            // 简单实现，需要配合 RETTR 系统
+            if (cascade) {
+                for (node *child: m_children) {
+                    child->set_visible(visible, cascade);
+                }
+            }
+        }
+
+        virtual void render() {
+        }
+
+    private:
+        node *m_parent;
+        std::string m_name;
+        std::vector<node *> m_children;
+
+        RETTR_ENABLE()
+        RETTR_REGISTRATION_FRIEND
+    };
+
+    class mesh : public node {
+    public:
+        enum class render_mode {
+            POINTS,
+            WIREFRAME,
+            SOLID
+        };
+
+        static mesh create_mesh(std::string file_name) {
+            std::string name = file_name;
+            size_t last_slash = name.find_last_of("/\\");
+            if (last_slash != std::string::npos) {
+                name = name.substr(last_slash + 1);
+            }
+            size_t last_dot = name.find_last_of('.');
+            if (last_dot != std::string::npos) {
+                name = name.substr(0, last_dot);
+            }
+            mesh m(name, nullptr);
+            return m;
+        }
+
+        virtual void render() override {
+            node::render();
+            switch (m_render_mode) {
+                case render_mode::POINTS:
+                    // 渲染点为点云
+                    break;
+                case render_mode::WIREFRAME:
+                    // 渲染为线框
+                    break;
+                case render_mode::SOLID:
+                    // 渲染为实体
+                    break;
+            }
+        }
+
+        void set_render_mode(render_mode mode) {
+            m_render_mode = mode;
+        }
+
+        render_mode get_render_mode() const {
+            return m_render_mode;
+        }
+
+    private:
+        mesh(std::string name, node *parent = nullptr) : node(std::move(name), parent), m_render_mode(render_mode::SOLID) {
+        }
+
+        render_mode m_render_mode;
+
+        RETTR_ENABLE(node)
+    };
+}
+
 
 RETTR_REGISTRATION {
     using namespace rettr;
@@ -136,10 +244,34 @@ RETTR_REGISTRATION {
     registration::class_<MyClass>("MyClass")(metadata(std::string_view{"Type"}, 111))
         .constructor<int, int, bool>()(parameter_names("left_operand", "right_operand", "add_one"), default_arguments(false))
         .constructor()
-        .constructor<const MyClass&>()
+        .constructor<const MyClass &>()
         .method("hello", &MyClass::hello)
         .method("add", &MyClass::add)(parameter_names("left_operand", "right_operand", "add_one"), default_arguments(false))
         .property("field", &MyClass::field)(metadata("attr", 10));
+
+    using namespace ns_3d;
+    registration::class_<node>("ns_3d::node")
+        .constructor<std::string, node *>()(default_arguments(nullptr)
+                                            // 第二个参数是可选的，在此处，我们为其提供一个默认值进行注入。
+                                            )
+        .property("name", &node::get_name, &node::set_name)(metadata("TOOL_TIP", "Set the name of node.")
+                                                            // 将元数据挂载到name这个属性
+                                                            )
+        // 直接注册一个成员对象指针；将其标记为“私有”成员
+        .property("parent", &ns_3d::node::m_parent, registration::private_access)
+        .property_readonly("children", &node::get_children)
+        // 这是一个只读属性；将会强制挂载为const对象以便无法修改
+        .method("set_visible", &node::set_visible)(
+            default_arguments(true), // the default value for 'cascade'
+            parameter_names("visible", "cascade") // provide the names of the parameter; optional, but might be useful for clients
+            )
+        .method("render", &node::render);
+    registration::class_<mesh>("ns_3d::mesh")
+        .constructor(&mesh::create_mesh)
+        .property("render_mode", &mesh::get_render_mode, &mesh::set_render_mode)
+        .enumeration<mesh::render_mode>("ns_3d::render_mode")(value("POINTS", mesh::render_mode::POINTS),
+                                                              value("WIREFRAME", mesh::render_mode::WIREFRAME),
+                                                              value("SOLID", mesh::render_mode::SOLID));
 }
 
 int main() {
