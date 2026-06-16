@@ -178,7 +178,7 @@ namespace rettr::implements {
             std::vector<std::unique_ptr<parameter_info_base>> result;
             result.reserve(arity);
             ((result.emplace_back(
-                 std::make_unique<parameter_info_wrapper<typename function_traits<Func>::template argument_type<Is>, Is>>(
+                 std::make_unique<parameter_info_wrapper<helper::type_at_t<Is, typename function_traits<Func>::argument_list>, Is>>(
                      string_view{}))),
              ...);
             return result;

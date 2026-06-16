@@ -78,6 +78,14 @@ namespace rettr {
     }
 
     template <typename Clazz>
+    template <typename A1, typename A2, typename AccLevel,
+              std::enable_if_t<!helper::type_list_contains<A2, implements::registration_private::access_levels_list>::value, int>>
+    registration::bind<implements::prop, Clazz, A1, A2, AccLevel> registration::class_<Clazz>::property(string_view name, A1 getter,
+                                                                                                        A2 setter, AccLevel) {
+        return {create_if_empty(reg_exec), name, getter, setter};
+    }
+
+    template <typename Clazz>
     template <typename Func, typename AccLevel, typename Tp>
     registration::bind<implements::meth, Clazz, Func, AccLevel> registration::class_<Clazz>::method(string_view name, Func func,
                                                                                                     AccLevel level) {
@@ -105,6 +113,13 @@ namespace rettr {
                        implements::registration_private::public_access>
     registration::property_readonly(string_view name, Acc accessor) {
         return {std::make_shared<implements::registration_executer>(), name, accessor};
+    }
+    template <typename A1, typename A2, typename AccLevel,
+              std::enable_if_t<!helper::type_list_contains<A2, implements::registration_private::access_levels_list>::value, int>>
+    registration::bind<implements::prop, implements::invalid_type_t, A1, A2, AccLevel> registration::property(string_view name,
+                                                                                                              A1 getter, A2 setter,
+                                                                                                              AccLevel level) {
+        return {std::make_shared<implements::registration_executer>(), name, getter, setter};
     }
 
     template <typename Func>

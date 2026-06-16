@@ -81,6 +81,12 @@ namespace rettr {
             bind<implements::prop_readonly, Clazz, Acc, AccLevel> property_readonly(string_view name, Acc accessor,
                                                                                     AccLevel level = AccLevel());
 
+            template <typename A1, typename A2, typename AccLevel = implements::registration_private::public_access,
+                      std::enable_if_t<!helper::type_list_contains<A2, implements::registration_private::access_levels_list>::value,
+                                       int> = 0>
+            bind<implements::prop, Clazz, A1, A2, AccLevel> property(string_view name, A1 getter, A2 setter,
+                                                                     AccLevel level = AccLevel());
+
             template <typename Func, typename AccLevel = implements::registration_private::public_access,
                       typename Tp = std::enable_if_t<
                           helper::type_list_contains<AccLevel, implements::registration_private::access_levels_list>::value>>
@@ -107,12 +113,19 @@ namespace rettr {
         static const implements::registration_private::private_access private_access;
 
         template <typename Acc>
-        static bind<implements::prop, struct implements::invalid_type_t, Acc, implements::registration_private::public_access> property(
-            string_view name, Acc accessor);
+        static bind<implements::prop, struct implements::invalid_type_t, Acc, implements::registration_private::public_access>
+        property(string_view name, Acc accessor);
 
         template <typename Acc>
         static bind<implements::prop_readonly, struct implements::invalid_type_t, Acc, implements::registration_private::public_access>
         property_readonly(string_view name, Acc accessor);
+
+        template <
+            typename A1, typename A2, typename AccLevel = implements::registration_private::public_access,
+            std::enable_if_t<!helper::type_list_contains<A2, implements::registration_private::access_levels_list>::value, int> = 0>
+        static bind<implements::prop, struct implements::invalid_type_t, A1, A2, AccLevel> property(string_view name, A1 getter,
+                                                                                                    A2 setter,
+                                                                                                    AccLevel level = AccLevel());
 
         template <typename Func>
         static bind<implements::meth, struct implements::invalid_type_t, Func, implements::registration_private::public_access> method(

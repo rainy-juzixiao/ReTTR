@@ -101,7 +101,7 @@ namespace rettr {
                                                                            implements::constructor_func_bind<Fx> {
     public:
         bind(std::shared_ptr<implements::registration_executer> reg_exec, Fx func) :
-            registration::class_<Clazz>{},
+            registration::class_<Clazz>(reg_exec),
             implements::constructor_func_bind<Fx>{[this](constructor ctor) {
                                                       reg_exec_->add_registration_func(this, [c = std::move(ctor)]() mutable {
                                                           implements::store_item<Clazz>(std::move(c));
@@ -167,33 +167,65 @@ namespace rettr {
         std::shared_ptr<implements::registration_executer> reg_exec_;
     };
 
-    template <typename Clazz, typename Acc, typename AccLevel>
-    class registration::bind<implements::prop_readonly, Clazz, Acc, AccLevel> : public registration::class_<Clazz>,
-                                                                                implements::property_bind<Clazz, const Acc> {
+    template <typename Clazz, typename Getter, typename Setter, typename AccLevel>
+    class registration::bind<implements::prop, Clazz, Getter, Setter, AccLevel> : public registration::class_<Clazz>,
+                                                                                  implements::property_bind<Clazz, Getter> {
     public:
-        bind(std::shared_ptr<implements::registration_executer> reg_exec, string_view name, Acc accessor) :
-            registration::class_<Clazz>{},
-            implements::property_bind<Clazz, const Acc>{
-                std::move(accessor),
-                [this, name](rettr::property prop) {
-                    reg_exec_->add_registration_func(static_cast<const void *>(this),
-                                                     [p = std::move(prop)]() mutable { implements::store_item<Clazz>(std::move(p)); });
+        bind(std::shared_ptr<implements::registration_executer> reg_exec, string_view name, Getter getter, Setter setter) :
+            registration::class_<Clazz>(reg_exec),
+            implements::property_bind<Clazz, Getter>{
+                std::move(getter), std::move(setter), name,
+                [this, r = reg_exec](rettr::property prop) {
+                    r->add_registration_func(this, [p = std::move(prop)]() mutable { implements::store_item<Clazz>(std::move(p)); });
                 }},
             reg_exec_(std::move(reg_exec)) {
-            implements::register_accessor_class_type_when_needed<Clazz, Acc>();
-            reg_exec_->add_registration_func(static_cast<const void *>(this), [] {});
+            reg_exec_->add_registration_func(static_cast<const void *>(this));
         }
 
         ~bind() {
             if (!called_bind) {
-                implements::property_bind<Clazz, const Acc>::operator()(implements::make_access_level_tag<AccLevel>::make());
+                implements::property_bind<Clazz, Getter>::operator()(implements::make_access_level_tag<AccLevel>::make());
             }
         }
 
         template <typename... Modifiers>
         registration::class_<Clazz> operator()(Modifiers &&...mods) {
-            implements::property_bind<Clazz, const Acc>::operator()(std::forward<Modifiers>(mods)...,
-                                                                    implements::make_access_level_tag<AccLevel>::make());
+            implements::property_bind<Clazz, Getter>::operator()(std::forward<Modifiers>(mods)...,
+                                                                 implements::make_access_level_tag<AccLevel>::make());
+            called_bind = true;
+            return {reg_exec_};
+        }
+
+    private:
+        bool called_bind{false};
+        std::shared_ptr<implements::registration_executer> reg_exec_;
+    };
+
+    template <typename Clazz, typename Getter, typename AccLevel>
+    class registration::bind<implements::prop_readonly, Clazz, Getter, AccLevel> : public registration::class_<Clazz>,
+                                                                                   implements::property_bind_readonly<Clazz> {
+    public:
+        bind(std::shared_ptr<implements::registration_executer> reg_exec, string_view name, Getter getter) :
+            registration::class_<Clazz>(reg_exec),
+            implements::property_bind_readonly<Clazz>{
+                std::move(getter), name,
+                [this, r = reg_exec](rettr::property prop) {
+                    r->add_registration_func(this, [p = std::move(prop)]() mutable { implements::store_item<Clazz>(std::move(p)); });
+                }},
+            reg_exec_(std::move(reg_exec)) {
+            reg_exec_->add_registration_func(static_cast<const void *>(this));
+        }
+
+        ~bind() {
+            if (!called_bind) {
+                implements::property_bind_readonly<Clazz>::operator()(implements::make_access_level_tag<AccLevel>::make());
+            }
+        }
+
+        template <typename... Modifiers>
+        registration::class_<Clazz> operator()(Modifiers &&...mods) {
+            implements::property_bind_readonly<Clazz>::operator()(std::forward<Modifiers>(mods)...,
+                                                                  implements::make_access_level_tag<AccLevel>::make());
             called_bind = true;
             return {reg_exec_};
         }
@@ -244,7 +276,7 @@ namespace rettr {
                                                                    implements::enumeration_bind<Clazz, EnumType> {
     public:
         bind(std::shared_ptr<implements::registration_executer> reg_exec, string_view name) :
-            registration::class_<Clazz>{},
+            registration::class_<Clazz>(reg_exec),
             implements::enumeration_bind<Clazz, EnumType>{name,
                                                           [this](rettr::enumeration enum_data) { enum_ = std::move(enum_data); }},
             reg_exec_(std::move(reg_exec)) {

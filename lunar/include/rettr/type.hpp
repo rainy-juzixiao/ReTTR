@@ -97,11 +97,11 @@ namespace rettr {
         template <typename T, std::enable_if_t<!std::is_same_v<T, rettr::typeinfo>, int> = 0>
         RETTR_LOCAL_API static type from(T &&object) noexcept;
 
-        static type from_base(void* ptr, type source_type) noexcept;
-        static type from_base(void* ptr, const typeinfo& source_type) noexcept;
+        static type from_base(void *ptr, type source_type) noexcept;
+        static type from_base(void *ptr, const typeinfo &source_type) noexcept;
 
         template <typename Ty>
-        static type from_base(Ty * ptr) noexcept;
+        static type from_base(Ty *ptr) noexcept;
 
         static type from_name(string_view name) noexcept;
 
@@ -164,17 +164,17 @@ namespace rettr {
         template <typename... Args>
         RETTR_NODISCARD any create(Args &&...args) const;
 
-        template <typename... Args, typename Ty = object, std::enable_if_t<std::is_same_v<Ty, object>,int> = 0>
+        template <typename... Args, typename Ty = object, std::enable_if_t<std::is_same_v<Ty, object>, int> = 0>
         RETTR_NODISCARD Ty create_object(Args &&...args) const;
 
-        template <typename... Args, typename Ty = shared_object, std::enable_if_t<std::is_same_v<Ty, shared_object>,int> = 0>
+        template <typename... Args, typename Ty = shared_object, std::enable_if_t<std::is_same_v<Ty, shared_object>, int> = 0>
         RETTR_NODISCARD Ty create_shared(Args &&...args) const;
 
         RETTR_NODISCARD rettr::destructor destructor() const noexcept;
 
         RETTR_NODISCARD bool destroy(const object_view &obj) const noexcept;
 
-        RETTR_NODISCARD const rettr::property& property(string_view name) const noexcept;
+        RETTR_NODISCARD const rettr::property &property(string_view name) const noexcept;
 
         RETTR_NODISCARD array_range<rettr::property> properties() const noexcept;
 
@@ -236,9 +236,9 @@ namespace rettr {
         template <typename Type = type>
         RETTR_INLINE type(implements::type_private::type_data<Type> *data) noexcept;
 
-        RETTR_NODISCARD object create_object_impl(any&& value) const;
+        RETTR_NODISCARD object create_object_impl(any &&value) const;
 
-        RETTR_NODISCARD shared_object create_shared_impl(any&& value) const;
+        RETTR_NODISCARD shared_object create_shared_impl(any &&value) const;
 
         RETTR_NODISCARD RETTR_INLINE type get_raw_type() const noexcept;
 
