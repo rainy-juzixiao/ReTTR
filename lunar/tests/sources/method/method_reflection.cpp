@@ -364,10 +364,11 @@ TEST_CASE("global methods", "[method]") {
     REQUIRE(global_meth_1.declaring_type().empty());
     REQUIRE(bool(global_meth_1) == true);
     REQUIRE(global_meth_1.parameter_infos().begin()->type() == type::from<bool>());
-    any success = global_meth_1.invoke(non_exists_instance);
+
+    REQUIRE_THROWS_AS(global_meth_1.invoke(non_exists_instance), argument_count_mismatch);
     REQUIRE(free_function_called == false);
 
-    success = global_meth_1.invoke(non_exists_instance, true);
+    global_meth_1.invoke(non_exists_instance, true);
     REQUIRE(free_function_called == true);
 
     method global_meth_2 = type::global_method("free_function", {rettr_typeid(int &)});

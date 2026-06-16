@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 rainy-juzixiao
+ * Copyright 2026 rainy-juzixiao
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 #define RETTR_IMPLEMENTS_INVOCABLE_INVOKER_ACCESSOR_HPP
 #include <numeric>
 #include <rettr/implements/invocable/invoker.hpp>
+#include <rettr/implements/invocable/exceptions.hpp>
 
 namespace rettr::implements {
     template <typename Fx, bool IsFnObj = is_fnobj<Fx>::value>
@@ -173,7 +174,7 @@ namespace rettr::implements {
                 if constexpr (!std::is_same_v<decltype(storage.arguments.store), std::tuple<>>) {
                     return invoke(object, {});
                 }
-                return {};
+                throw argument_count_mismatch{};
             }
         }
 
@@ -224,8 +225,7 @@ namespace rettr::implements {
                 return storage.invoke_with_conv_impl(ptr, arg_view, std::make_index_sequence<arity>{});
             }
             if (size < least || size > arity) {
-                errno = EINVAL;
-                return {};
+                throw argument_count_mismatch{};
             }
             // 这里可能会涉及默认参数，不过，可能有些参数是需要转换的，因此，这个路径可能会处理需要转换的参数
             return storage.invoke_with_defaults(ptr, arg_view);
@@ -255,8 +255,7 @@ namespace rettr::implements {
                 return storage.invoke_with_conv_impl(ptr, arg_view, std::make_index_sequence<arity>{});
             }
             if (size < least || size > arity) {
-                errno = EINVAL;
-                return {};
+                throw argument_count_mismatch{};
             }
             return storage.invoke_with_defaults(ptr, arg_view);
         }

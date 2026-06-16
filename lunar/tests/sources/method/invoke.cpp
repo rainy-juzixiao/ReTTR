@@ -142,28 +142,29 @@ TEST_CASE("method - invoke - NEGATIVE - invalid arg count", "[method]") {
     REQUIRE(meth_list.size() >= 8);
 
     method_invoke_test obj;
-    std::ignore = meth_list[0].invoke(obj, 1);
+
+    REQUIRE_THROWS_AS(meth_list[0].invoke(obj, 1), argument_count_mismatch);
     CHECK(obj.invoked[0] == false);
 
-    std::ignore = meth_list[1].invoke(obj);
+    REQUIRE_THROWS_AS(meth_list[1].invoke(obj), argument_count_mismatch);
     CHECK(obj.invoked[1] == false);
 
-    std::ignore = meth_list[2].invoke(obj, 1);
+    REQUIRE_THROWS_AS(meth_list[2].invoke(obj, 1), argument_count_mismatch);
     CHECK(obj.invoked[2] == false);
 
-    std::ignore = meth_list[3].invoke(obj, 1, 2);
+    REQUIRE_THROWS_AS(meth_list[3].invoke(obj, 1, 2), argument_count_mismatch);
     CHECK(obj.invoked[3] == false);
 
-    std::ignore = meth_list[4].invoke(obj, 1, 2, 3);
+    REQUIRE_THROWS_AS(meth_list[4].invoke(obj, 1, 2, 3), argument_count_mismatch);
     CHECK(obj.invoked[4] == false);
 
-    std::ignore = meth_list[5].invoke(obj, 1, 2, 3, 4);
+    REQUIRE_THROWS_AS(meth_list[5].invoke(obj, 1, 2, 3, 4), argument_count_mismatch);
     CHECK(obj.invoked[5] == false);
 
-    std::ignore = meth_list[6].invoke(obj, 1, 2, 3, 4, 5);
+    REQUIRE_THROWS_AS(meth_list[6].invoke(obj, 1, 2, 3, 4, 5), argument_count_mismatch);
     CHECK(obj.invoked[6] == false);
 
-    std::ignore = meth_list[7].invoke_variadic(obj, {1, 2, 3, 4, 5, 6});
+    REQUIRE_THROWS_AS(meth_list[7].invoke_variadic(obj, {1, 2, 3, 4, 5, 6}), argument_count_mismatch);
     CHECK(obj.invoked[7] == false);
 }
 

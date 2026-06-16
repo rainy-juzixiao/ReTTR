@@ -72,12 +72,11 @@ TEST_CASE("method - default argument test", "[method]") {
     CHECK(var.as<bool>() == true);
 
     // too less arguments
-    var = meth.invoke(obj);
-    CHECK_FALSE(var.has_value());
+
+    REQUIRE_THROWS_AS(meth.invoke(obj), argument_count_mismatch);
 
     // too much arguments
-    var = meth.invoke(obj, 23, std::string("This is a default"), ptr, 45);
-    CHECK_FALSE(var.has_value());
+    REQUIRE_THROWS_AS(meth.invoke(obj, 23, std::string("This is a default"), ptr, 45), argument_count_mismatch);
 }
 
 TEST_CASE("method - default argument test (invoke_variadic)", "[method]") {
@@ -106,12 +105,10 @@ TEST_CASE("method - default argument test (invoke_variadic)", "[method]") {
 
 
     // too less arguments
-    var = meth.invoke_variadic(obj, {});
-    CHECK_FALSE(var.has_value());
+    REQUIRE_THROWS_AS(meth.invoke_variadic(obj, {}), argument_count_mismatch);
 
     // too much arguments
-    var = meth.invoke_variadic(obj, {23, std::string("This is a default"), ptr, 45});
-    CHECK_FALSE(var.has_value());
+    REQUIRE_THROWS_AS(meth.invoke_variadic(obj, {23, std::string("This is a default"), ptr, 45}), argument_count_mismatch);
 }
 
 TEST_CASE("method - default argument test - invoke via type - member method", "[method]") {

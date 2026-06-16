@@ -20,6 +20,7 @@
 #include <rettr/object_view.hpp>
 #include <rettr/any.hpp>
 #include <rettr/implements/invocable/method_flags.hpp>
+#include <rettr/implements/invocable/exceptions.hpp>
 
 #if RETTR_USING_MSVC
 #pragma warning(push)
@@ -193,12 +194,14 @@ namespace rettr::implements {
             return item.template as<Type>();
         }
         if constexpr (is_any_convert_invocable<Type>) {
-            return any_converter<Type>::basic_convert(item.target_as_void_ptr(), item.type());
+            if (any_converter<Type>::is_convertible(item.type())) {
+                return any_converter<Type>::basic_convert(item.target_as_void_ptr(), item.type());
+            }
         }
         if (is_convertible_to(item.type(), rettr_typeid(Type))) {
             return dynamic_convert<Type>(item.target_as_void_ptr(), item.type());
         }
-        throw std::bad_cast();
+        throw convert_argument_type_mismatch(item.type(), rettr_typeid(Type));
     }
 
     template <typename Fx, typename DefaultArguments, typename... Args>
