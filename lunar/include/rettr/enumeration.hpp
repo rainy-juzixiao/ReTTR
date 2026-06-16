@@ -1,5 +1,5 @@
 /*
-* Copyright 2026 rainy-juzixiao
+ * Copyright 2026 rainy-juzixiao
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@
 
 namespace rettr::implements {
     struct enumeration_data {
-        const class typeinfo enum_type{};
-        const class typeinfo underlying_type{};
-        const class typeinfo declaring_type{};
+        rettr::typeinfo enum_type{};
+        rettr::typeinfo underlying_type{};
+        rettr::typeinfo declaring_type{};
         string_view name;
         std::vector<string_view> names;
         std::vector<any> values;

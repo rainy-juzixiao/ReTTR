@@ -43,9 +43,9 @@ namespace rettr::implements {
 
         explicit enumeration_bind(string_view name, std::function<void(enumeration)> commit) noexcept : commit_(std::move(commit)) {
             data_.name = name;
-            data_.enum_type = &typeinfo::create<EnumType>();
-            data_.underlying_type = &typeinfo::create<underlying>();
-            data_.declaring_type = &typeinfo::create<Clazz>();
+            data_.enum_type = typeinfo::create<EnumType>();
+            data_.underlying_type = typeinfo::create<underlying>();
+            data_.declaring_type = typeinfo::create<Clazz>();
         }
 
         ~enumeration_bind() {
