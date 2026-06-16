@@ -5,6 +5,8 @@
 > [!TIP]
 > 如果你使用过RTTR库，在大部分时候，你都可以轻松的使用ReTTR，因为 在使用上，ReTTR的大部分接口用法是极为接近RTTR库的
 > 除了某些体系被移除或替代之外，外加API的重新整理
+>
+> 另外，你只需要注意的是，ReTTR的部分组件要求你处理异常情况，而不是错误代码
 
 ## 声明类型
 
@@ -232,7 +234,7 @@ public:
 
 private:
     mesh (std::string name, node* parent = nullptr);
-    RTTR_ENABLE (node) // 在这里包含所有你在mesh类继承的基类，参照注释Base
+    RETTR_ENABLE (node) // 在这里包含所有你在mesh类继承的基类，参照注释Base
 }; 
 
 ```
