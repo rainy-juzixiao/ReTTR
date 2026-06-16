@@ -39,4 +39,14 @@ namespace rettr {
     object object_view::create_object() const {
         return reflect_type().create_object(*this);
     }
+
+    void *object_view::apply_offset(void *ptr, const rettr::typeinfo &source, const rettr::typeinfo &target) const {
+        const rettr::typeinfo* source_p = &source;
+        if (derived_info_p != nullptr) {
+            auto derived_info = reinterpret_cast<implements::derived_func<rettr::type>>(derived_info_p)(ptr);
+
+            source_p = &derived_info.type.type_info();
+        }
+        return implements::apply_offset(ptr, *source_p, target);
+    }
 }

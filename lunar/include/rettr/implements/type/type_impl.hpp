@@ -73,17 +73,17 @@ namespace rettr::implements::type_private {
 
 namespace rettr::implements {
     template <typename Ty, typename Type>
-    static type_private::derived_info<Type> get_most_derived_info_impl(void *ptr) {
+    static derived_info<Type> get_most_derived_info_impl(void *ptr) {
         return {static_cast<Ty *>(ptr)->rettr_private_stub_for_this_pointer(), static_cast<Ty *>(ptr)->reflect_this()};
     }
 
     template <typename Ty, typename Type>
-    static type_private::derived_info<Type> get_most_derived_info_impl_none(void *ptr) {
+    static derived_info<Type> get_most_derived_info_impl_none(void *ptr) {
         return {ptr, type::from<Ty>()};
     }
 
     template <typename Ty, typename Type>
-    static type_private::derived_func<Type> get_most_derived_info_func() {
+    static derived_func<Type> get_most_derived_info_func() {
         if constexpr (has_rettr_private_stub_for_this_pointer<Ty>::value && has_reflect_this_func<Ty>::value) {
             return get_most_derived_info_impl<Ty, Type>;
         } else {
@@ -617,10 +617,12 @@ struct std::hash<rettr::type> {
 namespace rettr {
     RETTR_INLINE rettr::type object_view::reflect_type() const {
         if (!impl_) {
-            impl_ = type::from_typeid(this->type()).type_data_;
-            if (!impl_) {
-                return {}; // 未注册
+            auto t = type::from_typeid(this->type());
+            if (t.empty()) {
+                return {};
             }
+            impl_ = t.type_data_;
+            derived_info_p = reinterpret_cast<void*>(&t.type_data_->my_class_data.derived_info_func);
         }
         return rettr::type{static_cast<implements::type_private::type_data<rettr::type> *>(impl_)};
     }

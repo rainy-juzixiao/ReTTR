@@ -302,6 +302,11 @@ namespace rettr::implements {
     }
 }
 
+namespace rettr::implements {
+    template <typename Ty, typename Type>
+    static derived_func<Type> get_most_derived_info_func();
+}
+
 namespace rettr {
     // 用于表示不存在的实例
     struct non_exists_instance_t {};
@@ -322,7 +327,8 @@ namespace rettr {
         template <typename Ty, enable_if_t<Ty> = 0, typename Type = type>
         object_view(Ty &object) noexcept : // NOLINT
             object_{const_cast<void *>(static_cast<const void *>(std::addressof(object)))}, ctti_{&rettr_typeid(Ty)},
-            impl_(static_cast<void *>(Type::template from<Ty>().type_data_)) {
+            impl_(static_cast<void *>(Type::template from<Ty>().type_data_)),
+            derived_info_p(reinterpret_cast<void *>(implements::get_most_derived_info_func<Ty, rettr::type>())) {
         }
 
         template <typename Ty,
@@ -333,7 +339,8 @@ namespace rettr {
                   typename Type = type>
         object_view(Ty &&object) : // NOLINT
             object_{const_cast<void *>(static_cast<const void *>(std::addressof(object)))}, ctti_{&rettr_typeid(Ty &&)},
-            impl_(static_cast<void *>(Type::template from<Ty>().type_data_)) {
+            impl_(static_cast<void *>(Type::template from<Ty>().type_data_)),
+            derived_info_p(reinterpret_cast<void *>(implements::get_most_derived_info_func<Ty, rettr::type>())) {
         }
 
         object_view(void *const object, const typeinfo &ctti) noexcept : object_{object}, ctti_{&ctti} {
@@ -349,7 +356,8 @@ namespace rettr {
         object_view(non_exists_instance_t) noexcept {
         }
 
-        object_view(object_view &&right) noexcept : object_(right.object_), ctti_(right.ctti_), object_holder_(right.object_holder_) {
+        object_view(object_view &&right) noexcept :
+            object_(right.object_), ctti_(right.ctti_), object_holder_(right.object_holder_), impl_(right.impl_) {
             if (right.object_ == &right.object_holder_) {
                 object_ = &object_holder_;
             }
@@ -362,10 +370,12 @@ namespace rettr {
             if (right.object_ == &right.object_holder_) {
                 object_ = &object_holder_;
             }
+            impl_ = right.impl_;
             return *this;
         }
 
-        object_view(const object_view &right) : object_(right.object_), ctti_(right.ctti_), object_holder_(right.object_holder_) {
+        object_view(const object_view &right) :
+            object_(right.object_), ctti_(right.ctti_), object_holder_(right.object_holder_), impl_(right.impl_) {
             if (right.object_ == &right.object_holder_) {
                 object_ = &object_holder_;
             }
@@ -378,6 +388,7 @@ namespace rettr {
             if (right.object_ == &right.object_holder_) {
                 object_ = &object_holder_;
             }
+            impl_ = right.impl_;
             return *this;
         }
 
@@ -443,13 +454,21 @@ namespace rettr {
 
         template <typename TargetType>
         RETTR_NODISCARD const TargetType *try_dynamic_cast() const noexcept {
-            static constexpr typeinfo target_type = typeinfo::create<TargetType>();
-            if (auto *result =
-                    static_cast<const TargetType *>(implements::apply_offset(const_cast<void *>(object_), type(), target_type))) {
+            static constexpr typeinfo target_type = typeinfo::create<helper::remove_cvref_t<TargetType>>();
+            const typeinfo &actual_type = type().remove_cvref().remove_pointer();
+            void *actual_ptr = [&]() -> void * {
+                if (type().remove_cvref().is_pointer()) {
+                    return *static_cast<void **>(object_);
+                }
+                return object_;
+            }();
+            if (actual_type == target_type) {
+                return static_cast<const TargetType *>(actual_ptr);
+            }
+            if (auto *result = static_cast<const TargetType *>(apply_offset(actual_ptr, actual_type, target_type))) {
                 return result;
             }
-            return static_cast<const TargetType *>(
-                implements::apply_offset(const_cast<void *>(object_), type().remove_cvref(), target_type));
+            return nullptr;
         }
 
         template <typename... Args>
@@ -494,10 +513,13 @@ namespace rettr {
     private:
         rettr::type reflect_type() const;
 
+        void *apply_offset(void *ptr, const rettr::typeinfo &source, const rettr::typeinfo &target) const;
+
         void *object_{};
         const typeinfo *ctti_{&rettr_typeid(void)};
         void *object_holder_{};
         mutable void *impl_{};
+        mutable void *derived_info_p{};
     };
 
     template <typename Any, std::enable_if_t<std::is_same_v<helper::remove_cvref_t<Any>, any>, int> = 0>

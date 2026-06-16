@@ -1068,7 +1068,16 @@ struct std::hash<rettr::typeinfo> {
 };
 
 namespace rettr::implements {
-    using converter_func = void *(*) (void *);
+    template <typename Type>
+    struct derived_info {
+        void *ptr;
+        Type type;
+    };
+
+    template <typename Type>
+    using derived_func = derived_info<Type> (*)(void *);
+
+    using converter_func = std::function<void *(void *)>;
 
     struct conversion_key {
         std::size_t source_hash;
@@ -1084,92 +1093,109 @@ namespace rettr::implements {
         }
     };
 
-    using conversion_map_t = std::unordered_map<conversion_key, converter_func, conversion_key_hash>;
-    using adjacency_map_t = std::unordered_map<std::size_t, std::vector<std::pair<std::size_t, converter_func>>>;
+    struct type_upcast_info {
+        std::vector<std::size_t> base_hashes;
+        std::vector<converter_func> converters;
+    };
 
-    RETTR_INLINE conversion_map_t &get_conversion_map() {
-        static conversion_map_t instance;
+    using type_info_map_t = std::unordered_map<std::size_t, type_upcast_info>;
+
+    RETTR_INLINE type_info_map_t &get_type_info_map() {
+        static type_info_map_t instance;
         return instance;
     }
 
-    RETTR_INLINE adjacency_map_t &get_adjacency_map() {
-        static adjacency_map_t instance;
+    using direct_bases_map_t = std::unordered_map<std::size_t, std::vector<std::pair<std::size_t, converter_func>>>;
+    using upcast_closure_map_t = std::unordered_map<conversion_key, converter_func, conversion_key_hash>;
+
+    RETTR_INLINE direct_bases_map_t &get_direct_bases_map() {
+        static direct_bases_map_t instance;
         return instance;
     }
 
-    RETTR_INLINE void register_conversion(const std::size_t src, const std::size_t tgt, converter_func fn) {
-        get_conversion_map().try_emplace(conversion_key{src, tgt}, fn);
-        get_adjacency_map()[src].emplace_back(tgt, fn);
+    RETTR_INLINE upcast_closure_map_t &get_upcast_closure_map() {
+        static upcast_closure_map_t instance;
+        return instance;
     }
 
-    RETTR_INLINE converter_func find_converter(const std::size_t src, const std::size_t tgt) {
-        auto &map = get_conversion_map();
-        if (const auto it = map.find(conversion_key{src, tgt}); it != map.end()) {
-            return it->second;
+    RETTR_INLINE void register_direct_base(const std::size_t derived, const std::size_t base, converter_func fn) {
+        auto &direct = get_direct_bases_map();
+        auto &closure = get_upcast_closure_map();
+        direct[derived].emplace_back(base, fn);
+        closure.try_emplace(conversion_key{derived, base}, fn);
+        auto it = direct.find(base);
+        if (it != direct.end()) {
+            for (const auto &[key, existing_fn]: closure) {
+                if (key.source_hash != base) {
+                    continue;
+                }
+                converter_func combined = [fn, existing_fn](void *ptr) -> void * {
+                    void *mid = fn(ptr);
+                    if (!mid) {
+                        return nullptr;
+                    }
+                    return existing_fn(mid);
+                };
+                closure.try_emplace(conversion_key{derived, key.target_hash}, combined);
+            }
         }
-        return nullptr;
+        for (const auto &[key, existing_fn]: closure) {
+            if (key.target_hash != derived) {
+                continue;
+            }
+            const std::size_t sub = key.source_hash;
+            const converter_func &to_derived = existing_fn;
+            converter_func sub_to_base = [to_derived, fn](void *ptr) -> void * {
+                void *mid = to_derived(ptr);
+                if (!mid) {
+                    return nullptr;
+                }
+                return fn(mid);
+            };
+            closure.try_emplace(conversion_key{sub, base}, sub_to_base);
+            for (const auto &[key2, base_ancestor_fn]: closure) {
+                if (key2.source_hash != base) {
+                    continue;
+                }
+                converter_func sub_to_ancestor = [to_derived, fn, base_ancestor_fn](void *ptr) -> void * {
+                    void *mid = to_derived(ptr);
+                    if (!mid) {
+                        return nullptr;
+                    }
+                    void *mid2 = fn(mid);
+                    if (!mid2) {
+                        return nullptr;
+                    }
+                    return base_ancestor_fn(mid2);
+                };
+                closure.try_emplace(conversion_key{sub, key2.target_hash}, sub_to_ancestor);
+            }
+        }
     }
-}
 
-namespace rettr::implements {
     template <typename Derived, typename Base>
     void register_base() {
-        static_assert(std::is_base_of_v<Base, Derived>, "Base must be base of Derived");
+        static_assert(std::is_base_of_v<Base, Derived>);
+        converter_func up_fn = [](void *ptr) -> void * { return static_cast<Base *>(static_cast<Derived *>(ptr)); };
+        register_direct_base(typeinfo::get_type_hash<Derived>(), typeinfo::get_type_hash<Base>(), up_fn);
+    }
 
-        // Derived* → Base*
-        implements::register_conversion(typeinfo::get_type_hash<Derived>(), typeinfo::get_type_hash<Base>(),
-                                        [](void *ptr) -> void * { return static_cast<Base *>(static_cast<Derived *>(ptr)); });
-
-        // Base* → Derived*
-        if constexpr (std::is_polymorphic_v<Base>) {
-            implements::register_conversion(typeinfo::get_type_hash<Base>(), typeinfo::get_type_hash<Derived>(),
-                                            [](void *ptr) -> void * { return dynamic_cast<Derived *>(static_cast<Base *>(ptr)); });
+    RETTR_INLINE bool is_upcast_reachable(std::size_t from_hash, std::size_t to_hash) {
+        if (from_hash == to_hash) {
+            return true;
         }
+        return get_upcast_closure_map().count(conversion_key{from_hash, to_hash}) > 0;
     }
 
     RETTR_INLINE void *apply_offset(void *ptr, const rettr::typeinfo &source, const rettr::typeinfo &target) {
         if (!ptr || source.hash_code() == target.hash_code()) {
             return ptr;
         }
-        if (const auto fn = find_converter(source.hash_code(), target.hash_code())) {
-            return fn(ptr);
+        const auto &closure = get_upcast_closure_map();
+        const auto it = closure.find(conversion_key{source.hash_code(), target.hash_code()});
+        if (it != closure.end()) {
+            return it->second(ptr);
         }
-        std::unordered_set<std::size_t> visited;
-        std::queue<std::pair<std::size_t, void *>> queue;
-
-        visited.insert(source.hash_code());
-        queue.push({source.hash_code(), ptr});
-
-        auto &adj = get_adjacency_map();
-
-        while (!queue.empty()) {
-            auto [cur_hash, cur_ptr] = queue.front();
-            queue.pop();
-
-            const auto it = adj.find(cur_hash);
-            if (it == adj.end()) {
-                continue;
-            }
-
-            for (auto &[next_hash, fn]: it->second) {
-                if (visited.count(next_hash)) {
-                    continue;
-                }
-
-                void *next_ptr = fn(cur_ptr);
-                if (!next_ptr) {
-                    continue;
-                }
-
-                if (next_hash == target.hash_code()) {
-                    return next_ptr;
-                }
-
-                visited.insert(next_hash);
-                queue.push({next_hash, next_ptr});
-            }
-        }
-
         return nullptr;
     }
 }

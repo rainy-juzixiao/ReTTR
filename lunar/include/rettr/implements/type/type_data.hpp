@@ -29,16 +29,7 @@ namespace rettr::implements::type_private {
     template <typename Type>
     struct type_data;
 
-    template <typename Type>
-    struct derived_info {
-        void *ptr;
-        Type type;
-    };
-
     using cast_func_ptr_t = void *(*) (void *);
-
-    template <typename Type>
-    using derived_func = derived_info<Type> (*)(void *);
 
     template <typename Type>
     RETTR_LOCAL_API RETTR_INLINE struct type_data<Type> *invalid_type_data() noexcept;
