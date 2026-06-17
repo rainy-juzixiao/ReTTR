@@ -78,10 +78,9 @@ namespace rettr {
         is_abstract = 1 << 24,
 
         /* reflection */
-        is_reflection_type = 1 << 25,
-        is_signed = 1 << 26,
-        is_sequential_container = 1 << 27,
-        is_associative_container = 1 << 28,
+        is_signed = 1 << 25,
+        is_sequential_container = 1 << 26,
+        is_associative_container = 1 << 27,
     };
 
     // @NODOCBEGIN
