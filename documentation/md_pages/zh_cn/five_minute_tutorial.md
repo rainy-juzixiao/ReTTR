@@ -123,6 +123,7 @@ RETTR_REGISTRATION {
 ```c++
 #include <rettr/rettr.hpp>
 #include <iostream>
+#include "mesh.h"
 
 int main() {
     using namespace rettr;
