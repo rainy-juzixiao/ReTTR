@@ -83,49 +83,49 @@ namespace rettr::implements {
     template <typename ObjectView = object_view>
     class arg_view {
     public:
-        using view = array_range<ObjectView>;
-        using iterator = typename view::iterator;
-        using const_iterator = typename view::const_iterator;
+        using iterator = object_view *;
+        using const_iterator = const object_view *;
         using reference = ObjectView &;
         using const_reference = const ObjectView &;
 
-        arg_view() : args{} {
+        arg_view() : start_args(nullptr), size_(0) {
         }
 
         template <std::size_t N>
-        arg_view(std::array<ObjectView, N> &list) : args(list) { // NOLINT
+        arg_view(std::array<ObjectView, N> &list) : start_args(list.data()), size_(list.size()) { // NOLINT
         }
 
         iterator begin() noexcept {
-            return args.begin();
+            return start_args + size_;
         }
 
         iterator end() noexcept {
-            return args.end();
+            return start_args + size_;
         }
 
         RETTR_INLINE reference operator[](const std::size_t idx) {
-            return args.operator[](static_cast<std::ptrdiff_t>(idx));
+            return start_args[static_cast<std::ptrdiff_t>(idx)];
         }
 
         RETTR_INLINE const_reference &operator[](const std::size_t idx) const {
-            return args.operator[](static_cast<std::ptrdiff_t>(idx));
+            return start_args[static_cast<std::ptrdiff_t>(idx)];
         }
 
         reference at(const std::size_t idx) {
-            return args.operator[](static_cast<std::ptrdiff_t>(idx));
+            return start_args[static_cast<std::ptrdiff_t>(idx)];
         }
 
         RETTR_NODISCARD const_reference at(const std::size_t idx) const {
-            return args.operator[](static_cast<std::ptrdiff_t>(idx));
+            return start_args[static_cast<std::ptrdiff_t>(idx)];
         }
 
         RETTR_NODISCARD std::size_t size() const noexcept {
-            return args.size();
+            return size_;
         }
 
     private:
-        view args;
+        ObjectView *start_args;
+        std::size_t size_;
     };
 
     template <std::size_t N, typename ObjectView = object_view>
@@ -321,8 +321,7 @@ namespace rettr {
 
         template <typename Ty, enable_if_t<Ty> = 0, typename Type = type>
         object_view(Ty &object) noexcept : // NOLINT
-            object_{const_cast<void *>(static_cast<const void *>(std::addressof(object)))}, ctti_{&rettr_typeid(Ty)},
-            impl_(static_cast<void *>(Type::template from<Ty>().type_data_)) {
+            object_{const_cast<void *>(static_cast<const void *>(std::addressof(object)))}, ctti_{rettr_typeid(Ty)} {
         }
 
         template <typename Ty,
@@ -332,18 +331,17 @@ namespace rettr {
                                    int> = 0,
                   typename Type = type>
         object_view(Ty &&object) : // NOLINT
-            object_{const_cast<void *>(static_cast<const void *>(std::addressof(object)))}, ctti_{&rettr_typeid(Ty &&)},
-            impl_(static_cast<void *>(Type::template from<Ty>().type_data_)) {
+            object_{const_cast<void *>(static_cast<const void *>(std::addressof(object)))}, ctti_{rettr_typeid(Ty &&)} {
         }
 
-        object_view(void *const object, const typeinfo &ctti) noexcept : object_{object}, ctti_{&ctti} {
+        object_view(void *const object, const typeinfo &ctti) noexcept : object_{object}, ctti_{ctti} {
         }
 
-        object_view(implements::as_array, void *const object, const typeinfo &ctti) noexcept : ctti_{&ctti}, object_holder_(object) {
+        object_view(implements::as_array, void *const object, const typeinfo &ctti) noexcept : ctti_{ctti}, object_holder_(object) {
             object_ = static_cast<void *>(&object_holder_);
         }
 
-        object_view(implements::as_reference, void *const object, const typeinfo &ctti) noexcept : object_{object}, ctti_{&ctti} {
+        object_view(implements::as_reference, void *const object, const typeinfo &ctti) noexcept : object_{object}, ctti_{ctti} {
         }
 
         object_view(non_exists_instance_t) noexcept {
@@ -418,8 +416,7 @@ namespace rettr {
         }
 
         RETTR_NODISCARD const typeinfo &type() const noexcept {
-            rettr_assume(ctti_ != nullptr);
-            return *ctti_;
+            return ctti_;
         }
 
         RETTR_NODISCARD rettr::type info() const noexcept;
@@ -428,8 +425,7 @@ namespace rettr {
         RETTR_NODISCARD rettr::type derived_info() const noexcept;
 
         RETTR_NODISCARD bool valid() const noexcept {
-            rettr_assume(ctti_ != nullptr);
-            return !ctti_->is_same(rettr_typeid(void));
+            return !ctti_.is_same(rettr_typeid(void));
         }
 
         RETTR_NODISCARD void *target_as_void_ptr() noexcept {
@@ -509,7 +505,7 @@ namespace rettr {
         void *apply_offset(void *ptr, const rettr::typeinfo &source, const rettr::typeinfo &target) const;
 
         void *object_{};
-        const typeinfo *ctti_{&rettr_typeid(void)};
+        typeinfo ctti_{};
         void *object_holder_{};
         mutable void *impl_{};
     };
