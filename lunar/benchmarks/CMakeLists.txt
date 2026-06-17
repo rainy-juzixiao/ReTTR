@@ -16,5 +16,11 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+add_custom_target(benchmark ALL
+        COMMENT "compile all benchmarks")
+
+set_target_properties(benchmark PROPERTIES
+        FOLDER "Benchmarks")
+
 add_subdirectory(method)
 add_subdirectory(rettr_cast)
