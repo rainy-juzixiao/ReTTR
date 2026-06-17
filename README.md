@@ -33,7 +33,7 @@ ReTTR的代码依赖了rainy-toolkit项目中的源代码，按照Apache 2.0许�
 
 - [x] 完成5分钟入门部分
 - [] 完成"使用rettr::type"文档部分
-  - [] 完成"理解rettr::typeinfo"部分
+  - [x] 完成"理解rettr::typeinfo"部分
   - [] 完成"从rettr::type获取类型信息"部分
   - [] 完成"对rettr::type执行查询"部分
   - [] 完成"注册类继承"部分
