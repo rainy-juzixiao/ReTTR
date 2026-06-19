@@ -91,7 +91,7 @@ namespace rettr {
 
         RETTR_NODISCARD const typeinfo &type_info() const noexcept;
 
-        template <typename T>
+        template <typename T, std::enable_if_t<!std::is_same_v<T, rettr::typeinfo>, int> = 0>
         RETTR_LOCAL_API static type from() noexcept;
 
         template <typename T, std::enable_if_t<!std::is_same_v<T, rettr::typeinfo>, int> = 0>

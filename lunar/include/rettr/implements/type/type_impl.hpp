@@ -259,7 +259,7 @@ namespace rettr {
         return type{type_data_->array_raw_type};
     }
 
-    template <typename Ty>
+    template <typename Ty, std::enable_if_t<!std::is_same_v<Ty, rettr::typeinfo>, int>>
     type type::from() noexcept {
         return implements::type_private::create_or_get_type<Ty>();
     }
@@ -274,18 +274,6 @@ namespace rettr {
         using remove_ref = std::remove_reference_t<Ty>;
         return implements::type_private::type_from_instance < Ty,
                implements::has_reflect_this_func<Ty>::value && !std::is_pointer_v < remove_ref >> ::invoke(std::forward<Ty>(object));
-    }
-
-    RETTR_INLINE type type::from_typeid(const typeinfo &ti) noexcept {
-        if (ti == rettr_typeid(implements::invalid_type_t)) {
-            return implements::type_private::invalid_type();
-        }
-        for (auto &t: types()) {
-            if (!t.empty() && t.type_data_->type_info == ti) {
-                return t;
-            }
-        }
-        return {};
     }
 
     RETTR_INLINE std::size_t type::size_of() const noexcept {
@@ -466,7 +454,7 @@ namespace rettr {
 
     template <typename Ty>
     type type::from_base(Ty *ptr) noexcept {
-        return from_base(ptr, type::from<typename implements::type_private::raw_type<Ty>::type>());
+        return from(ptr);
     }
 
     template <bool FollowCppRule, typename... Args>

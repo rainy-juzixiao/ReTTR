@@ -430,6 +430,15 @@ namespace rettr {
         return type_data_->raw_type_data->type_info;
     }
 
+    RETTR_INLINE type type::from_typeid(const typeinfo &ti) noexcept {
+        auto &orig_name_to_id = implements::type_register_private::get_instance().get_orig_name_to_id();
+        const auto ret = orig_name_to_id.find(ti);
+        if (ret != orig_name_to_id.end()) {
+            return ret->second;
+        }
+        return {};
+    }
+
     type type::from_name(string_view name) noexcept {
         auto &custom_name_to_id = implements::type_register_private::get_instance().get_custom_name_to_id();
         const auto ret = custom_name_to_id.find(std::string{name.data(), name.size()});
