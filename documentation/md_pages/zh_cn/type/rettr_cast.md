@@ -1,4 +1,4 @@
-## rettr_cast vs. dynamic_cast
+# rettr_cast vs. dynamic_cast
 
 rettr_cast 函数的行为类似于标准的 C++ dynamic_cast。但是，它有一些优势：
 
