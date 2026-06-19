@@ -6,7 +6,7 @@ rettr_cast 函数的行为类似于标准的 C++ dynamic_cast。但是，它有�
 - 可以跨动态库边界工作
 - 在运行性能上更快
 
-少有的不足是，它因为在C++26之前没有动态反射导致你必须使用`RETTR_ENABLE()`来提示ReTTR的类型系统。
+少有的不足是，它因为在C++26之前没有静态反射(reflection)特性，导致你必须使用`RETTR_ENABLE()`来提示ReTTR的类型系统。
 
 对于性能，可通过运行基准测试目标`bench_rettr_cast`以在本地计算机上执行此测试。
 
