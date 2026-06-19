@@ -29,9 +29,8 @@ target_link_libraries(bench_method rainy-juzixiao::rettr)
 target_link_libraries(bench_method nanobench::nanobench)
 
 set_target_properties(bench_method PROPERTIES
-        DEBUG_POSTFIX "_d"
-        "Benchmarks/bench_method"
-        CXX_STANDARD ${MAX_CXX_STANDARD}
+        DEBUG_POSTFIX ${rettr_debug_postfix}
+        FOLDER "Benchmarks"
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/rettr_project
 )
 

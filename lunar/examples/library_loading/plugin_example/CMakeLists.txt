@@ -23,9 +23,8 @@ add_library(plugin_example SHARED "main.cpp")
 target_link_libraries(plugin_example rainy-juzixiao::rettr)
 
 set_target_properties(plugin_example PROPERTIES
-        DEBUG_POSTFIX "_d"
-        "Examples/library_loading"
-        CXX_STANDARD ${MAX_CXX_STANDARD}
+        DEBUG_POSTFIX ${rettr_debug_postfix}
+        FOLDER "Examples"
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/rettr_project
         LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/rettr_project
         ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/rettr_project)

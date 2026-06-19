@@ -24,9 +24,8 @@ target_link_libraries(library_loader_example rainy-juzixiao::rettr)
 add_dependencies(library_loader_example plugin_example)
 
 set_target_properties(library_loader_example PROPERTIES
-        DEBUG_POSTFIX "_d"
-        "Examples/library_loading"
-        CXX_STANDARD ${MAX_CXX_STANDARD}
+        DEBUG_POSTFIX ${rettr_debug_postfix}
+        FOLDER "Examples"
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/rettr_project
 )
 
