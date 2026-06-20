@@ -774,7 +774,7 @@ namespace rettr::helper {
      */
     template<typename Ty>
     RETTR_CONSTEXPR_BOOL has_operator_three_way_compare_v<
-        Ty, std::void_t<decltype(std::declval<Ty &>() <= > std::declval<Ty &>())> > = true;
+        Ty, std::void_t<decltype(std::declval<Ty &>() <= std::declval<Ty &>())> > = true;
 #endif
 
     /**

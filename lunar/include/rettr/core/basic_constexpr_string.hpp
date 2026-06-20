@@ -92,11 +92,11 @@ namespace rettr::helper {
          *
          *        获取字符串缓冲区的固定大小。
          *
-         * @return Fixed buffer size including null terminator
-         *         包含空终止符的固定缓冲区大小
+         * @return Fixed buffer size not including null terminator
+         *         不包含空终止符的固定缓冲区大小
          */
         constexpr rettr_fn size() const noexcept -> size_type {
-            return N;
+            return N - 1;
         }
 
         /**

@@ -187,7 +187,9 @@ namespace rettr::implements {
                 ptr = static_cast<void *>(object.template try_dynamic_cast<Class>());
                 assert(ptr != nullptr && "Failure to convert the instance to the target pointer type during runtime");
             } else {
-                assert(object.type().is_compatible(rettr_typeid(Class)) || object.type().is_void());
+                if constexpr (!std::is_void_v<Class>) {
+                    assert(object.type().is_compatible(rettr_typeid(Class)) || object.type().is_void());
+                }
                 ptr = object.target_as_void_ptr();
             }
             if (size == arity) {

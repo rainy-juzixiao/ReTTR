@@ -21,7 +21,7 @@
 RETTR_MSVC_WARNING_DISABLE_C4251_BEGIN
 
 namespace rettr {
-    template<typename CharType, typename Traits = std::char_traits<CharType> >
+    template<typename CharType, typename Traits>
     class basic_string_view {
     public:
         using traits_type = Traits;
@@ -679,8 +679,8 @@ namespace rettr {
     using u8string_view = basic_string_view<char8_t>;
 #endif
 
-    template<typename Elem, typename UTy>
-    RETTR_INLINE std::basic_ostream<Elem> &operator<<(std::basic_ostream<Elem> &left, basic_string_view<UTy> right) {
+    template<typename Elem>
+    RETTR_INLINE std::basic_ostream<Elem> &operator<<(std::basic_ostream<Elem> &left, basic_string_view<Elem> right) {
         return left.write(right.data(), right.size());
     }
 }

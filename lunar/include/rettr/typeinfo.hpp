@@ -212,7 +212,7 @@ namespace rettr::implements {
             traits_ |= traits::is_fundamental;
         }
 
-        if constexpr (std::is_trivial_v<Ty>) {
+        if constexpr (std::is_trivially_default_constructible_v<Ty> && std::is_trivially_copyable_v<Ty>) {
             traits_ |= traits::is_trivial;
         }
 
@@ -371,7 +371,7 @@ namespace rettr::implements {
             last_colon = 0;
         }
 
-        auto last_sep = (core::max) ({last_dot, last_arrow, last_colon});
+        auto last_sep = (std::max) ({last_dot, last_arrow, last_colon});
 
         if (last_sep != 0) {
             auto sep_len = (last_sep == last_arrow || last_sep == last_colon) ? 2 : 1;
