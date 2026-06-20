@@ -23,12 +23,6 @@
 #include <rettr/annotations/lunar/metadata.hpp>
 
 namespace rettr::annotations::implements {
-    struct member_metadata_entry {
-        const char *name;
-        const metadata_t *items;
-        std::size_t count;
-    };
-
     template <std::meta::info Member>
     constexpr auto member_metadatas = [] {
         std::vector<metadata_t> items;
@@ -40,6 +34,21 @@ namespace rettr::annotations::implements {
     }();
 
     template <std::meta::info Type>
+    constexpr auto all_members = [] {
+        using namespace std::meta;
+        std::vector<std::meta::info> members = members_of(Type, access_context::unchecked());
+        return std::define_static_array(members);
+    }();
+}
+
+namespace rettr::annotations::implements {
+    struct member_metadata_entry {
+        const char *const name;
+        const metadata_t *const items;
+        std::size_t count;
+    };
+
+    template <std::meta::info Type>
     constexpr auto data_members = [] {
         using namespace std::meta;
 
@@ -48,11 +57,11 @@ namespace rettr::annotations::implements {
 
         std::vector<info> members;
 
-        for (const auto & item:nonstatic_data_members) {
+        for (const auto &item: nonstatic_data_members) {
             members.emplace_back(item);
         }
 
-        for (const auto& item:static_data_members) {
+        for (const auto &item: static_data_members) {
             members.emplace_back(item);
         }
 
@@ -69,6 +78,50 @@ namespace rettr::annotations::implements {
             entries.push_back(member_metadata_entry{name_str, member_metadatas<member>.data(), member_metadatas<member>.size()});
         }
 
+        return define_static_array(entries);
+    }
+}
+
+namespace rettr::annotations::implements {
+    struct method_metadata_entry {
+        const char *const name;
+        std::size_t signauture_type_hash;
+        const metadata_t *const items;
+        std::size_t count;
+    };
+
+    template <std::meta::info Type>
+    constexpr auto method_members = [] {
+        using namespace std::meta;
+
+        std::vector<info> members;
+
+        template for (const auto &item: all_members<Type>) {
+            if ((is_special_member_function(item) || is_function(item)) && !is_constructor(item) && !is_destructor(item) &&
+                !is_operator_function(item)) {
+                members.emplace_back(item);
+            }
+        }
+
+        return std::define_static_array(members);
+    }();
+
+    template <std::meta::info Member>
+    constexpr auto member_name_str = std::define_static_string(std::meta::identifier_of(Member));
+
+    template <std::meta::info Type>
+    consteval auto scan_method_member_metadata() -> std::span<const method_metadata_entry> {
+        using namespace std::meta;
+        std::vector<method_metadata_entry> entries;
+        template for (constexpr auto member: method_members<Type>) {
+            using entity_t = decltype(&[:member:]);
+            entries.push_back(method_metadata_entry{
+                member_name_str<member>,
+                typeinfo::create<entity_t>().hash_code(),
+                member_metadatas<member>.data(),
+                member_metadatas<member>.size(),
+            });
+        }
         return define_static_array(entries);
     }
 }

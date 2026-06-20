@@ -151,12 +151,13 @@ namespace rettr {
             implements::register_accessor_class_type_when_needed<Clazz, Acc>();
             reg_exec_->add_registration_func(static_cast<const void *>(this));
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
-            static constexpr auto entries = rettr::annotations::implements::scan_data_member_metadata<^^Clazz>();
+            using class_type = typename helper::member_pointer_traits<Acc>::class_type;
+            static constexpr auto entries = rettr::annotations::implements::scan_data_member_metadata<^^class_type>();
             std::vector<metadata_item> inject_metadatas;
             for (auto &entry: entries) {
                 if (name == entry.name) {
                     std::span<const rettr::annotations::metadata_t> items{entry.items, entry.count};
-                    for (const auto& item: items) {
+                    for (const auto &item: items) {
                         inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(), item.value_storage());
                     }
                     break;
@@ -204,7 +205,7 @@ namespace rettr {
             for (auto &entry: entries) {
                 if (name == entry.name) {
                     std::span<const rettr::annotations::metadata_t> items{entry.items, entry.count};
-                    for (const auto& item: items) {
+                    for (const auto &item: items) {
                         inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(), item.value_storage());
                     }
                     break;
@@ -252,7 +253,7 @@ namespace rettr {
             for (auto &entry: entries) {
                 if (name == entry.name) {
                     std::span<const rettr::annotations::metadata_t> items{entry.items, entry.count};
-                    for (const auto& item: items) {
+                    for (const auto &item: items) {
                         inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(), item.value_storage());
                     }
                     break;
@@ -296,6 +297,22 @@ namespace rettr {
             reg_exec_(std::move(reg_exec)) {
             implements::register_accessor_class_type_when_needed<Clazz, Func>();
             reg_exec_->add_registration_func(static_cast<const void *>(this));
+#if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
+            using class_type = typename helper::member_pointer_traits<Func>::class_type;
+            static constexpr auto entries = rettr::annotations::implements::scan_method_member_metadata<^^class_type>();
+            std::vector<metadata_item> inject_metadatas;
+            for (auto &entry: entries) {
+                if (name == entry.name) {
+                    std::span<const rettr::annotations::metadata_t> items{entry.items, entry.count};
+                    for (const auto &item: items) {
+                        inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(),
+                                                      item.value_storage());
+                    }
+                    break;
+                }
+            }
+            implements::method_bind<Func>::apply_metadatas(std::move(inject_metadatas));
+#endif
         }
 
         ~bind() {

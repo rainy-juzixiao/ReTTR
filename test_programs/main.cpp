@@ -224,13 +224,23 @@ namespace ns_3d {
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
 
 namespace xxx {
-    class MyAnnoTest {
+    class MyAnnoTestBase {
+        RETTR_ENABLE()
     public:
-        [[
-            = rettr::annotations::metadata<"TIP", 3>(),
-            = rettr::annotations::metadata<"TIP1", 3.14f>()
-        ]]
-        int value;
+        [[= rettr::annotations::metadata<"Version22", 2>()]] void method2() {
+        }
+    };
+
+    class MyAnnoTest : public MyAnnoTestBase {
+        RETTR_ENABLE(MyAnnoTestBase)
+    public:
+        [[ = rettr::annotations::metadata<"TIP", 3>(), = rettr::annotations::metadata<"TIP1", 3.14f>() ]] int value;
+
+        [[ = rettr::annotations::metadata<"Version", 1>(), = rettr::annotations::metadata<"Version2", 111>() ]] void method1() {
+        }
+
+        [[= rettr::annotations::metadata<"Version", 2>()]] void method1(int value) {
+        }
     };
 }
 
@@ -240,7 +250,11 @@ RETTR_REGISTRATION {
     using namespace rettr;
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
 
-    registration::class_<xxx::MyAnnoTest>("MyAnnoTest").property("value", &xxx::MyAnnoTest::value);
+    registration::class_<xxx::MyAnnoTest>("MyAnnoTest")
+        .property("value", &xxx::MyAnnoTest::value)
+        .method("method1", select_overload<xxx::MyAnnoTest, void()>(&xxx::MyAnnoTest::method1))
+        .method("method1", select_overload<xxx::MyAnnoTest, void(int)>(&xxx::MyAnnoTest::method1))
+        .method("method2", select_overload<xxx::MyAnnoTestBase, void()>(&xxx::MyAnnoTestBase::method2));
 
 #endif
 
@@ -301,6 +315,13 @@ int main() {
         auto metadatas = t.property("value").metadatas();
         for (const auto &item: metadatas) {
             std::cout << item.key() << ' ' << item.value() << '\n';
+        }
+
+        for (const auto &method: t.methods()) {
+            std::cout << "method " << method.name() << " : " << method.function_signature().name() << '\n';
+            for (const auto &md: method.metadatas()) {
+                std::cout << '\t' << md.key() << " : " << md.value() << '\n';
+            }
         }
     }
     {
