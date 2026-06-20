@@ -155,7 +155,7 @@ namespace rettr {
         RETTR_NODISCARD any metadatas() const;
 
         RETTR_NODISCARD const rettr::constructor &constructor(
-            const array_range<typeinfo> &params = std::vector<type>()) const noexcept;
+            const array_range<typeinfo> &params = std::vector<typeinfo>()) const noexcept;
 
         RETTR_NODISCARD array_range<rettr::constructor> constructors() const noexcept;
 

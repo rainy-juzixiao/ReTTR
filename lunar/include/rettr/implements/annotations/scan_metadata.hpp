@@ -20,6 +20,7 @@
 
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
 
+#include <rettr/annotations/lunar/mark_as_constructor_func.hpp>
 #include <rettr/annotations/lunar/metadata.hpp>
 
 namespace rettr::annotations::implements {
@@ -107,7 +108,13 @@ namespace rettr::annotations::implements {
     }();
 
     template <std::meta::info Member>
-    constexpr auto member_name_str = std::define_static_string(std::meta::identifier_of(Member));
+    constexpr auto member_name_str = [] {
+        if constexpr (std::meta::has_identifier(Member)) {
+            return std::define_static_string(std::meta::identifier_of(Member));
+        } else {
+            return "";
+        }
+    }();
 
     template <std::meta::info Type>
     consteval auto scan_method_member_metadata() -> std::span<const method_metadata_entry> {
@@ -118,6 +125,96 @@ namespace rettr::annotations::implements {
             entries.push_back(method_metadata_entry{
                 member_name_str<member>,
                 typeinfo::create<entity_t>().hash_code(),
+                member_metadatas<member>.data(),
+                member_metadatas<member>.size(),
+            });
+        }
+        return define_static_array(entries);
+    }
+}
+
+namespace rettr::annotations::implements {
+    enum class constructor_category {
+        ctor_func,
+        native_ctor
+    };
+
+    struct constructor_metadata_entry {
+        std::size_t param_hash;
+        constructor_category category;
+        const metadata_t *const items;
+        std::size_t count;
+    };
+
+    template <std::meta::info Type>
+    constexpr auto type_constructors = [] {
+        using namespace std::meta;
+
+        std::vector<info> members;
+
+        template for (constexpr auto item: all_members<Type>) {
+            if constexpr (is_function(item) && !is_constructor(item) && !is_destructor(item) && !is_operator_function(item)) {
+                if constexpr (make_member_anno(item).template has<mark_as_constructor_func_t>()) {
+                    static_assert(remove_cvref(return_type_of(item)) == Type,
+                                  "You mark this constructor func, but, the return type is not This type itself!");
+                }
+                if (remove_cvref(return_type_of(item)) == Type) {
+                    members.emplace_back(item);
+                }
+                continue;
+            }
+            if constexpr (is_constructor(item)) {
+                static_assert(!make_member_anno(item).template has<mark_as_constructor_func_t>(),
+                              "Detected type constructor has mark_as_constructor_func annotation. Do not pass this!");
+                members.emplace_back(item);
+                continue;
+            }
+        }
+
+        return std::define_static_array(members);
+    }();
+
+    template <std::meta::info Constructor>
+    constexpr auto eval_constructor_args_types = [] {
+        using namespace std::meta;
+        auto params = parameters_of(Constructor);
+        std::vector<info> types;
+        for (const auto &param: params) {
+            types.emplace_back(type_of(param));
+        }
+        return std::define_static_array(types);
+    }();
+
+    template <std::meta::info Constructor>
+    consteval rettr_fn eval_for_native_constructor_hash() {
+        using namespace std::meta;
+        std::size_t hash = 0;
+        template for (constexpr auto type: eval_constructor_args_types<Constructor>) {
+            hash += typeinfo::create<typename[:type:]>().hash_code();
+        }
+        return hash;
+    }
+
+    template <typename... Args>
+    constexpr std::size_t eval_for_constructor_args_hash =
+        static_cast<std::size_t>((std::size_t{0} + ... + typeinfo::create<std::remove_cvref_t<Args>>().hash_code()));
+
+    template <typename Fx>
+    constexpr std::size_t eval_for_constructor_func_args_hash = []<std::size_t... Count>(std::index_sequence<Count...>) {
+        return static_cast<std::size_t>(
+            (std::size_t{0} + ... +
+             typeinfo::create<std::remove_cvref_t<helper::type_at_t<Count, typename function_traits<Fx>::argument_list>>>()
+                 .hash_code()));
+    }(std::make_index_sequence<function_traits<Fx>::arity>{});
+
+    template <std::meta::info Type>
+    consteval auto scan_constructor_metadata() -> std::span<const constructor_metadata_entry> {
+        using namespace std::meta;
+        std::vector<constructor_metadata_entry> entries;
+        template for (constexpr auto member: type_constructors<Type>) {
+            entries.push_back(constructor_metadata_entry{
+                eval_for_native_constructor_hash<member>(),
+                is_constructor(member) ? constructor_category::native_ctor : constructor_category::ctor_func,
                 member_metadatas<member>.data(),
                 member_metadatas<member>.size(),
             });

@@ -227,13 +227,21 @@ namespace xxx {
     class MyAnnoTestBase {
         RETTR_ENABLE()
     public:
-        [[= rettr::annotations::metadata<"Version22", 2>()]] void method2() {
+        [[= rettr::annotations::metadata<"Version22", 2>()]]
+        void method2() {
         }
     };
 
     class MyAnnoTest : public MyAnnoTestBase {
         RETTR_ENABLE(MyAnnoTestBase)
     public:
+        [[= rettr::annotations::metadata<"Constructor", true>()]]
+        MyAnnoTest create_anno_test(int) {
+            return {};
+        }
+
+        [[= rettr::annotations::metadata<"default_construct", true>()]] MyAnnoTest() = default;
+
         [[ = rettr::annotations::metadata<"TIP", 3>(), = rettr::annotations::metadata<"TIP1", 3.14f>() ]] int value;
 
         [[ = rettr::annotations::metadata<"Version", 1>(), = rettr::annotations::metadata<"Version2", 111>() ]] void method1() {
@@ -251,6 +259,8 @@ RETTR_REGISTRATION {
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
 
     registration::class_<xxx::MyAnnoTest>("MyAnnoTest")
+        .constructor(&xxx::MyAnnoTest::create_anno_test)
+        .constructor()
         .property("value", &xxx::MyAnnoTest::value)
         .method("method1", select_overload<xxx::MyAnnoTest, void()>(&xxx::MyAnnoTest::method1))
         .method("method1", select_overload<xxx::MyAnnoTest, void(int)>(&xxx::MyAnnoTest::method1))
@@ -323,6 +333,13 @@ int main() {
                 std::cout << '\t' << md.key() << " : " << md.value() << '\n';
             }
         }
+
+        auto ctor = t.constructor();
+
+        std::cout << ctor.metadatas().size() << '\n';
+
+        auto ctor_func = t.constructor({rettr_typeid(int)});
+        std::cout << ctor_func.metadatas().size() << '\n';
     }
     {
         Derived *derivedObj = new Derived();
