@@ -6,6 +6,8 @@
 
 #include <rettr/rettr.hpp>
 
+#include <rettr/annotations/lunar/metadata.hpp>
+
 class MyClass {
 public:
     MyClass() = default;
@@ -219,9 +221,28 @@ namespace ns_3d {
     };
 }
 
+#if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
+
+namespace xxx {
+    class MyAnnoTest {
+    public:
+        [[
+            = rettr::annotations::metadata<rettr::helper::make_constexpr_string("TIP"), 3>(),
+            = rettr::annotations::metadata<rettr::helper::make_constexpr_string("TIP1"), 3.14f>()
+        ]]
+        int value;
+    };
+}
+
+#endif
 
 RETTR_REGISTRATION {
     using namespace rettr;
+#if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
+
+    registration::class_<xxx::MyAnnoTest>("MyAnnoTest").property("value", &xxx::MyAnnoTest::value);
+
+#endif
 
     registration::class_<GrandBase>("GrandBase").constructor<>();
     registration::class_<Base1>("Base1").constructor<>();
@@ -275,6 +296,13 @@ RETTR_REGISTRATION {
 }
 
 int main() {
+    {
+        auto t = rettr::type::from<xxx::MyAnnoTest>();
+        auto metadatas = t.property("value").metadatas();
+        for (const auto &item: metadatas) {
+            std::cout << item.key() << ' ' << item.value() << '\n';
+        }
+    }
     {
         Derived *derivedObj = new Derived();
         GrandBase *grandPtr = derivedObj;
