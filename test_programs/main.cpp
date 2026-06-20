@@ -227,8 +227,8 @@ namespace xxx {
     class MyAnnoTest {
     public:
         [[
-            = rettr::annotations::metadata<rettr::helper::make_constexpr_string("TIP"), 3>(),
-            = rettr::annotations::metadata<rettr::helper::make_constexpr_string("TIP1"), 3.14f>()
+            = rettr::annotations::metadata<"TIP", 3>(),
+            = rettr::annotations::metadata<"TIP1", 3.14f>()
         ]]
         int value;
     };

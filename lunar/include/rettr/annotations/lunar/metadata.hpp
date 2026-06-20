@@ -45,6 +45,21 @@ namespace rettr::annotations {
     consteval metadata_t metadata() {
         return {get_custom_factory<Key>(), get_custom_factory<Value>()};
     }
+
+    template <helper::constexpr_string Key, auto Value>
+    consteval metadata_t metadata() {
+        return {get_custom_factory<Key>(), get_custom_factory<Value>()};
+    }
+
+    template <auto Key, helper::constexpr_string Value>
+    consteval metadata_t metadata() {
+        return {get_custom_factory<Key>(), get_custom_factory<Value>()};
+    }
+
+    template <helper::constexpr_string Key, helper::constexpr_string Value>
+    consteval metadata_t metadata() {
+        return {get_custom_factory<Key>(), get_custom_factory<Value>()};
+    }
 }
 
 #endif
