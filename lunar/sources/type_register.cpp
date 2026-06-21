@@ -37,7 +37,9 @@ namespace rettr::implements {
                                default_predicate<Ty>([t](const Ty &item) { return (item.declaring_type() == t); }));
     }
 
-    type_register_private::type_register_private() : type_list_({type(type_private::invalid_type_data())}) {
+    type_register_private::type_register_private() :
+        type_list_({type(type_private::invalid_type_data())}), type_data_storage_({type_private::invalid_type_data()}) {
+        this->type_id_to_type_ = {{rettr_typeid(invalid_type_t), type_private::invalid_type_data()}};
     }
 
     void type_register_private::register_reg_manager(registration_manager *manager) noexcept {
@@ -224,28 +226,15 @@ namespace rettr::implements {
     }
 
     bool type_register_private::register_enumeration(enumeration_data *edata) noexcept {
-        if (!edata) {
-            return false;
-        }
-        std::lock_guard<std::mutex> lock(mutex_);
-        auto it = type_id_to_type_.find(edata->enum_type);
-        if (it == type_id_to_type_.end()) {
-            return false;
-        }
-        it->second.type_data_->enumeration_data_ = edata;
+        auto t = type::from_typeid(edata->enum_type);
+        t.type_data_->enumeration_data_ = edata;
+        t.type_data_->metadata() = edata->metadata;
         return true;
     }
 
     bool type_register_private::unregister_enumeration(enumeration_data *edata) noexcept {
-        if (!edata) {
-            return false;
-        }
-        std::lock_guard<std::mutex> lock(mutex_);
-        auto it = type_id_to_type_.find(edata->enum_type);
-        if (it == type_id_to_type_.end()) {
-            return false;
-        }
-        it->second.type_data_->enumeration_data_ = nullptr;
+        auto t = type::from_typeid(edata->enum_type);
+        t.type_data_->enumeration_data_ = nullptr;
         return true;
     }
 

@@ -1,5 +1,5 @@
 /*
-* Copyright 2026 rainy-juzixiao
+ * Copyright 2026 rainy-juzixiao
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,10 @@
  */
 #ifndef RETTR_IMPLEMENTS_METADATA_HPP
 #define RETTR_IMPLEMENTS_METADATA_HPP
-#include <rettr/core/prerequisites.hpp>
-#include <rettr/any.hpp>
 #include <algorithm>
+#include <rettr/any.hpp>
+#include <rettr/core/prerequisites.hpp>
+#include <utility>
 
 namespace rettr {
     class metadata_item {
@@ -31,6 +32,9 @@ namespace rettr {
 
         metadata_item &operator=(const metadata_item &) = default;
         metadata_item &operator=(metadata_item &&) = default;
+
+        metadata_item(implements::internal_construct_tag_t, any key, any value) noexcept : key_{std::move(key)}, value_{std::move(value)} {
+        }
 
         template <typename Ty1, typename Ty2>
         metadata_item(Ty1 &&key, Ty2 &&value) {
@@ -64,8 +68,7 @@ namespace rettr {
 
 namespace rettr::implements {
     template <typename... Args>
-    RETTR_INLINE_CONSTEXPR std::size_t metadata_count =
-        helper::count_type_v<metadata_item, helper::type_list<Args...>>;
+    RETTR_INLINE_CONSTEXPR std::size_t metadata_count = helper::count_type_v<metadata_item, helper::type_list<Args...>>;
 
     RETTR_INLINE const metadata_item &find_metadata(const std::vector<metadata_item> &view, const any &key) {
         static const metadata_item empty;

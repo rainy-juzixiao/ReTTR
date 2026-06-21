@@ -32,6 +32,14 @@ namespace rettr::implements {
     enum_value_tag<EnumType> value(string_view name, EnumType val) noexcept {
         return {name, val};
     }
+
+    template <typename EnumType, typename Clazz>
+    enumeration_data &enumeration_instance() {
+        using underlying = std::underlying_type_t<EnumType>;
+        static enumeration_data stored{
+            typeinfo::create<EnumType>(), typeinfo::create<underlying>(), typeinfo::create<Clazz>(), {}, {}, {}, {}};
+        return stored;
+    }
 }
 
 namespace rettr::implements {
@@ -42,10 +50,7 @@ namespace rettr::implements {
         using underlying = std::underlying_type_t<EnumType>;
 
         explicit enumeration_bind(string_view name, std::function<void(enumeration)> commit) noexcept : commit_(std::move(commit)) {
-            data_.name = name;
-            data_.enum_type = typeinfo::create<EnumType>();
-            data_.underlying_type = typeinfo::create<underlying>();
-            data_.declaring_type = typeinfo::create<Clazz>();
+            data_->name = name;
         }
 
         ~enumeration_bind() {
@@ -63,22 +68,31 @@ namespace rettr::implements {
             return *this;
         }
 
+    protected:
+        void apply_values(const std::vector<string_view> &names, const std::vector<any> &values) {
+            data_->names = names;
+            data_->values = values;
+        }
+
+        void apply_metadatas(std::vector<metadata_item> &&metadatas) {
+            data_->metadata = std::move(metadatas);
+        }
+
     private:
         void apply_(enum_value_tag<EnumType> &&tag) {
-            data_.names.emplace_back(tag.name);
-            data_.values.emplace_back(any{tag.value});
+            data_->names.emplace_back(tag.name);
+            data_->values.emplace_back(any{tag.value});
         }
 
         void apply_(metadata_tag &&meta) {
-            data_.metadata.emplace_back(std::move(meta.value));
+            data_->metadata.emplace_back(std::move(meta.value));
         }
 
         void commit_impl_() {
-            static enumeration_data stored = std::move(data_);
-            commit_(enumeration{ &stored });
+            commit_(enumeration{&enumeration_instance<EnumType, Clazz>()});
         }
 
-        enumeration_data data_{};
+        enumeration_data *data_{&enumeration_instance<EnumType, Clazz>()};
         std::function<void(enumeration)> commit_;
         bool committed_{false};
     };

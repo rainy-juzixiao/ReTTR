@@ -77,6 +77,12 @@ namespace rettr::implements {
             }
         }
 
+        void add_global_item(enumeration_data *edata) {
+            if (type_register::register_enumeration(edata)) {
+                enumerations_.push_back(edata);
+            }
+        }
+
         void set_disable_unregister() noexcept {
             should_unregister_ = false;
         }

@@ -207,20 +207,20 @@ namespace rettr::implements {
     RETTR_CONSTEVAL rettr_fn enum_get_member_names_compositor(std::array<std::string_view, Size> &array) noexcept -> void {
         using namespace std::meta;
 
-        [&]<std::size_t... Idx>(type_traits::helper::index_sequence<Idx...>) consteval {
+        [&]<std::size_t... Idx>(std::index_sequence<Idx...>) consteval {
             (
                 [&]() consteval {
                     template for (constexpr auto m: all_enum_array<Ty>) {
                         if ([:m:] == [:enum_arrays<Ty>[Idx]:]) {
-                            try_apply_rename<m>(array[Idx]);
-                            try_apply_name_style<Ty, m>(array[Idx]);
-                            try_apply_prefix_and_suffix_tag<Ty, m>(array[Idx]);
+                            rettr::moon::implements::try_apply_rename<m>(array[Idx]);
+                            rettr::moon::implements::try_apply_name_style<Ty, m>(array[Idx]);
+                            rettr::moon::implements::try_apply_prefix_and_suffix_tag<Ty, m>(array[Idx]);
                             break;
                         }
                     }
                 }(),
                 ...);
-        }(type_traits::helper::make_index_sequence<Size>{});
+        }(std::make_index_sequence<Size>{});
     }
 }
 

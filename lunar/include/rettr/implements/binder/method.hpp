@@ -54,6 +54,11 @@ namespace rettr::implements {
             return *this;
         }
 
+    protected:
+        void apply_metadatas(std::vector<metadata_item>&& metadatas) {
+            metadatas_ = std::move(metadatas);
+        }
+
     private:
         template <std::size_t... Is>
         auto init_parameter_wrappers_(std::index_sequence<Is...>) {

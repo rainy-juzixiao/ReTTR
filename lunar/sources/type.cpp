@@ -54,7 +54,7 @@ namespace rettr {
         return implements::type_register_private::get_instance().metadata(*this, key);
     }
 
-    any type::metadatas() const {
+    array_range<rettr::metadata_item> type::metadatas() const {
         return implements::type_register_private::get_instance().metadatas(get_raw_type());
     }
 

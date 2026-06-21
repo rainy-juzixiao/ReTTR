@@ -23,7 +23,12 @@
 #include <rettr/implements/binder/property.hpp>
 #include <rettr/implements/registration/bind_types.hpp>
 #include <rettr/implements/registration/register_base_class_from_accessor.hpp>
+#include <rettr/moon/enumeration.hpp>
 #include <rettr/registration.hpp>
+
+#if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
+#include <rettr/implements/annotations/scan_metadata.hpp>
+#endif
 
 namespace rettr::implements {
     class enumeration_proxy : enumeration {
@@ -60,7 +65,7 @@ namespace rettr::implements {
         }
     };
 }
-
+#include <iostream>
 namespace rettr {
     template <typename Clazz, typename AccLevel, typename... ConstructorArgs>
     class registration::bind<implements::ctor, Clazz, AccLevel, ConstructorArgs...>
@@ -74,6 +79,25 @@ namespace rettr {
             }},
             reg_exec_(std::move(reg_exec)) {
             reg_exec_->add_registration_func(static_cast<const void *>(this));
+#if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
+            static constexpr auto entries = rettr::annotations::implements::scan_constructor_metadata<^^Clazz>();
+
+            static constexpr std::size_t args_hash =
+                rettr::annotations::implements::eval_for_constructor_args_hash<ConstructorArgs...>;
+
+            std::vector<metadata_item> inject_metadatas;
+            for (auto &entry: entries) {
+                if (args_hash == entry.param_hash &&
+                    entry.category == rettr::annotations::implements::constructor_category::native_ctor) {
+                    std::span<const rettr::annotations::metadata_t> items{entry.items, entry.count};
+                    for (const auto &item: items) {
+                        inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(), item.value_storage());
+                    }
+                    break;
+                }
+            }
+            implements::constructor_bind<Clazz, ConstructorArgs...>::apply_metadatas(std::move(inject_metadatas));
+#endif
         }
 
         ~bind() {
@@ -110,6 +134,24 @@ namespace rettr {
                                                   std::move(func)},
             reg_exec_(std::move(reg_exec)) {
             reg_exec_->add_registration_func(static_cast<const void *>(this));
+#if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
+            static constexpr auto entries = rettr::annotations::implements::scan_constructor_metadata<^^Clazz>();
+
+            static constexpr std::size_t args_hash = rettr::annotations::implements::eval_for_constructor_func_args_hash<Fx>;
+
+            std::vector<metadata_item> inject_metadatas;
+            for (auto &entry: entries) {
+                if (args_hash == entry.param_hash &&
+                    entry.category == rettr::annotations::implements::constructor_category::ctor_func) {
+                    std::span<const rettr::annotations::metadata_t> items{entry.items, entry.count};
+                    for (const auto &item: items) {
+                        inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(), item.value_storage());
+                    }
+                    break;
+                }
+            }
+            implements::constructor_func_bind<Fx>::apply_metadatas(std::move(inject_metadatas));
+#endif
         }
 
         ~bind() {
@@ -146,6 +188,21 @@ namespace rettr {
             reg_exec_(std::move(reg_exec)) {
             implements::register_accessor_class_type_when_needed<Clazz, Acc>();
             reg_exec_->add_registration_func(static_cast<const void *>(this));
+#if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
+            using class_type = typename helper::member_pointer_traits<Acc>::class_type;
+            static constexpr auto entries = rettr::annotations::implements::scan_data_member_metadata<^^class_type>();
+            std::vector<metadata_item> inject_metadatas;
+            for (auto &entry: entries) {
+                if (name == entry.name) {
+                    std::span<const rettr::annotations::metadata_t> items{entry.items, entry.count};
+                    for (const auto &item: items) {
+                        inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(), item.value_storage());
+                    }
+                    break;
+                }
+            }
+            implements::property_bind<Clazz, Acc>::apply_metadatas(std::move(inject_metadatas));
+#endif
         }
 
         ~bind() {
@@ -180,6 +237,20 @@ namespace rettr {
                 }},
             reg_exec_(std::move(reg_exec)) {
             reg_exec_->add_registration_func(static_cast<const void *>(this));
+#if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
+            static constexpr auto entries = rettr::annotations::implements::scan_data_member_metadata<^^Clazz>();
+            std::vector<metadata_item> inject_metadatas;
+            for (auto &entry: entries) {
+                if (name == entry.name) {
+                    std::span<const rettr::annotations::metadata_t> items{entry.items, entry.count};
+                    for (const auto &item: items) {
+                        inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(), item.value_storage());
+                    }
+                    break;
+                }
+            }
+            implements::property_bind<Clazz, Getter>::apply_metadatas(std::move(inject_metadatas));
+#endif
         }
 
         ~bind() {
@@ -214,6 +285,20 @@ namespace rettr {
                 }},
             reg_exec_(std::move(reg_exec)) {
             reg_exec_->add_registration_func(static_cast<const void *>(this));
+#if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
+            static constexpr auto entries = rettr::annotations::implements::scan_data_member_metadata<^^Clazz>();
+            std::vector<metadata_item> inject_metadatas;
+            for (auto &entry: entries) {
+                if (name == entry.name) {
+                    std::span<const rettr::annotations::metadata_t> items{entry.items, entry.count};
+                    for (const auto &item: items) {
+                        inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(), item.value_storage());
+                    }
+                    break;
+                }
+            }
+            implements::property_bind_readonly<Clazz>::apply_metadatas(std::move(inject_metadatas));
+#endif
         }
 
         ~bind() {
@@ -250,6 +335,21 @@ namespace rettr {
             reg_exec_(std::move(reg_exec)) {
             implements::register_accessor_class_type_when_needed<Clazz, Func>();
             reg_exec_->add_registration_func(static_cast<const void *>(this));
+#if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
+            using class_type = typename helper::member_pointer_traits<Func>::class_type;
+            static constexpr auto entries = rettr::annotations::implements::scan_method_member_metadata<^^class_type>();
+            std::vector<metadata_item> inject_metadatas;
+            for (auto &entry: entries) {
+                if (name == entry.name) {
+                    std::span<const rettr::annotations::metadata_t> items{entry.items, entry.count};
+                    for (const auto &item: items) {
+                        inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(), item.value_storage());
+                    }
+                    break;
+                }
+            }
+            implements::method_bind<Func>::apply_metadatas(std::move(inject_metadatas));
+#endif
         }
 
         ~bind() {
@@ -277,26 +377,53 @@ namespace rettr {
     public:
         bind(std::shared_ptr<implements::registration_executer> reg_exec, string_view name) :
             registration::class_<Clazz>(reg_exec),
-            implements::enumeration_bind<Clazz, EnumType>{name,
-                                                          [this](rettr::enumeration enum_data) { enum_ = std::move(enum_data); }},
+            implements::enumeration_bind<Clazz, EnumType>{
+                name,
+                [this](rettr::enumeration enum_data) {
+                    reg_exec_->add_registration_func(static_cast<const void *>(this), [e = enum_data]() mutable {
+                        implements::store_item<Clazz>(implements::enumeration_proxy{e}.get());
+                    });
+                }},
             reg_exec_(std::move(reg_exec)) {
+            std::ignore = type::from<EnumType>(); // 确保被注册
             reg_exec_->add_registration_func(static_cast<const void *>(this));
+#if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
+            static constexpr auto metadata = rettr::annotations::implements::scan_enumerator_metadata<^^EnumType>();
+            std::vector<metadata_item> inject_metadatas;
+            std::span<const rettr::annotations::metadata_t> items{metadata.items, metadata.count};
+            for (const auto &item: items) {
+                inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(), item.value_storage());
+            }
+            implements::enumeration_bind<Clazz, EnumType>::apply_metadatas(std::move(inject_metadatas));
+#endif
         }
 
         ~bind() {
-            reg_exec_->add_registration_func(static_cast<const void *>(this), [e = std::move(enum_)]() mutable {
-                implements::store_item<Clazz>(implements::enumeration_proxy{e}.get());
-            });
+            if (!called_bind) {
+                static constexpr auto enums = rettr::enum_entries<EnumType>();
+
+                std::vector<string_view> names;
+                std::vector<any> values;
+
+                for (const auto &entry: enums) {
+                    values.emplace_back(entry.first);
+                    names.emplace_back(entry.second);
+                }
+
+                implements::enumeration_bind<Clazz, EnumType>::apply_values(names, values); // 在bind销毁后，触发enumeration_bind的提交
+            }
         }
 
         template <typename... Modifiers>
         registration::class_<Clazz> operator()(Modifiers &&...mods) {
             implements::enumeration_bind<Clazz, EnumType>::operator()(std::forward<Modifiers>(mods)...);
+            called_bind = true;
             return {reg_exec_};
         }
 
     private:
         rettr::enumeration enum_{};
+        bool called_bind{false};
         std::shared_ptr<implements::registration_executer> reg_exec_;
     };
 }

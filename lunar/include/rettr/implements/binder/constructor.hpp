@@ -50,6 +50,11 @@ namespace rettr::implements {
             return *this;
         }
 
+    protected:
+        void apply_metadatas(std::vector<metadata_item>&& metadatas) {
+            metadatas_ = std::move(metadatas);
+        }
+
     private:
         template <std::size_t... Is>
         auto init_wrappers_(std::index_sequence<Is...>) {
@@ -170,6 +175,11 @@ namespace rettr::implements {
             commit_impl_(std::make_index_sequence<arity>{});
             committed_ = true;
             return *this;
+        }
+
+    protected:
+        void apply_metadatas(std::vector<metadata_item>&& metadatas) {
+            metadatas_ = std::move(metadatas);
         }
 
     private:

@@ -90,12 +90,12 @@ namespace rettr {
 
         template <typename C>
         RETTR_CONSTEXPR20 array_range(std::vector<C> &value, const Predicate &pred = Predicate()) noexcept :
-            array_range(data(value), value.size(), pred) {
+            array_range(std::data(value), value.size(), pred) {
         }
 
         template <typename C>
         RETTR_CONSTEXPR20 array_range(const std::vector<C> &value, const Predicate &pred = Predicate()) noexcept :
-            array_range(data(value), value.size(), pred) {
+            array_range(std::data(value), value.size(), pred) {
         }
 
         template <typename C, std::size_t N>

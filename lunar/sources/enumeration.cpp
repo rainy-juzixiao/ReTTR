@@ -1,6 +1,6 @@
+#include <iostream>
 #include <rettr/enumeration.hpp>
 #include <rettr/type.hpp>
-
 namespace rettr {
     string_view enumeration::name() const noexcept {
         if (empty()) {
@@ -41,9 +41,8 @@ namespace rettr {
         if (empty()) {
             return {};
         }
-       // return {data_->values.data(), data_->values.size()};
-        return {};
-        }
+        return array_range<any>(data_->values.data(), data_->values.size());
+    }
 
     RETTR_NODISCARD const rettr::metadata_item &enumeration::metadata(const any &key) const noexcept {
         static const rettr::metadata_item empty{};

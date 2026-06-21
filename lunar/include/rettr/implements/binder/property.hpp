@@ -48,6 +48,12 @@ namespace rettr::implements {
             return *this;
         }
 
+    protected:
+
+        void apply_metadatas(std::vector<metadata_item>&& metadatas) {
+            prop_.metadatas_ = std::move(metadatas);
+        }
+
     private:
         void apply_(access_level_tag &&tag) {
             prop_.access_levels_ = tag.value;
@@ -88,6 +94,12 @@ namespace rettr::implements {
             commit_impl_();
             committed_ = true;
             return *this;
+        }
+
+    protected:
+
+        void apply_metadatas(std::vector<metadata_item>&& metadatas) {
+            prop_.metadatas_ = std::move(metadatas);
         }
 
     private:
