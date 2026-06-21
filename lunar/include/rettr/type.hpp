@@ -24,6 +24,7 @@
 #include <rettr/string_view.hpp>
 
 namespace rettr {
+    class metadata_item;
     class constructor;
     class destructor;
     class method;
@@ -152,7 +153,7 @@ namespace rettr {
         RETTR_NODISCARD array_range<type> derived_classes() const noexcept;
 
         RETTR_NODISCARD any metadata(const any &key) const;
-        RETTR_NODISCARD any metadatas() const;
+        RETTR_NODISCARD array_range<rettr::metadata_item> metadatas() const;
 
         RETTR_NODISCARD const rettr::constructor &constructor(
             const array_range<typeinfo> &params = std::vector<typeinfo>()) const noexcept;

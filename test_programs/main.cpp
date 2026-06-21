@@ -227,16 +227,14 @@ namespace xxx {
     class MyAnnoTestBase {
         RETTR_ENABLE()
     public:
-        [[= rettr::annotations::metadata<"Version22", 2>()]]
-        void method2() {
+        [[= rettr::annotations::metadata<"Version22", 2>()]] void method2() {
         }
     };
 
     class MyAnnoTest : public MyAnnoTestBase {
         RETTR_ENABLE(MyAnnoTestBase)
     public:
-        [[= rettr::annotations::metadata<"Constructor", true>()]]
-        MyAnnoTest create_anno_test(int) {
+        [[= rettr::annotations::metadata<"Constructor", true>()]] MyAnnoTest create_anno_test(int) {
             return {};
         }
 
@@ -249,6 +247,11 @@ namespace xxx {
 
         [[= rettr::annotations::metadata<"Version", 2>()]] void method1(int value) {
         }
+    };
+
+    enum class[[= rettr::annotations::metadata<"Version", 250>()]] enums {
+        value1 = 1,
+        value2 = 2
     };
 }
 
@@ -265,6 +268,8 @@ RETTR_REGISTRATION {
         .method("method1", select_overload<xxx::MyAnnoTest, void()>(&xxx::MyAnnoTest::method1))
         .method("method1", select_overload<xxx::MyAnnoTest, void(int)>(&xxx::MyAnnoTest::method1))
         .method("method2", select_overload<xxx::MyAnnoTestBase, void()>(&xxx::MyAnnoTestBase::method2));
+
+    registration::enumeration<xxx::enums>("enums");
 
 #endif
 
@@ -320,7 +325,23 @@ RETTR_REGISTRATION {
 }
 
 int main() {
+#if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
     {
+        {
+            auto t = rettr::type::from<xxx::enums>();
+
+            std::cout << t.enumeration().metadatas().size() << '\n';
+
+            for (const auto &item: t.metadatas()) {
+                std::cout << item.key() << " : " << item.value() << '\n';
+            }
+            auto enum_ = t.enumeration();
+            //
+            for (const auto &enum_item: enum_.values()) {
+                std::cout << (int) enum_item.as<xxx::enums>() << '\n';
+            }
+        }
+
         auto t = rettr::type::from<xxx::MyAnnoTest>();
         auto metadatas = t.property("value").metadatas();
         for (const auto &item: metadatas) {
@@ -341,6 +362,7 @@ int main() {
         auto ctor_func = t.constructor({rettr_typeid(int)});
         std::cout << ctor_func.metadatas().size() << '\n';
     }
+#endif
     {
         Derived *derivedObj = new Derived();
         GrandBase *grandPtr = derivedObj;

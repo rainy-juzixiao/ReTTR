@@ -23,6 +23,7 @@
 #include <rettr/implements/binder/property.hpp>
 #include <rettr/implements/registration/bind_types.hpp>
 #include <rettr/implements/registration/register_base_class_from_accessor.hpp>
+#include <rettr/moon/enumeration.hpp>
 #include <rettr/registration.hpp>
 
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
@@ -64,7 +65,7 @@ namespace rettr::implements {
         }
     };
 }
-
+#include <iostream>
 namespace rettr {
     template <typename Clazz, typename AccLevel, typename... ConstructorArgs>
     class registration::bind<implements::ctor, Clazz, AccLevel, ConstructorArgs...>
@@ -376,26 +377,53 @@ namespace rettr {
     public:
         bind(std::shared_ptr<implements::registration_executer> reg_exec, string_view name) :
             registration::class_<Clazz>(reg_exec),
-            implements::enumeration_bind<Clazz, EnumType>{name,
-                                                          [this](rettr::enumeration enum_data) { enum_ = std::move(enum_data); }},
+            implements::enumeration_bind<Clazz, EnumType>{
+                name,
+                [this](rettr::enumeration enum_data) {
+                    reg_exec_->add_registration_func(static_cast<const void *>(this), [e = enum_data]() mutable {
+                        implements::store_item<Clazz>(implements::enumeration_proxy{e}.get());
+                    });
+                }},
             reg_exec_(std::move(reg_exec)) {
+            std::ignore = type::from<EnumType>(); // 确保被注册
             reg_exec_->add_registration_func(static_cast<const void *>(this));
+#if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
+            static constexpr auto metadata = rettr::annotations::implements::scan_enumerator_metadata<^^EnumType>();
+            std::vector<metadata_item> inject_metadatas;
+            std::span<const rettr::annotations::metadata_t> items{metadata.items, metadata.count};
+            for (const auto &item: items) {
+                inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(), item.value_storage());
+            }
+            implements::enumeration_bind<Clazz, EnumType>::apply_metadatas(std::move(inject_metadatas));
+#endif
         }
 
         ~bind() {
-            reg_exec_->add_registration_func(static_cast<const void *>(this), [e = std::move(enum_)]() mutable {
-                implements::store_item<Clazz>(implements::enumeration_proxy{e}.get());
-            });
+            if (!called_bind) {
+                static constexpr auto enums = rettr::enum_entries<EnumType>();
+
+                std::vector<string_view> names;
+                std::vector<any> values;
+
+                for (const auto &entry: enums) {
+                    values.emplace_back(entry.first);
+                    names.emplace_back(entry.second);
+                }
+
+                implements::enumeration_bind<Clazz, EnumType>::apply_values(names, values); // 在bind销毁后，触发enumeration_bind的提交
+            }
         }
 
         template <typename... Modifiers>
         registration::class_<Clazz> operator()(Modifiers &&...mods) {
             implements::enumeration_bind<Clazz, EnumType>::operator()(std::forward<Modifiers>(mods)...);
+            called_bind = true;
             return {reg_exec_};
         }
 
     private:
         rettr::enumeration enum_{};
+        bool called_bind{false};
         std::shared_ptr<implements::registration_executer> reg_exec_;
     };
 }

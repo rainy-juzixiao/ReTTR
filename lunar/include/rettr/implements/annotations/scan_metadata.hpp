@@ -223,6 +223,22 @@ namespace rettr::annotations::implements {
     }
 }
 
+namespace rettr::annotations::implements {
+    struct enumeration_metadata {
+        const metadata_t *const items;
+        std::size_t count;
+    };
+
+    template <std::meta::info Type>
+    consteval auto scan_enumerator_metadata() -> enumeration_metadata {
+        using namespace std::meta;
+        return enumeration_metadata{
+            member_metadatas<Type>.data(),
+            member_metadatas<Type>.size(),
+        };
+    }
+}
+
 #endif
 
 #endif
