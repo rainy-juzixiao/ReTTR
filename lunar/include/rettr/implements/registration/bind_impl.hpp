@@ -28,6 +28,7 @@
 
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
 #include <rettr/implements/annotations/scan_metadata.hpp>
+#include <rettr/implements/parameter_info/scan_parameter_names.hpp>
 #endif
 
 namespace rettr::implements {
@@ -65,7 +66,7 @@ namespace rettr::implements {
         }
     };
 }
-#include <iostream>
+
 namespace rettr {
     template <typename Clazz, typename AccLevel, typename... ConstructorArgs>
     class registration::bind<implements::ctor, Clazz, AccLevel, ConstructorArgs...>
@@ -80,23 +81,45 @@ namespace rettr {
             reg_exec_(std::move(reg_exec)) {
             reg_exec_->add_registration_func(static_cast<const void *>(this));
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
-            static constexpr auto entries = rettr::annotations::implements::scan_constructor_metadata<^^Clazz>();
-
+            // 处理metadata的stub
             static constexpr std::size_t args_hash =
                 rettr::annotations::implements::eval_for_constructor_args_hash<ConstructorArgs...>;
+            {
+                static constexpr auto entries = rettr::annotations::implements::scan_constructor_metadata<^^Clazz>();
 
-            std::vector<metadata_item> inject_metadatas;
-            for (auto &entry: entries) {
-                if (args_hash == entry.param_hash &&
-                    entry.category == rettr::annotations::implements::constructor_category::native_ctor) {
-                    std::span<const rettr::annotations::metadata_t> items{entry.items, entry.count};
-                    for (const auto &item: items) {
-                        inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(), item.value_storage());
+                std::vector<metadata_item> inject_metadatas;
+                for (auto &entry: entries) {
+                    if (args_hash == entry.param_hash &&
+                        entry.category == rettr::implements::entity::constructor_category::native_ctor) {
+                        std::span<const rettr::annotations::metadata_t> items{entry.items, entry.count};
+                        for (const auto &item: items) {
+                            inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(),
+                                                          item.value_storage());
+                        }
+                        break;
                     }
-                    break;
+                }
+                implements::constructor_bind<Clazz, ConstructorArgs...>::apply_metadatas(std::move(inject_metadatas));
+            }
+            // 处理parameter_names
+            if constexpr (sizeof...(ConstructorArgs) != 0) {
+                std::vector<string_view> names;
+
+                static constexpr auto constructors = rettr::implements::scan_constructor_parameter_names<Clazz>();
+
+                for (auto &entry: constructors) {
+                    if (args_hash == entry.parameters_hash &&
+                        entry.category == rettr::implements::entity::constructor_category::native_ctor) {
+                        for (std::size_t i = 0; i < entry.count; ++i) {
+                            names.emplace_back(entry.parameter_names_start[i]);
+                        }
+                        break;
+                        }
+                }
+                if (!names.empty()) {
+                    implements::constructor_bind<Clazz, ConstructorArgs...>::apply_parameter_names(std::move(names));
                 }
             }
-            implements::constructor_bind<Clazz, ConstructorArgs...>::apply_metadatas(std::move(inject_metadatas));
 #endif
         }
 
@@ -135,22 +158,44 @@ namespace rettr {
             reg_exec_(std::move(reg_exec)) {
             reg_exec_->add_registration_func(static_cast<const void *>(this));
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
-            static constexpr auto entries = rettr::annotations::implements::scan_constructor_metadata<^^Clazz>();
-
             static constexpr std::size_t args_hash = rettr::annotations::implements::eval_for_constructor_func_args_hash<Fx>;
+            {
+                static constexpr auto entries = rettr::annotations::implements::scan_constructor_metadata<^^Clazz>();
 
-            std::vector<metadata_item> inject_metadatas;
-            for (auto &entry: entries) {
-                if (args_hash == entry.param_hash &&
-                    entry.category == rettr::annotations::implements::constructor_category::ctor_func) {
-                    std::span<const rettr::annotations::metadata_t> items{entry.items, entry.count};
-                    for (const auto &item: items) {
-                        inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(), item.value_storage());
+                std::vector<metadata_item> inject_metadatas;
+                for (auto &entry: entries) {
+                    if (args_hash == entry.param_hash && entry.category == rettr::implements::entity::constructor_category::ctor_func) {
+                        std::span<const rettr::annotations::metadata_t> items{entry.items, entry.count};
+                        for (const auto &item: items) {
+                            inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(), item.value_storage());
+                        }
+                        break;
                     }
-                    break;
+                }
+                implements::constructor_func_bind<Fx>::apply_metadatas(std::move(inject_metadatas));
+            }
+
+            {
+                if constexpr (function_traits<Fx>::arity != 0) {
+                    std::vector<string_view> names;
+
+                    static constexpr auto constructors = rettr::implements::scan_constructor_parameter_names<Clazz>();
+
+                    for (auto &entry: constructors) {
+                        if (args_hash == entry.parameters_hash &&
+                            entry.category == rettr::implements::entity::constructor_category::native_ctor) {
+                            for (std::size_t i = 0; i < entry.count; ++i) {
+                                names.emplace_back(entry.parameter_names_start[i]);
+                            }
+                            break;
+                        }
+                    }
+
+                    if (!names.empty()) {
+                        implements::constructor_func_bind<Fx>::apply_parameter_names(std::move(names));
+                    }
                 }
             }
-            implements::constructor_func_bind<Fx>::apply_metadatas(std::move(inject_metadatas));
 #endif
         }
 
@@ -435,4 +480,14 @@ namespace rettr {
         std::shared_ptr<implements::registration_executer> reg_exec_;
     };
 }
+
+// ^^^运行时参数
+//////////////
+// vvv变量模板
+
+namespace rettr {
+    template <auto Entity, typename Clazz, typename AccLevel, typename... ConstructorArgs>
+    class registration::bind_entity<Entity, implements::ctor, Clazz, AccLevel, ConstructorArgs...> {};
+}
+
 #endif

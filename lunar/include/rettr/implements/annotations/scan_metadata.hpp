@@ -20,8 +20,10 @@
 
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
 
-#include <rettr/annotations/lunar/mark_as_constructor_func.hpp>
 #include <rettr/annotations/lunar/metadata.hpp>
+
+#include <rettr/implements/entity/method.hpp>
+#include <rettr/implements/entity/constructor.hpp>
 
 namespace rettr::annotations::implements {
     template <std::meta::info Member>
@@ -91,22 +93,6 @@ namespace rettr::annotations::implements {
         std::size_t count;
     };
 
-    template <std::meta::info Type>
-    constexpr auto method_members = [] {
-        using namespace std::meta;
-
-        std::vector<info> members;
-
-        template for (const auto &item: all_members<Type>) {
-            if ((is_special_member_function(item) || is_function(item)) && !is_constructor(item) && !is_destructor(item) &&
-                !is_operator_function(item)) {
-                members.emplace_back(item);
-            }
-        }
-
-        return std::define_static_array(members);
-    }();
-
     template <std::meta::info Member>
     constexpr auto member_name_str = [] {
         if constexpr (std::meta::has_identifier(Member)) {
@@ -120,7 +106,7 @@ namespace rettr::annotations::implements {
     consteval auto scan_method_member_metadata() -> std::span<const method_metadata_entry> {
         using namespace std::meta;
         std::vector<method_metadata_entry> entries;
-        template for (constexpr auto member: method_members<Type>) {
+        template for (constexpr auto member: rettr::implements::entity::method_members<Type>) {
             using entity_t = decltype(&[:member:]);
             entries.push_back(method_metadata_entry{
                 member_name_str<member>,
@@ -134,45 +120,12 @@ namespace rettr::annotations::implements {
 }
 
 namespace rettr::annotations::implements {
-    enum class constructor_category {
-        ctor_func,
-        native_ctor
-    };
-
     struct constructor_metadata_entry {
         std::size_t param_hash;
-        constructor_category category;
+        rettr::implements::entity::constructor_category category;
         const metadata_t *const items;
         std::size_t count;
     };
-
-    template <std::meta::info Type>
-    constexpr auto type_constructors = [] {
-        using namespace std::meta;
-
-        std::vector<info> members;
-
-        template for (constexpr auto item: all_members<Type>) {
-            if constexpr (is_function(item) && !is_constructor(item) && !is_destructor(item) && !is_operator_function(item)) {
-                if constexpr (make_member_anno(item).template has<mark_as_constructor_func_t>()) {
-                    static_assert(remove_cvref(return_type_of(item)) == Type,
-                                  "You mark this constructor func, but, the return type is not This type itself!");
-                }
-                if (remove_cvref(return_type_of(item)) == Type) {
-                    members.emplace_back(item);
-                }
-                continue;
-            }
-            if constexpr (is_constructor(item)) {
-                static_assert(!make_member_anno(item).template has<mark_as_constructor_func_t>(),
-                              "Detected type constructor has mark_as_constructor_func annotation. Do not pass this!");
-                members.emplace_back(item);
-                continue;
-            }
-        }
-
-        return std::define_static_array(members);
-    }();
 
     template <std::meta::info Constructor>
     constexpr auto eval_constructor_args_types = [] {
@@ -211,10 +164,10 @@ namespace rettr::annotations::implements {
     consteval auto scan_constructor_metadata() -> std::span<const constructor_metadata_entry> {
         using namespace std::meta;
         std::vector<constructor_metadata_entry> entries;
-        template for (constexpr auto member: type_constructors<Type>) {
+        template for (constexpr auto member: rettr::implements::entity::type_constructors<Type>) {
             entries.push_back(constructor_metadata_entry{
                 eval_for_native_constructor_hash<member>(),
-                is_constructor(member) ? constructor_category::native_ctor : constructor_category::ctor_func,
+                is_constructor(member) ? rettr::implements::entity::constructor_category::native_ctor : rettr::implements::entity::constructor_category::ctor_func,
                 member_metadatas<member>.data(),
                 member_metadatas<member>.size(),
             });
