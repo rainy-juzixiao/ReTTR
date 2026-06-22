@@ -55,6 +55,12 @@ namespace rettr::implements {
             metadatas_ = std::move(metadatas);
         }
 
+        void apply_parameter_names(std::vector<string_view>&& metadatas) {
+            for (std::size_t i = 0; i < arity; ++i) {
+                wrappers_[i]->set_name(metadatas[i]);
+            }
+        }
+
     private:
         template <std::size_t... Is>
         auto init_wrappers_(std::index_sequence<Is...>) {
@@ -180,6 +186,12 @@ namespace rettr::implements {
     protected:
         void apply_metadatas(std::vector<metadata_item>&& metadatas) {
             metadatas_ = std::move(metadatas);
+        }
+
+        void apply_parameter_names(std::vector<string_view>&& metadatas) {
+            for (std::size_t i = 0; i < arity; ++i) {
+                wrappers_[i]->set_name(metadatas[i]);
+            }
         }
 
     private:

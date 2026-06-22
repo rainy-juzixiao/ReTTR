@@ -51,6 +51,9 @@ namespace rettr {
         template <typename... Types>
         class bind;
 
+        template <auto Entity, typename... Types>
+        class bind_entity;
+
         template <typename Clazz>
         class class_ {
         public:
@@ -94,6 +97,26 @@ namespace rettr {
 
             template <typename EnumType>
             bind<implements::enum_, Clazz, EnumType> enumeration(string_view name);
+
+#if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
+            template <auto Entity, typename AccLevel = implements::registration_private::public_access,
+                      typename Tp = std::enable_if_t<
+                          helper::type_list_contains<AccLevel, implements::registration_private::access_levels_list>::value>>
+            bind_entity<Entity, implements::meth, Clazz, AccLevel> method(AccLevel level = AccLevel());
+
+            template <auto Entity, typename AccLevel = implements::registration_private::public_access,
+                      typename Tp = std::enable_if_t<
+                          helper::type_list_contains<AccLevel, implements::registration_private::access_levels_list>::value>>
+            bind_entity<Entity, implements::meth, Clazz, AccLevel> property(AccLevel level = AccLevel());
+
+            template <auto Entity, typename Acc, typename AccLevel = implements::registration_private::public_access,
+                      typename Tp = std::enable_if_t<
+                          helper::type_list_contains<AccLevel, implements::registration_private::access_levels_list>::value>>
+            bind_entity<Entity, implements::prop_readonly, Clazz, AccLevel> property_readonly(string_view name, Acc accessor,
+                                                                                              AccLevel level = AccLevel());
+
+
+#endif
 
         private:
             class_(const std::shared_ptr<implements::registration_executer> &reg_exec);
