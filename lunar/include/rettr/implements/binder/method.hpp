@@ -59,6 +59,12 @@ namespace rettr::implements {
             metadatas_ = std::move(metadatas);
         }
 
+        void apply_parameter_names(std::vector<string_view>&& metadatas) {
+            for (std::size_t i = 0; i < arity; ++i) {
+                parameter_wrappers_[i]->set_name(metadatas[i]);
+            }
+        }
+
     private:
         template <std::size_t... Is>
         auto init_parameter_wrappers_(std::index_sequence<Is...>) {
