@@ -114,7 +114,7 @@ namespace rettr {
                             names.emplace_back(entry.parameter_names_start[i]);
                         }
                         break;
-                        }
+                    }
                 }
                 if (!names.empty()) {
                     implements::constructor_bind<Clazz, ConstructorArgs...>::apply_parameter_names(std::move(names));
@@ -164,10 +164,12 @@ namespace rettr {
 
                 std::vector<metadata_item> inject_metadatas;
                 for (auto &entry: entries) {
-                    if (args_hash == entry.param_hash && entry.category == rettr::implements::entity::constructor_category::ctor_func) {
+                    if (args_hash == entry.param_hash &&
+                        entry.category == rettr::implements::entity::constructor_category::ctor_func) {
                         std::span<const rettr::annotations::metadata_t> items{entry.items, entry.count};
                         for (const auto &item: items) {
-                            inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(), item.value_storage());
+                            inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(),
+                                                          item.value_storage());
                         }
                         break;
                     }
@@ -386,7 +388,9 @@ namespace rettr {
             using class_type = typename helper::member_pointer_traits<Func>::class_type;
             static constexpr std::size_t entity_hash = typeinfo::create<Func>().hash_code();
             {
-                if constexpr (!function_traits<Func>::is_function_object && !std::is_same_v<class_type, void>) { // functor无法被用于识别member
+                if constexpr (!function_traits<Func>::is_function_object && !std::is_same_v<class_type, void>) {
+                    // functor无法被用于识别member
+
                     static constexpr auto entries = rettr::annotations::implements::scan_method_member_metadata<^^class_type>();
                     std::vector<metadata_item> inject_metadatas;
                     for (auto &entry: entries) {
@@ -400,6 +404,27 @@ namespace rettr {
                         }
                     }
                     implements::method_bind<Func>::apply_metadatas(std::move(inject_metadatas));
+                }
+            }
+
+            {
+                if constexpr (function_traits<Func>::arity != 0) {
+                    std::vector<string_view> names;
+
+                    static constexpr auto methods = rettr::implements::scan_method_parameter_names<Clazz>();
+
+                    for (auto &entry: methods) {
+                        if (entity_hash == entry.signature_type_hash && name == entry.name) {
+                            for (std::size_t i = 0; i < entry.count; ++i) {
+                                names.emplace_back(entry.parameter_names_start[i]);
+                            }
+                            break;
+                        }
+                    }
+
+                    if (names.size() == function_traits<Func>::arity) {
+                        implements::method_bind<Func>::apply_parameter_names(std::move(names));
+                    }
                 }
             }
 #endif

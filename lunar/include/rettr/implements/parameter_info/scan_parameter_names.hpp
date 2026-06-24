@@ -27,7 +27,7 @@
 
 namespace rettr::implements {
     struct scan_method_parameter_results {
-        std::size_t parameters_hash;
+        std::size_t signature_type_hash;
         const char *const *parameter_names_start;
         std::size_t count;
         const char *const name;
@@ -74,8 +74,8 @@ namespace rettr::implements {
         std::vector<scan_method_parameter_results> parameters;
         template for (constexpr auto item: entity::method_members<^^Clazz>) {
             parameters.emplace_back(scan_method_parameter_results{
-                eval_for_method_hash<item>(), get_parameter_names<item>.data(), get_parameter_names<item>.size(),
-                std::define_static_string(std::meta::identifier_of(item)),
+                typeinfo::create<decltype(&[:item:])>().hash_code(), get_parameter_names<item>.data(),
+                get_parameter_names<item>.size(), std::define_static_string(std::meta::identifier_of(item)),
                 std::meta::is_constructor(item) ? entity::constructor_category::native_ctor
                                                 : entity::constructor_category::ctor_func});
         }

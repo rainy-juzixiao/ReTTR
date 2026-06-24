@@ -356,6 +356,9 @@ int main() {
             for (const auto &md: method.metadatas()) {
                 std::cout << '\t' << md.key() << " : " << md.value() << '\n';
             }
+            for (const auto& parameter_info: method.parameter_infos()) {
+                std::cout << parameter_info.name() << '\n';
+            }
         }
 
         auto ctor = t.constructor();
