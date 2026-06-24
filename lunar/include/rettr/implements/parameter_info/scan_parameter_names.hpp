@@ -31,7 +31,6 @@ namespace rettr::implements {
         const char *const *parameter_names_start;
         std::size_t count;
         const char *const name;
-        entity::constructor_category category;
     };
 
     template <std::meta::info Method>
@@ -73,11 +72,9 @@ namespace rettr::implements {
     consteval rettr_fn scan_method_parameter_names() -> std::span<const scan_method_parameter_results> {
         std::vector<scan_method_parameter_results> parameters;
         template for (constexpr auto item: entity::method_members<^^Clazz>) {
-            parameters.emplace_back(scan_method_parameter_results{
-                typeinfo::create<decltype(&[:item:])>().hash_code(), get_parameter_names<item>.data(),
-                get_parameter_names<item>.size(), std::define_static_string(std::meta::identifier_of(item)),
-                std::meta::is_constructor(item) ? entity::constructor_category::native_ctor
-                                                : entity::constructor_category::ctor_func});
+            parameters.emplace_back(scan_method_parameter_results{typeinfo::create<decltype(&[:item:])>().hash_code(),
+                                                                  get_parameter_names<item>.data(), get_parameter_names<item>.size(),
+                                                                  std::define_static_string(std::meta::identifier_of(item))});
         }
         return std::define_static_array(parameters);
     }
