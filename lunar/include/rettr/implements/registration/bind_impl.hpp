@@ -411,14 +411,24 @@ namespace rettr {
                 if constexpr (function_traits<Func>::arity != 0) {
                     std::vector<string_view> names;
 
-                    static constexpr auto methods = rettr::implements::scan_method_parameter_names<Clazz>();
+                    if constexpr (function_traits<Func>::is_function_object) {
+                        static constexpr auto parameters = std::define_static_array(std::meta::parameters_of(^^Func::operator()));
+                        // 由于C++26反射的在GCC的限制，如对于lambda表达式，尽管在许多实践被认为，它是一个匿名函数对象，以及源码可能考虑到了对隐式生成的lambda表达式扫描，但无论如何，我们只能用这种方式扫描
 
-                    for (auto &entry: methods) {
-                        if (entity_hash == entry.signature_type_hash && name == entry.name) {
-                            for (std::size_t i = 0; i < entry.count; ++i) {
-                                names.emplace_back(entry.parameter_names_start[i]);
+                        template for (constexpr auto item: parameters) {
+                            names.emplace_back(std::meta::identifier_of(item));
+                        }
+
+                    } else {
+                        static constexpr auto methods = rettr::implements::scan_method_parameter_names<Clazz>();
+
+                        for (auto &entry: methods) {
+                            if (entity_hash == entry.signature_type_hash && name == entry.name) {
+                                for (std::size_t i = 0; i < entry.count; ++i) {
+                                    names.emplace_back(entry.parameter_names_start[i]);
+                                }
+                                break;
                             }
-                            break;
                         }
                     }
 

@@ -270,7 +270,8 @@ RETTR_REGISTRATION {
         .property("value", &xxx::MyAnnoTest::value)
         .method("method1", select_overload<xxx::MyAnnoTest, void()>(&xxx::MyAnnoTest::method1))
         .method("method1", select_overload<xxx::MyAnnoTest, void(int)>(&xxx::MyAnnoTest::method1))
-        .method("method2", select_overload<xxx::MyAnnoTestBase, void()>(&xxx::MyAnnoTestBase::method2));
+        .method("method2", select_overload<xxx::MyAnnoTestBase, void()>(&xxx::MyAnnoTestBase::method2))
+        .method("free_function", [](int value) { std::cout << "free_function" << '\n'; });
 
     registration::enumeration<xxx::enums>("enums");
 
@@ -371,7 +372,6 @@ int main() {
         {
             ctor_func = t.constructor({rettr_typeid(std::string)});
             std::cout << ctor_func.parameter_infos()[0].name() << '\n';
-
         }
     }
 #endif
