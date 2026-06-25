@@ -386,33 +386,45 @@ namespace rettr {
             using class_type = typename helper::member_pointer_traits<Func>::class_type;
             static constexpr std::size_t entity_hash = typeinfo::create<Func>().hash_code();
             {
-                static constexpr auto entries = rettr::annotations::implements::scan_method_member_metadata<^^class_type>();
-                std::vector<metadata_item> inject_metadatas;
-                for (auto &entry: entries) {
-                    if (name == entry.name && entry.signauture_type_hash == entity_hash) {
-                        std::span<const rettr::annotations::metadata_t> items{entry.items, entry.count};
-                        for (const auto &item: items) {
-                            inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(),
-                                                          item.value_storage());
+                if constexpr (!function_traits<Func>::is_function_object) { // functor无法被用于识别member
+                    static constexpr auto entries = rettr::annotations::implements::scan_method_member_metadata<^^class_type>();
+                    std::vector<metadata_item> inject_metadatas;
+                    for (auto &entry: entries) {
+                        if (name == entry.name && entry.signauture_type_hash == entity_hash) {
+                            std::span<const rettr::annotations::metadata_t> items{entry.items, entry.count};
+                            for (const auto &item: items) {
+                                inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(),
+                                                              item.value_storage());
+                            }
+                            break;
                         }
-                        break;
                     }
+                    implements::method_bind<Func>::apply_metadatas(std::move(inject_metadatas));
                 }
-                implements::method_bind<Func>::apply_metadatas(std::move(inject_metadatas));
             }
 
             {
                 if constexpr (function_traits<Func>::arity != 0) {
                     std::vector<string_view> names;
 
-                    static constexpr auto methods = rettr::implements::scan_method_parameter_names<Clazz>();
+                    if constexpr (function_traits<Func>::is_function_object) {
+                        static constexpr auto parameters = std::define_static_array(std::meta::parameters_of(^^Func::operator()));
+                        // 由于C++26反射的在GCC的限制，如对于lambda表达式，尽管在许多实践被认为，它是一个匿名函数对象，以及源码可能考虑到了对隐式生成的lambda表达式扫描，但无论如何，我们只能用这种方式扫描
 
-                    for (auto &entry: methods) {
-                        if (entity_hash == entry.signature_type_hash && name == entry.name) {
-                            for (std::size_t i = 0; i < entry.count; ++i) {
-                                names.emplace_back(entry.parameter_names_start[i]);
+                        template for (constexpr auto item: parameters) {
+                            names.emplace_back(std::meta::identifier_of(item));
+                        }
+
+                    } else {
+                        static constexpr auto methods = rettr::implements::scan_method_parameter_names<Clazz>();
+
+                        for (auto &entry: methods) {
+                            if (entity_hash == entry.signature_type_hash && name == entry.name) {
+                                for (std::size_t i = 0; i < entry.count; ++i) {
+                                    names.emplace_back(entry.parameter_names_start[i]);
+                                }
+                                break;
                             }
-                            break;
                         }
                     }
 
