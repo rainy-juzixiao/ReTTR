@@ -388,9 +388,7 @@ namespace rettr {
             using class_type = typename helper::member_pointer_traits<Func>::class_type;
             static constexpr std::size_t entity_hash = typeinfo::create<Func>().hash_code();
             {
-                if constexpr (!function_traits<Func>::is_function_object && !std::is_same_v<class_type, void>) {
-                    // functor无法被用于识别member
-
+                if constexpr (!function_traits<Func>::is_function_object) { // functor无法被用于识别member
                     static constexpr auto entries = rettr::annotations::implements::scan_method_member_metadata<^^class_type>();
                     std::vector<metadata_item> inject_metadatas;
                     for (auto &entry: entries) {
