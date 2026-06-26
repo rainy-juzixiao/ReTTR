@@ -240,6 +240,8 @@ namespace xxx {
 
         [[= rettr::annotations::metadata<"default_construct", true>()]] MyAnnoTest() = default;
 
+        [[= rettr::annotations::metadata<"default_construct", true>()]] MyAnnoTest(std::string name){}
+
         [[ = rettr::annotations::metadata<"TIP", 3>(), = rettr::annotations::metadata<"TIP1", 3.14f>() ]] int value;
 
         [[ = rettr::annotations::metadata<"Version", 1>(), = rettr::annotations::metadata<"Version2", 111>() ]] void method1() {
@@ -263,11 +265,13 @@ RETTR_REGISTRATION {
 
     registration::class_<xxx::MyAnnoTest>("MyAnnoTest")
         .constructor(&xxx::MyAnnoTest::create_anno_test)
+        .constructor<std::string>()
         .constructor()
         .property("value", &xxx::MyAnnoTest::value)
         .method("method1", select_overload<xxx::MyAnnoTest, void()>(&xxx::MyAnnoTest::method1))
         .method("method1", select_overload<xxx::MyAnnoTest, void(int)>(&xxx::MyAnnoTest::method1))
-        .method("method2", select_overload<xxx::MyAnnoTestBase, void()>(&xxx::MyAnnoTestBase::method2));
+        .method("method2", select_overload<xxx::MyAnnoTestBase, void()>(&xxx::MyAnnoTestBase::method2))
+        .method("free_function", [](int value) { std::cout << "free_function" << '\n'; });
 
     registration::enumeration<xxx::enums>("enums");
 
@@ -353,6 +357,9 @@ int main() {
             for (const auto &md: method.metadatas()) {
                 std::cout << '\t' << md.key() << " : " << md.value() << '\n';
             }
+            for (const auto& parameter_info: method.parameter_infos()) {
+                std::cout << parameter_info.name() << '\n';
+            }
         }
 
         auto ctor = t.constructor();
@@ -361,6 +368,11 @@ int main() {
 
         auto ctor_func = t.constructor({rettr_typeid(int)});
         std::cout << ctor_func.metadatas().size() << '\n';
+
+        {
+            ctor_func = t.constructor({rettr_typeid(std::string)});
+            std::cout << ctor_func.parameter_infos()[0].name() << '\n';
+        }
     }
 #endif
     {
