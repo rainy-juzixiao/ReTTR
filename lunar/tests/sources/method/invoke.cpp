@@ -110,28 +110,27 @@ TEST_CASE("method - invoke - NEGATIVE - invalid method", "[method]") {
     REQUIRE(meth.empty());
 
     method_invoke_test obj;
-    std::ignore = meth.invoke(obj);
+    CHECK_THROWS_AS(meth.invoke(obj), rettr::bad_function_call);
     CHECK(obj.invoked[0] == false);
 
-    std::ignore = meth.invoke(obj, 1);
+    CHECK_THROWS_AS(meth.invoke(obj, 1), rettr::bad_function_call);
     CHECK(obj.invoked[1] == false);
 
-    std::ignore = meth.invoke(obj, 1, 2);
+    CHECK_THROWS_AS(meth.invoke(obj, 1, 2), rettr::bad_function_call);
     CHECK(obj.invoked[2] == false);
-
-    std::ignore = meth.invoke(obj, 1, 2, 3);
+    CHECK_THROWS_AS(meth.invoke(obj, 1, 2, 3), rettr::bad_function_call);
     CHECK(obj.invoked[3] == false);
 
-    std::ignore = meth.invoke(obj, 1, 2, 3, 4);
+    CHECK_THROWS_AS(meth.invoke(obj, 1, 2, 3, 4), rettr::bad_function_call);
     CHECK(obj.invoked[4] == false);
 
-    std::ignore = meth.invoke(obj, 1, 2, 3, 4, 5);
+    CHECK_THROWS_AS(meth.invoke(obj, 1, 2, 3, 4, 5), rettr::bad_function_call);
     CHECK(obj.invoked[5] == false);
 
-    std::ignore = meth.invoke(obj, 1, 2, 3, 4, 5, 6);
+    CHECK_THROWS_AS(meth.invoke(obj, 1, 2, 3, 4, 5, 6), rettr::bad_function_call);
     CHECK(obj.invoked[6] == false);
 
-    std::ignore = meth.invoke_variadic(obj, {1, 2, 3, 4, 5, 6, 7});
+    CHECK_THROWS_AS(meth.invoke_variadic(obj, {1, 2, 3, 4, 5, 6, 7}), rettr::bad_function_call);
     CHECK(obj.invoked[7] == false);
 }
 

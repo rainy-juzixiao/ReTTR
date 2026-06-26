@@ -147,27 +147,27 @@ TEST_CASE("method - invoke - NEGATIVE - defaults", "[method]") {
     REQUIRE(meth.empty());
 
     method_invoke_defaults_test obj;
-    CHECK_FALSE(meth.invoke(obj).has_value());
+    CHECK_THROWS_AS(meth.invoke(obj), rettr::bad_function_call);
     CHECK_FALSE(obj.invoked[0]);
 
-    CHECK_FALSE(meth.invoke(obj, 1).has_value());
+    CHECK_THROWS_AS(meth.invoke(obj, 1).has_value(), rettr::bad_function_call);
     CHECK_FALSE(obj.invoked[1]);
 
-    CHECK_FALSE(meth.invoke(obj, 1, 2).has_value());
+    CHECK_THROWS_AS(meth.invoke(obj, 1, 2).has_value(), rettr::bad_function_call);
     CHECK_FALSE(obj.invoked[2]);
 
-    CHECK_FALSE(meth.invoke(obj, 1, 2, 3).has_value());
+    CHECK_THROWS_AS(meth.invoke(obj, 1, 2, 3).has_value(), rettr::bad_function_call);
     CHECK_FALSE(obj.invoked[3]);
 
-    CHECK_FALSE(meth.invoke(obj, 1, 2, 3, 4).has_value());
+    CHECK_THROWS_AS(meth.invoke(obj, 1, 2, 3, 4).has_value(), rettr::bad_function_call);
     CHECK_FALSE(obj.invoked[4]);
 
-    CHECK_FALSE(meth.invoke(obj, 1, 2, 3, 4, 5).has_value());
+    CHECK_THROWS_AS(meth.invoke(obj, 1, 2, 3, 4, 5).has_value(), rettr::bad_function_call);
     CHECK_FALSE(obj.invoked[5]);
 
-    CHECK_FALSE(meth.invoke(obj, 1, 2, 3, 4, 5, 6).has_value());
+    CHECK_THROWS_AS(meth.invoke(obj, 1, 2, 3, 4, 5, 6).has_value(), rettr::bad_function_call);
     CHECK_FALSE(obj.invoked[6]);
 
-    CHECK_FALSE(meth.invoke_variadic(obj, {1, 2, 3, 4, 5, 6, 7}).has_value());
+    CHECK_THROWS_AS(meth.invoke_variadic(obj, {1, 2, 3, 4, 5, 6, 7}).has_value(), rettr::bad_function_call);
     CHECK_FALSE(obj.invoked[7]);
 }
