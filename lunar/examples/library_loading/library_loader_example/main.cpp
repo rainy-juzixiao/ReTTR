@@ -16,6 +16,7 @@
 #include <iostream>
 
 #include <rettr/library.hpp>
+#include <rettr/object.hpp>
 #include <rettr/registration.hpp>
 
 using namespace rettr;
@@ -46,9 +47,9 @@ int main() {
         for (auto meth: t.methods()) {
             std::cout << meth.function_signature().name() << std::endl;
         }
-        auto var = t.create();
-        t.invoke("perform_calculation", as_object_view(var));
-        std::cout << t.property("value")(as_object_view(var)) << std::endl; // prints "12"
+        auto var = t.create_object();
+        var.invoke("perform_calculation");
+        std::cout << t.property_value("value", var) << std::endl; // prints "12"
     }
 
     if (!lib.unload()) {
