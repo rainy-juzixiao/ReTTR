@@ -56,6 +56,8 @@ TEST_CASE("method - parameter info - no info", "[method]") {
     CHECK(meth.parameter_infos().size() == 0);
 }
 
+#if !(RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION)
+
 TEST_CASE("method - parameter info - no names provided", "[method]") {
     method meth = type::from<method_param_info_test>().method("method_2");
     REQUIRE_FALSE(meth.empty());
@@ -81,6 +83,8 @@ TEST_CASE("method - parameter info - no names provided", "[method]") {
     CHECK(infos[2].index() == 2);
     CHECK_FALSE(infos[2].default_value().has_value());
 }
+
+#endif
 
 TEST_CASE("method - parameter info - names provided", "[method]") {
     method meth = type::from<method_param_info_test>().method("method_3");
