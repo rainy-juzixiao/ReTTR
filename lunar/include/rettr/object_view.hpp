@@ -505,7 +505,7 @@ namespace rettr {
         void *apply_offset(void *ptr, const rettr::typeinfo &source, const rettr::typeinfo &target) const;
 
         void *object_{};
-        typeinfo ctti_{};
+        typeinfo ctti_{rettr_typeid(void)};
         void *object_holder_{};
         mutable void *impl_{};
     };
