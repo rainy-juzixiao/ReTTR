@@ -190,18 +190,20 @@ namespace rettr {
             reg_exec_->add_registration_func(static_cast<const void *>(this));
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
             using class_type = typename helper::member_pointer_traits<Acc>::class_type;
-            static constexpr auto entries = rettr::annotations::implements::scan_data_member_metadata<^^class_type>();
-            std::vector<metadata_item> inject_metadatas;
-            for (auto &entry: entries) {
-                if (name == entry.name) {
-                    std::span<const rettr::annotations::metadata_t> items{entry.items, entry.count};
-                    for (const auto &item: items) {
-                        inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(), item.value_storage());
+            if constexpr(!std::is_void_v<class_type>) {
+                static constexpr auto entries = rettr::annotations::implements::scan_data_member_metadata<^^class_type>();
+                std::vector<metadata_item> inject_metadatas;
+                for (auto &entry: entries) {
+                    if (name == entry.name) {
+                        std::span<const rettr::annotations::metadata_t> items{entry.items, entry.count};
+                        for (const auto &item: items) {
+                            inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(), item.value_storage());
+                        }
+                        break;
                     }
-                    break;
                 }
+                implements::property_bind<Clazz, Acc>::apply_metadatas(std::move(inject_metadatas));
             }
-            implements::property_bind<Clazz, Acc>::apply_metadatas(std::move(inject_metadatas));
 #endif
         }
 
@@ -337,18 +339,24 @@ namespace rettr {
             reg_exec_->add_registration_func(static_cast<const void *>(this));
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
             using class_type = typename helper::member_pointer_traits<Func>::class_type;
-            static constexpr auto entries = rettr::annotations::implements::scan_method_member_metadata<^^class_type>();
-            std::vector<metadata_item> inject_metadatas;
-            for (auto &entry: entries) {
-                if (name == entry.name) {
-                    std::span<const rettr::annotations::metadata_t> items{entry.items, entry.count};
-                    for (const auto &item: items) {
-                        inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(), item.value_storage());
+            static constexpr std::size_t entity_hash = typeinfo::create<Func>().hash_code();
+            {
+                if constexpr (!function_traits<Func>::is_function_object && !std::is_same_v<class_type, void>) { // functor无法被用于识别member
+                    static constexpr auto entries = rettr::annotations::implements::scan_method_member_metadata<^^class_type>();
+                    std::vector<metadata_item> inject_metadatas;
+                    for (auto &entry: entries) {
+                        if (name == entry.name && entry.signauture_type_hash == entity_hash) {
+                            std::span<const rettr::annotations::metadata_t> items{entry.items, entry.count};
+                            for (const auto &item: items) {
+                                inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(),
+                                                              item.value_storage());
+                            }
+                            break;
+                        }
                     }
-                    break;
+                    implements::method_bind<Func>::apply_metadatas(std::move(inject_metadatas));
                 }
             }
-            implements::method_bind<Func>::apply_metadatas(std::move(inject_metadatas));
 #endif
         }
 
