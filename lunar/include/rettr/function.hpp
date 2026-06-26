@@ -108,7 +108,7 @@ namespace rettr {
         template <typename... Args>
         RETTR_INLINE any invoke(object_view instance, Args &&...args) const {
             if (empty()) {
-                throw std::bad_function_call();
+                throw rettr::bad_function_call();
             }
 #if RETTR_ENABLE_DEBUG
             if (instance.type().is_const()) {
