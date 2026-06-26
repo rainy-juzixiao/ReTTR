@@ -238,7 +238,7 @@ namespace rettr {
     any function::invoke_variadic(object_view instance,
                                                const array_range<any> args) const {
         if (empty()) {
-            return {};
+            throw std::bad_function_call();
         }
         return invoke_accessor()->dynamic_invoke(instance, args);
     }
