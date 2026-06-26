@@ -43,6 +43,16 @@ namespace rettr {
         const rettr::typeinfo &from_;
         const rettr::typeinfo &to_;
     };
+
+    class bad_function_call final : public std::exception
+    {
+    public:
+        ~bad_function_call() override = default;
+
+        RETTR_NODISCARD const char* what() const noexcept override {
+            return "bad_function_call";
+        }
+    };
 }
 
 
