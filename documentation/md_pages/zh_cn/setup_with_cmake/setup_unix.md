@@ -23,8 +23,8 @@ FetchContent_Declare(
 # )
 
 set(RETTR_BUILD_WITH_DYNAMIC ON)   # 构建动态库（默认）
-set(RETTR_BUILD_TESTS OFF)         # 跳过测试
 set(RETTR_BUILD_EXAMPLES OFF)      # 跳过示例
+set(RETTR_BUILD_UNIT_TESTS OFF)    # 跳过测试
 
 FetchContent_MakeAvailable(ReTTR)
 
@@ -130,6 +130,8 @@ target_link_libraries(your_target RETTR::rettr)
 | 选项                               | 默认值 | 说明                                      |
 |------------------------------------|--------|-------------------------------------------|
 | `RETTR_BUILD_WITH_DYNAMIC`         | `ON`   | 构建共享库；设为 `OFF` 则构建静态库       |
+| `RETTR_BUILD_EXAMPLES`             | `ON`   | 构建 ReTTR 自带的示例程序                 |
+| `RETTR_BUILD_UNIT_TESTS`           | `ON`   | 构建单元测试（依赖 Catch2）               |
 | `RETTR_USE_CXX26_REFLECTION_TS`    | `ON`   | 启用 C++26 反射 TS 支持（需要编译器支持） |
 | `RETTR_USE_CROSSCOMPILE`           | `OFF`  | 交叉编译模式                              |
 | `RETTR_USING_UTF8_INPUT_FOR_MSVC`  | `ON`   | MSVC 输入编码（Unix 下无影响）            |

@@ -23,8 +23,8 @@ FetchContent_Declare(
 # )
 
 set(RETTR_BUILD_WITH_DYNAMIC ON)   # 构建动态库（默认）
-set(RETTR_BUILD_TESTS OFF)         # 跳过测试
 set(RETTR_BUILD_EXAMPLES OFF)      # 跳过示例
+set(RETTR_BUILD_UNIT_TESTS OFF)    # 跳过测试
 
 FetchContent_MakeAvailable(ReTTR)
 
@@ -162,6 +162,8 @@ cmake -S . -B build -DCMAKE_PREFIX_PATH="path/to/build/install"
 | 选项                               | 默认值 | 说明                                                   |
 |------------------------------------|--------|--------------------------------------------------------|
 | `RETTR_BUILD_WITH_DYNAMIC`         | `ON`   | 构建动态库（.dll）；设为 `OFF` 则构建静态库            |
+| `RETTR_BUILD_EXAMPLES`             | `ON`   | 构建 ReTTR 自带的示例程序                              |
+| `RETTR_BUILD_UNIT_TESTS`           | `ON`   | 构建单元测试（依赖 Catch2）                            |
 | `RETTR_USE_CXX26_REFLECTION_TS`    | `ON`   | 启用 C++26 反射 TS 支持（可能需要MinGW编译器才可支持） |
 | `RETTR_USE_CROSSCOMPILE`           | `OFF`  | 交叉编译模式                                           |
 | `RETTR_USING_UTF8_INPUT_FOR_MSVC`  | `ON`   | MSVC 输入使用 UTF-8 编码                               |
