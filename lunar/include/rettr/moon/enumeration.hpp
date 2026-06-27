@@ -54,11 +54,8 @@ namespace rettr::implements {
         using type = Ty;
     };
 
-    template <typename Enum, typename Ty, typename Pred = std::equal_to<>,
-              typename Decay = std::decay_t<Enum>>
-    using enable_if_t = typename enable_if_enum<std::is_enum_v<Decay> &&
-                                                    std::is_invocable_r_v<bool, Pred, char, char>,
-                                                Ty>::type;
+    template <typename Enum, typename Ty, typename Pred = std::equal_to<>, typename Decay = std::decay_t<Enum>>
+    using enable_if_t = typename enable_if_enum<std::is_enum_v<Decay> && std::is_invocable_r_v<bool, Pred, char, char>, Ty>::type;
 }
 
 namespace rettr {
@@ -132,10 +129,8 @@ namespace rettr::implements {
 
     public:
         template <typename Left, typename Right>
-        constexpr auto operator()(Left left, Right right) const noexcept -> std::enable_if_t<
-            std::is_same_v<std::decay_t<Left>, char> &&
-                std::is_same_v<std::decay_t<Right>, char>,
-            bool> {
+        constexpr auto operator()(Left left, Right right) const noexcept
+            -> std::enable_if_t<std::is_same_v<std::decay_t<Left>, char> && std::is_same_v<std::decay_t<Right>, char>, bool> {
             return Op{}(to_lower(left), to_lower(right));
         }
     };
@@ -304,8 +299,9 @@ namespace rettr::implements {
             std::size_t idx = 0;
             (([&] {
                  if constexpr (is_enum_value_impl<E, Begin + static_cast<std::underlying_type_t<E>>(Is)>::value) {
-                     tmp[idx++] = {static_cast<E>(Begin + static_cast<std::underlying_type_t<E>>(Is)),
-                                   enum_name_impl<E, static_cast<E>(Begin + static_cast<std::underlying_type_t<E>>(Is))>()};
+                     tmp[idx].first = static_cast<E>(Begin + static_cast<std::underlying_type_t<E>>(Is));
+                     tmp[idx].second = enum_name_impl<E, static_cast<E>(Begin + static_cast<std::underlying_type_t<E>>(Is))>();
+                     ++idx;
                  }
              }()),
              ...);
@@ -407,8 +403,7 @@ namespace rettr {
     }
 
     template <typename E>
-    constexpr rettr_fn enum_value(std::size_t idx) noexcept
-        -> std::enable_if_t<std::is_enum_v<E>, E> {
+    constexpr rettr_fn enum_value(std::size_t idx) noexcept -> std::enable_if_t<std::is_enum_v<E>, E> {
         constexpr auto values = enum_values<E>();
         return values[idx];
     }
@@ -440,8 +435,7 @@ namespace rettr {
     }
 
     template <typename Enum>
-    constexpr rettr_fn enum_name(Enum EnumValue)
-        -> std::enable_if_t<std::is_enum_v<Enum>, std::string_view> {
+    constexpr rettr_fn enum_name(Enum EnumValue) -> std::enable_if_t<std::is_enum_v<Enum>, std::string_view> {
         constexpr auto entries = enum_entries<Enum>();
         for (const auto &[enum_value, enum_name]: entries) {
             if (enum_value == EnumValue) {
@@ -452,8 +446,7 @@ namespace rettr {
     }
 
     template <typename Enum, Enum EnumValue>
-    constexpr rettr_fn enum_name()
-        -> std::enable_if_t<std::is_enum_v<Enum>, std::string_view> {
+    constexpr rettr_fn enum_name() -> std::enable_if_t<std::is_enum_v<Enum>, std::string_view> {
         return enum_name<Enum>(EnumValue);
     }
 
@@ -491,8 +484,7 @@ namespace rettr {
     }
 
     template <typename Enum>
-    constexpr rettr_fn enum_cast(std::underlying_type_t<Enum> value) noexcept
-        -> implements::enable_if_t<Enum, std::optional<Enum>> {
+    constexpr rettr_fn enum_cast(std::underlying_type_t<Enum> value) noexcept -> implements::enable_if_t<Enum, std::optional<Enum>> {
         constexpr auto entries = enum_entries<Enum>();
         using underlying = std::underlying_type_t<Enum>;
         for (const auto &[enum_value, enum_name]: entries) {
@@ -557,8 +549,7 @@ namespace rettr {
 
 namespace rettr {
     template <typename E>
-    RETTR_NODISCARD rettr_fn enum_flags_name(E value, const char sep = '|')
-        -> implements::enable_if_t<E, std::string> {
+    RETTR_NODISCARD rettr_fn enum_flags_name(E value, const char sep = '|') -> implements::enable_if_t<E, std::string> {
         using D = std::decay_t<E>;
         using U = std::underlying_type_t<D>;
         std::string name;

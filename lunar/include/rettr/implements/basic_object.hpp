@@ -68,7 +68,7 @@ namespace rettr::implements {
 
         template <typename... Args>
         any invoke(string_view name, Args &&...args) const {
-            return type_data_.invoke(as_object_view(target()), name, std::forward<Args>(args)...);
+            return type_data_.invoke(name, as_object_view(target()), std::forward<Args>(args)...);
         }
 
         template <typename... Args>
