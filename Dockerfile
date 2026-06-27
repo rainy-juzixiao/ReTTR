@@ -58,6 +58,8 @@ RUN cmake -S . -B build \
     -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
     -DCMAKE_INSTALL_PREFIX=/usr/local \
     -DRETTR_BUILD_WITH_DYNAMIC="${SHARED_LIBS}" \
+    -DRETTR_BUILD_EXAMPLES=OFF \
+    -DRETTR_BUILD_UNIT_TESTS=OFF \
     -DRETTR_USE_CXX26_REFLECTION_TS=OFF \
     && cmake --build build --parallel "$(nproc)" \
     && cmake --install build \
