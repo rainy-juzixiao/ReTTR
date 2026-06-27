@@ -37,13 +37,6 @@ else()
     message(STATUS "[ReTTR] POSIX detected — installing to ${CMAKE_INSTALL_PREFIX}")
 endif()
 
-# Install the library target
-set_target_properties(rettr PROPERTIES
-    OUTPUT_NAME rettr
-    DEBUG_POSTFIX "${rettr_debug_postfix}"
-    PUBLIC_HEADER   ""   # headers are installed separately below
-)
-
 install(TARGETS rettr
     EXPORT  ReTTRTargets
     ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"   # .a  / .lib
