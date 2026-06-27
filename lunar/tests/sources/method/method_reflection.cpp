@@ -305,7 +305,7 @@ TEST_CASE("Test method", "[method]") {
 
 
     method_test_derived derived_inst;
-    derived_inst.reflect_this().method("method_8").invoke(derived_inst);
+    std::ignore = derived_inst.reflect_this().method("method_8").invoke(derived_inst);
     REQUIRE(derived_inst.method_8_derived_called == true); // the derived virtual function was called
     REQUIRE(derived_inst.method_8_called == false); // and not the base function
 
@@ -343,7 +343,7 @@ TEST_CASE("Test method", "[method]") {
 
     method_test &up_cast_test = final_obj;
     // test the cross cast
-    t_final.method("method_12").invoke(up_cast_test);
+    std::ignore = t_final.method("method_12").invoke(up_cast_test);
     REQUIRE(final_obj.method_12_right_called == true);
 
     // test the middle cast
@@ -353,7 +353,7 @@ TEST_CASE("Test method", "[method]") {
     REQUIRE(t_meth.method("method_default") == t_meth.method("method_default"));
     REQUIRE(t_meth.method("method_default") != t_meth.method("method_4"));
 
-    t_meth.destroy(as_object_view(inst));
+    std::ignore = t_meth.destroy(as_object_view(inst));
     REQUIRE(inst.has_value());
 }
 
