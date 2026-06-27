@@ -120,22 +120,22 @@ printf "  Shared libs : %s\n" "${SHARED_LIBS}"
 printf "  Build dir   : %s\n" "${BUILD_DIR}"
 printf "  Jobs        : %s\n" "${JOBS}"
 
-SCRIPT_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)"
-cd "${SCRIPT_DIR}"
+# Project root is one level above the scripts/ directory.
+PROJECT_ROOT="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)"
 
-[ -f "CMakeLists.txt" ] || die "CMakeLists.txt not found — run this script from the ReTTR source tree."
+[ -f "${PROJECT_ROOT}/CMakeLists.txt" ] || die "CMakeLists.txt not found at ${PROJECT_ROOT} — is the script inside the ReTTR source tree?"
 
 if [ -n "${DRY_RUN}" ]; then
     printf "\nDry-run — would run:\n"
-    printf "  cmake -B %s -DCMAKE_BUILD_TYPE=%s -DCMAKE_INSTALL_PREFIX=%s -DRETTR_BUILD_WITH_DYNAMIC=%s\n" \
-        "${BUILD_DIR}" "${BUILD_TYPE}" "${PREFIX}" "${SHARED_LIBS}"
+    printf "  cmake -S %s -B %s -DCMAKE_BUILD_TYPE=%s -DCMAKE_INSTALL_PREFIX=%s -DRETTR_BUILD_WITH_DYNAMIC=%s\n" \
+        "${PROJECT_ROOT}" "${BUILD_DIR}" "${BUILD_TYPE}" "${PREFIX}" "${SHARED_LIBS}"
     printf "  cmake --build %s --parallel %s\n" "${BUILD_DIR}" "${JOBS}"
     printf "  cmake --install %s\n" "${BUILD_DIR}"
     exit 0
 fi
 
 phase "Configure"
-cmake -B "${BUILD_DIR}" \
+cmake -S "${PROJECT_ROOT}" -B "${BUILD_DIR}" \
     -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
     -DCMAKE_INSTALL_PREFIX="${PREFIX}" \
     -DRETTR_BUILD_WITH_DYNAMIC="${SHARED_LIBS}"
@@ -178,7 +178,7 @@ if [ "${LIB_COUNT}" -eq 0 ]; then
     printf "  [WARN] No library found at %s/lib/librettr*\n" "${PREFIX}"
 fi
 
-printf "\nReTTR %s installed successfully to %s\n" "$(cat version.txt 2>/dev/null || echo "?")" "${PREFIX}"
+printf "\nReTTR %s installed successfully to %s\n" "$(cat "${PROJECT_ROOT}/version.txt" 2>/dev/null || echo "?")" "${PREFIX}"
 printf "Use in CMake projects:\n"
 printf "  find_package(ReTTR REQUIRED)\n"
 printf "  target_link_libraries(<target> RETTR::rettr)\n"

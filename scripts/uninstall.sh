@@ -119,10 +119,10 @@ case "${OS_NAME}" in
         ;;
 esac
 
-SCRIPT_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)"
-cd "${SCRIPT_DIR}"
+# Project root is one level above the scripts/ directory.
+PROJECT_ROOT="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)"
 
-[ -f "CMakeLists.txt" ] || die "CMakeLists.txt not found — run this script from the ReTTR source tree."
+[ -f "${PROJECT_ROOT}/CMakeLists.txt" ] || die "CMakeLists.txt not found at ${PROJECT_ROOT} — is the script inside the ReTTR source tree?"
 
 PREFIX="${PREFIX%/}"
 
@@ -152,14 +152,15 @@ if [ -f "${MANIFEST}" ]; then
 
     printf "\n  %d entries processed from manifest.\n" "${count}"
 
-    # After removing files, prune empty parent directories.
+    for candidate in "${PREFIX}/lib"/librettr*; do
+        [ -e "${candidate}" ] || continue
+        remove_file "${candidate}"
+    done
+
     if [ -z "${DRY_RUN}" ]; then
-        phase "Pruning empty directories under ${PREFIX}"
-        find "${PREFIX}/include/rettr"      -type d -empty -delete 2>/dev/null || true
-        find "${PREFIX}/lib/cmake/ReTTR"    -type d -empty -delete 2>/dev/null || true
-        find "${PREFIX}/lib/cmake"          -type d -empty -delete 2>/dev/null || true
-        find "${PREFIX}/share/rettr"        -type d -empty -delete 2>/dev/null || true
-        find "${PREFIX}/share"              -type d -empty -delete 2>/dev/null || true
+        rm -rf "${PREFIX}/include/rettr" 2>/dev/null || true
+        rm -rf "${PREFIX}/lib/cmake/ReTTR" 2>/dev/null || true
+        rm -rf "${PREFIX}/share/rettr" 2>/dev/null || true
     fi
 
     printf "\nUninstall complete.\n"
