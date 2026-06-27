@@ -38,9 +38,9 @@ ReTTR的代码依赖了rainy-toolkit项目中的源代码，按照Apache 2.0许�
   - [x] 完成"注册类继承"部分
   - [x] 完成"rettr_cast vs. dynamic_cast"部分
 - [] 完成"注册类型"部分
-  - [] 完成"Hello World"部分
-  - [] 完成"Methods"部分
-  - [] 完成"Properties"部分
+  - [x] 完成"Hello World"部分
+  - [x] 完成"Methods"部分
+  - [x] 完成"Properties"部分
   - [] 完成"Enums"部分
   - [] 完成"Any"部分
   - [] 完成"shared_object、object、weak_object"部分
@@ -49,7 +49,7 @@ ReTTR的代码依赖了rainy-toolkit项目中的源代码，按照Apache 2.0许�
   - [] 完成"Default Arguments"部分
   - [] 完成"Parameter Names"部分
   - [] 完成"Policies"部分
-  - [] 完成"Plugins"部分
+  - [x] 完成"Plugins"部分
 - 完成“使用rettr::moon”文档部分
   - [] 完成"编译期反射enumeration"部分
   - [] 完成“编译期反射tuple-like”部分
