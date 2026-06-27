@@ -1,0 +1,22 @@
+.git/
+.gitignore
+.gitattributes
+
+.idea/
+.vscode/
+.vs
+
+*.swp
+*.swo
+
+build/
+build_debug/
+install/
+
+# Docs
+documentation/
+
+.DS_Store
+Thumbs.db
+
+.github/
