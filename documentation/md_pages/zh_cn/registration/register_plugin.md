@@ -7,8 +7,7 @@
 定义你的插件类，并使用 `RETTR_PLUGIN_REGISTRATION` 宏进行注册。
 
 ```cpp
-#include <rettr/library.hpp>
-#include <rettr/registration.hpp>
+#include <rettr/registration>
 
 struct MyPluginClass {
     MyPluginClass() {}
@@ -47,8 +46,7 @@ RETTR_PLUGIN_REGISTRATION {
 使用 `rettr::library` 加载插件。构造函数**无需**添加平台后缀（`.so`、`.dll` 等），ReTTR 会自动追加。
 
 ```cpp
-#include <rettr/library.hpp>
-#include <rettr/registration.hpp>
+#include <rettr/type>
 
 using namespace rettr;
 

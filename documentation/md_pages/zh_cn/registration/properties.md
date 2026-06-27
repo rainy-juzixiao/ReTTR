@@ -9,7 +9,7 @@
 最简单的形式是将名称与成员指针绑定：
 
 ```cpp
-#include <rettr/rettr.hpp>
+#include <rettr/registration>
 
 struct Person {
     std::string name;

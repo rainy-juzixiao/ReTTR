@@ -31,7 +31,7 @@ typeinfo类型是一个类型标识，类似于标准库的RTTI，但它只能�
 > 结果仅供参考，其输出结果受平台或编译器影响
 
 ```c++
-#include <rettr/typeinfo.hpp>
+#include <rettr/type>
 
 int main() {
     std::cout << rettr_typeid(int).name()        << '\n'; // int
@@ -109,7 +109,7 @@ enum class traits {
 下面这段代码展示了一部分对typeinfo的trait的使用。有一部分trait检查可以直接通过方法调用，其它的trait则需要has_traits ()方法
 
 ```c++
-#include <rettr/typeinfo.hpp>
+#include <rettr/type>
 
 int main() {
     std::cout << std::boolalpha;
@@ -209,7 +209,7 @@ typeinfo提供了如下方法进行类型修改
 ### 使用
 
 ```c++
-#include <rettr/typeinfo.hpp>
+#include <rettr/type>
 
 int main() {
     {
@@ -282,7 +282,7 @@ is_compatible相比is_same更加特殊，它主要接收一个可能要被转换
 | `T&、T&&、const T&、const T&&、const volatile T&、const volatile T&& ` | 检查对应引用类型能否隐式转换为 Type 的引用形式 |
 
 ```c++
-#include <rettr/typeinfo.hpp>
+#include <rettr/type>
 
 int main() {
     std::cout << std::boolalpha;
@@ -340,7 +340,7 @@ false
 ### 使用
 
 ```c++
-#include <rettr/typeinfo.hpp>
+#include <rettr/type>
 
 int main() {
     std::cout << "Check std::vector<int>: \n";

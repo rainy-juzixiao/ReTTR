@@ -13,7 +13,8 @@
 假设，你拥有一个名为node的类型，而你现在，要对其进行内省，通过ReTTR库内省。
 
 ```c++
-#include <rettr/rettr.hpp>
+#include <rettr/type>
+#include <rettr/registration_friend>
 
 namespace ns_3d {
     class node {
@@ -79,7 +80,7 @@ class C : public B {
 > 请勿在头文件执行注册，否则将会导致ODR的错误。除非你不使用RETTR_REGISTRATION，详细请参见其它文档
 
 ```c++
-#include <rettr/rettr.hpp>
+#include <rettr/registration>
 
 RETTR_REGISTRATION {
     using namespace rettr;
@@ -110,7 +111,7 @@ RETTR_REGISTRATION {
 }
 ```
 
-为了进行注册，请包含该头文件: `#include <rettr/rettr.hpp>'
+为了进行注册，请包含该头文件: `#include <rettr/registration>`
 
 在上述代码中，每当程序被拉起的时候，ReTTR的注册流程将启用。其会在内部创建各种对象来处理你的注册信息，以便你的使用。
 
@@ -121,7 +122,7 @@ RETTR_REGISTRATION {
 假设你已经完成了注册，那么，现在你可以使用ReTTR来进行一些操作了。
 
 ```c++
-#include <rettr/rettr.hpp>
+#include <rettr/type>
 #include <iostream>
 #include "mesh.h"
 
@@ -262,7 +263,7 @@ RETTR_REGISTRATION
 ### 基本使用
 
 ```c++
-#include <rettr/rettr.hpp>
+#include <rettr/type>
 #include <iostream>
 #include "mesh.h"
 

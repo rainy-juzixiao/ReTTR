@@ -4,11 +4,11 @@
 
 ## 基本用法
 
-引入 `rettr/rettr.hpp` 头文件，使用 `RETTR_REGISTRATION` 宏在全局作用域注册函数，然后通过名称反射调用。
+引入 `rettr/registration` 和 `rettr/type` 头文件，分别用于注册端和调用端。使用 `RETTR_REGISTRATION` 宏在全局作用域注册函数，然后通过名称反射调用。
 
 ```cpp
 #include <iostream>
-#include <rettr/rettr.hpp>
+#include <rettr/registration>
 
 static void f() { std::cout << "Hello World" << std::endl; }
 

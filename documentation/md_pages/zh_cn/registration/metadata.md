@@ -8,7 +8,7 @@
 请查看以下示例：
 
 ```c++
-#include <rettr/rettr.hpp>
+#include <rettr/registration>
 
 enum class MetaData_Type { SCRIPTABLE, GUI };
 

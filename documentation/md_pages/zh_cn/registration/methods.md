@@ -7,7 +7,7 @@
 通过 `registration::class_<T>()` 的 `.method()` 链式调用注册成员函数；对于全局函数，使用 `registration::method()` 静态方法。
 
 ```cpp
-#include <rettr/rettr.hpp>
+#include <rettr/registration>
 
 struct Calculator {
     int add(int a, int b) { return a + b; }
@@ -35,7 +35,7 @@ RETTR_REGISTRATION {
 > ReTTR 的 `select_overload` 要求**显式指定类名**作为第一个模板参数：`select_overload<ClassName, Signature>`，这与 RTTR 不同。
 
 ```cpp
-#include <rettr/rettr.hpp>
+#include <rettr/registration>
 
 struct Printer {
     void print(const std::string& text) {}

@@ -14,7 +14,7 @@
 最快的获取方式是使用rettr::from<T>()进行获取。下面的代码展示了最快的获取方式。
 
 ```c++
-#include <rettr/rettr.hpp> // 必须添加
+#include <rettr/type> // 必须添加
 
 using namespace rettr; // 可加可不加，请按照团队规范决定
 
