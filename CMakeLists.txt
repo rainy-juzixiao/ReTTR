@@ -45,3 +45,5 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/lunar/benchmarks)
 add_executable(test_program ${PROJECT_SOURCE_DIR}/test_programs/main.cpp)
 
 target_link_libraries(test_program rettr)
+
+include(${PROJECT_SOURCE_DIR}/cmake/install.cmake)

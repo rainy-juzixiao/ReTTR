@@ -1,0 +1,53 @@
+#                                 Apache License
+#                           Version 2.0, January 2004
+#                        http://www.apache.org/licenses/
+#
+#   Copyright 2026 rainy-juzixiao
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+@PACKAGE_INIT@
+
+# ReTTR — runtime C++ reflection library
+# =======================================
+#
+# This file is consumed by find_package(ReTTR).
+# It provides the imported target::
+#
+#     RETTR::rettr
+#
+# and the compatibility alias::
+#
+#     rainy-juzixiao::rettr
+#
+# Usage example::
+#
+#     find_package(ReTTR REQUIRED)
+#     target_link_libraries(my_app RETTR::rettr)
+
+include("${CMAKE_CURRENT_LIST_DIR}/ReTTRTargets.cmake")
+
+# Create the compatibility alias if it doesn't exist yet.
+if(TARGET RETTR::rettr AND NOT TARGET rainy-juzixiao::rettr)
+    add_library(rainy-juzixiao::rettr ALIAS RETTR::rettr)
+endif()
+
+# Validate that the installed headers are reachable.
+set(_rettr_include_dir "${PACKAGE_PREFIX_DIR}/@CMAKE_INSTALL_INCLUDEDIR@")
+if(NOT EXISTS "${_rettr_include_dir}/rettr/rettr.hpp")
+    message(WARNING
+        "ReTTR headers not found at '${_rettr_include_dir}/rettr' — "
+        "the package may be incomplete.  Re-run the install step.")
+endif()
+
+check_required_components(ReTTR)
