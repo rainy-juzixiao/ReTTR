@@ -39,7 +39,7 @@ namespace rettr {
     };
 
     RETTR_ENABLE_ENUM_CLASS_BITMASK_OPERATORS(property_flags);
-    
+
     class type;
 }
 
@@ -323,6 +323,14 @@ namespace rettr {
         property(std::in_place_type_t<Class>, string_view name, Type Class::*prop,
                  access_levels levels = access_levels::public_access) : name_{name}, access_levels_{levels}, is_empty_(false) {
             accessor_ = std::make_unique<property_accessor_impl<Type, Type Class::*, Class>>(prop, &rettr_typeid(Class));
+        }
+
+        template <typename Derived, typename Base, typename Type,
+                  std::enable_if_t<std::is_base_of_v<Base, Derived> && (!std::is_same_v<Base, Derived>), int> = 0>
+        property(std::in_place_type_t<Derived>, string_view name, Type Base::*prop,
+                 access_levels levels = access_levels::public_access) : name_{name}, access_levels_{levels}, is_empty_(false) {
+            accessor_ = std::make_unique<property_accessor_impl<Type, Type Derived::*, Derived>>(static_cast<Type Derived::*>(prop),
+                                                                                                 &rettr_typeid(Derived));
         }
 
         template <typename Type, typename Clazz>
