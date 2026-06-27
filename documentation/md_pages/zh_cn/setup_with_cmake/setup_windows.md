@@ -32,7 +32,57 @@ target_link_libraries(your_target RETTR::rettr)
 ```
 
 > [!NOTE]
-> 使用 `cpp26_preview` 分支需要支持 C++26 反射 TS 的编译器，目前仅在 GCC 上可用，Windows 下未进行测试，可尝试使用MinGW测试
+> 使用 `cpp26_preview` 分支需要支持 C++26 反射 TS 的编译器，目前仅在 GCC 上可用，Windows 下未进行测试，可尝试使用 MinGW 测试
+
+## 使用安装脚本
+
+`scripts/` 目录提供了 PowerShell 安装 / 卸载脚本。
+
+### install.ps1
+
+```powershell
+.\scripts\install.ps1                           # Release 构建，默认前缀
+.\scripts\install.ps1 -Debug                     # Debug 构建
+.\scripts\install.ps1 -Static                    # 构建静态库
+.\scripts\install.ps1 -Prefix C:\tools\ReTTR     # 自定义前缀
+.\scripts\install.ps1 -WhatIf                    # 预览不执行
+```
+
+**脚本参数（同时支持 PowerShell 风格与 Unix 风格）：**
+
+| PowerShell 参数         | Unix 风格            | 说明                                    |
+|-------------------------|----------------------|-----------------------------------------|
+| `-Prefix <path>`        | `--prefix <path>`    | 安装前缀（默认：`<build-dir>\install`） |
+| `-Static`               | `--static`           | 构建静态库而非动态库                    |
+| `-Debug`                | `--debug`            | Debug 构建（含调试符号）                |
+| `-BuildDir <path>`      | `--build-dir <path>` | CMake 构建目录（默认：`build`）         |
+| `-Jobs <N>` / `-Jobs:N` | `-j <N>`             | 并行编译任务数（默认：自动检测）        |
+| `-WhatIf`               | `--dry-run`          | 仅打印将要执行的命令，不实际执行        |
+| `-Help`                 | `--help` / `-h`      | 显示帮助信息                            |
+
+### uninstall.ps1
+
+```powershell
+.\scripts\uninstall.ps1                           # 默认卸载
+.\scripts\uninstall.ps1 -Prefix C:\tools\ReTTR     # 自定义前缀
+.\scripts\uninstall.ps1 -BuildDir build_debug       # 指定构建目录（用于查找 manifest）
+.\scripts\uninstall.ps1 -WhatIf                     # 预览将要删除的文件
+```
+
+**脚本参数（可同时支持使用 PowerShell 风格与 Unix 风格调用）：**
+
+| PowerShell 参数    | Unix 风格            | 说明                                              |
+|--------------------|----------------------|---------------------------------------------------|
+| `-Prefix <path>`   | `--prefix <path>`    | 安装前缀（默认：`<build-dir>\install`）           |
+| `-BuildDir <path>` | `--build-dir <path>` | CMake 构建目录（用于查找 `install_manifest.txt`） |
+| `-WhatIf`          | `--dry-run`          | 仅打印将要删除的文件，不实际删除                  |
+| `-Help`            | `--help` / `-h`      | 显示帮助信息                                      |
+
+**卸载策略：**
+
+1. 若构建目录中的 `install_manifest.txt` 存在，按清单逐条删除；
+2. 清单不存在时，根据前缀删除已知的安装子树（`include/rettr`、库文件、CMake 配置）。
+
 ## 使用 CMake 命令行构建
 
 ```powershell
