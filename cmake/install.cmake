@@ -35,9 +35,6 @@ if (WIN32)
     message(STATUS "[ReTTR] Windows detected — install tree will be placed in ${CMAKE_INSTALL_PREFIX}")
 else ()
     message(STATUS "[ReTTR] POSIX detected — installing to ${CMAKE_INSTALL_PREFIX}")
-    set_target_properties(rettr PROPERTIES
-            OUTPUT_NAME "rettr"
-    )
 endif ()
 
 install(TARGETS rettr

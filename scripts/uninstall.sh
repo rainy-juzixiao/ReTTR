@@ -152,7 +152,7 @@ if [ -f "${MANIFEST}" ]; then
 
     printf "\n  %d entries processed from manifest.\n" "${count}"
 
-    for candidate in "${PREFIX}/lib"/librettr*; do
+    for candidate in "${PREFIX}/lib"/*rettr-*-package*; do
         [ -e "${candidate}" ] || continue
         remove_file "${candidate}"
     done

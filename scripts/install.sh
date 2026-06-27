@@ -169,7 +169,7 @@ fi
 
 # Library name carries version info from the build system — use a glob.
 LIB_COUNT=0
-for candidate in "${PREFIX}/lib"/librettr*; do
+for candidate in "${PREFIX}/lib"/*rettr-*-package*; do
     [ -e "${candidate}" ] || continue
     printf "  [OK] Library installed: %s\n" "${candidate}"
     LIB_COUNT=$((LIB_COUNT + 1))
