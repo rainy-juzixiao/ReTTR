@@ -77,8 +77,7 @@ namespace rettr::annotations::implements {
         std::vector<member_metadata_entry> entries;
 
         template for (constexpr auto member: data_members<Type>) {
-            static constexpr auto name_str = define_static_string(identifier_of(member));
-            entries.push_back(member_metadata_entry{name_str, member_metadatas<member>.data(), member_metadatas<member>.size()});
+            entries.push_back(member_metadata_entry{define_static_string(identifier_of(member)), member_metadatas<member>.data(), member_metadatas<member>.size()});
         }
 
         return define_static_array(entries);
