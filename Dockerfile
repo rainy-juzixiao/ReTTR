@@ -42,9 +42,6 @@
 
 ARG BASE_IMAGE=ubuntu:24.04
 
-# ---------------------------------------------------------------------------
-# Stage 1 — Build ReTTR
-# ---------------------------------------------------------------------------
 FROM ${BASE_IMAGE} AS builder
 
 ARG BUILD_TYPE=Release
@@ -67,9 +64,6 @@ RUN cmake -S . -B build \
     && printf "ReTTR %s  Build: %s  Shared: %s\n" \
        "$(cat version.txt 2>/dev/null || echo unknown)" "${BUILD_TYPE}" "${SHARED_LIBS}"
 
-# ---------------------------------------------------------------------------
-# Stage 2 — Final slim image
-# ---------------------------------------------------------------------------
 FROM ${BASE_IMAGE} AS rettr
 
 ARG BUILD_TYPE=Release
