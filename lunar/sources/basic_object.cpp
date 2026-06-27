@@ -119,7 +119,7 @@ namespace rettr::implements { // shared_object part
     template <>
     basic_object<true>::basic_object(const basic_object &right) : type_data_(right.type_data_) {
         if (right.pimpl) {
-            pimpl = std::make_shared<impl>(*right.pimpl);
+            pimpl = right.pimpl;
         }
     }
 
@@ -133,7 +133,7 @@ namespace rettr::implements { // shared_object part
         if (this != &right) {
             type_data_ = right.type_data_;
             if (right.pimpl) {
-                pimpl = std::make_shared<impl>(*right.pimpl);
+                pimpl = right.pimpl;
             } else {
                 pimpl.reset();
             }

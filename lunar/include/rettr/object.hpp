@@ -27,12 +27,18 @@ namespace rettr {
 
         using basic_object::basic_object;
 
+        object(const object &right) noexcept = default;
+        object(object &&right) noexcept = default;
+
+        object &operator=(const object &right) noexcept = default;
+        object &operator=(object &&right) noexcept = default;
+
         RETTR_NODISCARD object clone() const;
 
         RETTR_NODISCARD shared_object share_this(); // 将对象转移到shared_object中，放弃独占所有权
 
     private:
-        object(const std::shared_ptr<impl> &impl, const rettr::type &type) noexcept;
+        object(implementation_layer &impl, const rettr::type &type) noexcept;
     };
 }
 

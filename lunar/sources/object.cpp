@@ -18,16 +18,18 @@
 
 namespace rettr {
     object object::clone() const {
-        const auto cloned = std::make_shared<impl>(impl{*this->pimpl});
-        return {cloned, type_data_};
+        auto cloned = std::make_unique<impl>(impl{*this->pimpl});
+        return object{cloned, type_data_};
     }
 
     shared_object object::share_this() {
-        shared_object res{implements::internal_construct_tag, std::move(*this->pimpl), type_data_};
+        shared_object res{implements::internal_construct_tag, std::move(this->pimpl->this_object), type_data_};
         this->reset();
         return res;
     }
 
-    object::object(const std::shared_ptr<impl> &impl, const rettr::type &type) noexcept {
+    object::object(implementation_layer &impl, const rettr::type &type) noexcept {
+        this->pimpl = std::move(impl);
+        this->type_data_ = type;
     }
 }
