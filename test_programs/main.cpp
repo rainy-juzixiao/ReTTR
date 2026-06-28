@@ -240,7 +240,8 @@ namespace xxx {
 
         [[= rettr::annotations::metadata<"default_construct", true>()]] MyAnnoTest() = default;
 
-        [[= rettr::annotations::metadata<"default_construct", true>()]] MyAnnoTest(std::string name){}
+        [[= rettr::annotations::metadata<"default_construct", true>()]] MyAnnoTest(std::string name) {
+        }
 
         [[ = rettr::annotations::metadata<"TIP", 3>(), = rettr::annotations::metadata<"TIP1", 3.14f>() ]] int value;
 
@@ -332,6 +333,13 @@ int main() {
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
     {
         {
+            auto members = rettr::implements::entity::make_method_entites<xxx::MyAnnoTest>();
+
+            template for (auto member: members) {
+                std::cout << member.name_ptr << '\n';
+            }
+        }
+        {
             auto t = rettr::type::from<xxx::enums>();
 
             std::cout << t.enumeration().metadatas().size() << '\n';
@@ -357,7 +365,7 @@ int main() {
             for (const auto &md: method.metadatas()) {
                 std::cout << '\t' << md.key() << " : " << md.value() << '\n';
             }
-            for (const auto& parameter_info: method.parameter_infos()) {
+            for (const auto &parameter_info: method.parameter_infos()) {
                 std::cout << parameter_info.name() << '\n';
             }
         }
