@@ -424,9 +424,7 @@ namespace rettr {
                         }
 
                     } else {
-                        static constexpr auto methods = rettr::implements::scan_method_parameter_names<Clazz>();
-
-                        for (auto &entry: methods) {
+                        for (auto &entry: rettr::implements::scan_method_parameter_names_v<Clazz>) {
                             if (entity_hash == entry.signature_type_hash && name == entry.name) {
                                 for (std::size_t i = 0; i < entry.count; ++i) {
                                     names.emplace_back(entry.parameter_names_start[i]);

@@ -78,6 +78,9 @@ namespace rettr::implements {
         }
         return std::define_static_array(parameters);
     }
+
+    template <typename Clazz>
+    constexpr auto scan_method_parameter_names_v = scan_method_parameter_names<Clazz>();
 }
 
 namespace rettr::implements {
