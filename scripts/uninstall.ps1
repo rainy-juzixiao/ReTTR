@@ -36,12 +36,16 @@
 #     .\uninstall.ps1 -Prefix C:\tools\ReTTR        # PowerShell-style
 #     .\uninstall.ps1 --build-dir build_debug        # custom build dir
 #     .\uninstall.ps1 --dry-run                      # preview without deleting
+#     .\uninstall.ps1 --skip-test                    # ignored (build-time)
 #
 #   Parameters:
-#     -Prefix / --prefix <path>   Installation prefix (default: <build-dir>\install)
-#     -BuildDir / --build-dir     CMake build directory containing install_manifest.txt
-#     -WhatIf / --dry-run         Print what would be removed, do not delete
-#     -Help / --help / -h         Show this help message
+#     -Prefix / --prefix <path>         Installation prefix (default: <build-dir>\install)
+#     -BuildDir / --build-dir           CMake build directory containing install_manifest.txt
+#     -SkipTest / --skip-test           Ignored — build-time option kept for script uniformity
+#     -SkipExamples / --skip-examples   Ignored — build-time option kept for script uniformity
+#     -NoReflectionTs / --no-reflection-ts  Ignored — build-time option kept for script uniformity
+#     -WhatIf / --dry-run               Print what would be removed, do not delete
+#     -Help / --help / -h               Show this help message
 # =============================================================================
 
 # --- argument parsing ---
@@ -49,6 +53,9 @@ $Prefix = ""
 $BuildDir = "build"
 $WhatIf = $false
 $Help = $false
+$SkipTest = $false
+$SkipExamples = $false
+$NoReflectionTs = $false
 
 $i = 0
 while ($i -lt $args.Count) {
@@ -63,6 +70,15 @@ while ($i -lt $args.Count) {
             $i++
             if ($i -ge $args.Count) { Write-Host "ERROR: --build-dir requires a path argument" -ForegroundColor Red; exit 1 }
             $BuildDir = $args[$i]
+        }
+        '^-?-[Ss]kip[Tt]est$|^--skip-test$' {
+            # build-time option — ignored during uninstall
+        }
+        '^-?-[Ss]kip[Ee]xamples$|^--skip-examples$' {
+            # build-time option — ignored during uninstall
+        }
+        '^-?-[Nn]o[Rr]eflection[Tt]s$|^--no-reflection-ts$' {
+            # build-time option — ignored during uninstall
         }
         '^-?-[Ww]hat[Ii]f$|^--dry-run$' {
             $WhatIf = $true

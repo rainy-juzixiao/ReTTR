@@ -30,6 +30,8 @@
 #     .\install.ps1 --prefix C:\tools\ReTTR      # Unix-style
 #     .\install.ps1 --static                     # build static library
 #     .\install.ps1 --debug                      # Debug build
+#     .\install.ps1 --skip-test --skip-examples  # skip tests and examples
+#     .\install.ps1 --no-reflection-ts           # disable C++26 Reflection TS support
 #     .\install.ps1 --dry-run                    # preview without building
 #
 #   Parameters:
@@ -38,6 +40,9 @@
 #     -Debug / --debug            Build with debug symbols
 #     -BuildDir / --build-dir     CMake build directory (default: build)
 #     -Jobs / -j <N>              Number of parallel jobs (default: auto-detect)
+#     -SkipTest / --skip-test     Skip building unit tests
+#     -SkipExamples / --skip-examples  Skip building example programs
+#     -NoReflectionTs / --no-reflection-ts  Disable C++26 Reflection TS support (enabled by default)
 #     -WhatIf / --dry-run         Print what would be done without executing
 #     -Help / --help / -h         Show this help message
 # =============================================================================
@@ -50,6 +55,9 @@ $BuildDir = "build"
 $Jobs = 0
 $WhatIf = $false
 $Help = $false
+$SkipTest = $false
+$SkipExamples = $false
+$NoReflectionTs = $false
 
 $i = 0
 while ($i -lt $args.Count) {
@@ -75,6 +83,15 @@ while ($i -lt $args.Count) {
             $i++
             if ($i -ge $args.Count) { Write-Host "ERROR: -j requires a number" -ForegroundColor Red; exit 1 }
             $Jobs = [int]$args[$i]
+        }
+        '^-?-[Ss]kip[Tt]est$|^--skip-test$' {
+            $SkipTest = $true
+        }
+        '^-?-[Ss]kip[Ee]xamples$|^--skip-examples$' {
+            $SkipExamples = $true
+        }
+        '^-?-[Nn]o[Rr]eflection[Tt]s$|^--no-reflection-ts$' {
+            $NoReflectionTs = $true
         }
         '^-?-[Ww]hat[Ii]f$|^--dry-run$' {
             $WhatIf = $true
@@ -136,10 +153,20 @@ Write-Host "  Prefix      : $Prefix"
 Write-Host "  Shared libs : $SharedLibs"
 Write-Host "  Build dir   : $BuildDir"
 Write-Host "  Jobs        : $Jobs"
+Write-Host "  Skip test   : $SkipTest"
+Write-Host "  Skip exmpls : $SkipExamples"
+Write-Host "  No refl. TS : $NoReflectionTs"
+
+# Build up extra CMake options from flags
+$CmakeExtraOpts = @()
+if ($SkipTest)       { $CmakeExtraOpts += "-DRETTR_BUILD_UNIT_TESTS=OFF" }
+if ($SkipExamples)   { $CmakeExtraOpts += "-DRETTR_BUILD_EXAMPLES=OFF" }
+if ($NoReflectionTs) { $CmakeExtraOpts += "-DRETTR_USE_CXX26_REFLECTION_TS=OFF" }
 
 if ($WhatIf) {
     Write-Host "`nDry-run — would run:"
-    Write-Host "  cmake -S $ProjectRoot -B $BuildDir -DCMAKE_BUILD_TYPE=$Config -DCMAKE_INSTALL_PREFIX=$Prefix -DRETTR_BUILD_WITH_DYNAMIC=$SharedLibs"
+    $OptStr = if ($CmakeExtraOpts.Count -gt 0) { " $($CmakeExtraOpts -join ' ')" } else { "" }
+    Write-Host "  cmake -S $ProjectRoot -B $BuildDir -DCMAKE_BUILD_TYPE=$Config -DCMAKE_INSTALL_PREFIX=$Prefix -DRETTR_BUILD_WITH_DYNAMIC=$SharedLibs$OptStr"
     Write-Host "  cmake --build $BuildDir --config $Config --parallel $Jobs"
     Write-Host "  cmake --install $BuildDir --config $Config"
     exit 0
@@ -149,7 +176,8 @@ Phase "Configure"
 cmake -S "$ProjectRoot" -B "$BuildDir" `
     -DCMAKE_BUILD_TYPE="$Config" `
     -DCMAKE_INSTALL_PREFIX="$Prefix" `
-    -DRETTR_BUILD_WITH_DYNAMIC="$SharedLibs"
+    -DRETTR_BUILD_WITH_DYNAMIC="$SharedLibs" `
+    @CmakeExtraOpts
 if ($LASTEXITCODE -ne 0) { Die "CMake configuration failed." }
 
 Phase "Build"

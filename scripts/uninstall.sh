@@ -34,13 +34,17 @@
 #     ./uninstall.sh --prefix /usr            # custom prefix
 #     ./uninstall.sh --build-dir build        # specify build dir (for manifest)
 #     ./uninstall.sh --dry-run                # preview without deleting
+#     ./uninstall.sh --skip-test              # ignored (build-time, kept for uniformity)
 #     ./uninstall.sh --help
 #
 #   Options:
-#     --prefix <path>    Installation prefix (default: /usr/local)
-#     --build-dir <path> CMake build directory containing install_manifest.txt
-#     --dry-run          Print what would be removed, do not delete
-#     --help, -h         Show this help message
+#     --prefix <path>         Installation prefix (default: /usr/local)
+#     --build-dir <path>      CMake build directory containing install_manifest.txt
+#     --dry-run               Print what would be removed, do not delete
+#     --skip-test             Ignored — build-time option kept for script uniformity
+#     --skip-examples         Ignored — build-time option kept for script uniformity
+#     --no-reflection-ts      Ignored — build-time option kept for script uniformity
+#     --help, -h              Show this help message
 # =============================================================================
 
 set -eu
@@ -97,6 +101,10 @@ while [ $# -gt 0 ]; do
         --build-dir)
             [ $# -ge 2 ] || die "--build-dir requires a path argument"
             BUILD_DIR="$2"; shift 2
+            ;;
+        --skip-test|--skip-examples|--no-reflection-ts)
+            # build-time options — ignored during uninstall
+            shift
             ;;
         --dry-run)
             DRY_RUN="1"; shift
