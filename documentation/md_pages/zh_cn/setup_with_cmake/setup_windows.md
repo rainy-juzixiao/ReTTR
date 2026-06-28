@@ -45,6 +45,9 @@ target_link_libraries(your_target RETTR::rettr)
 .\scripts\install.ps1 -Debug                     # Debug 构建
 .\scripts\install.ps1 -Static                    # 构建静态库
 .\scripts\install.ps1 -Prefix C:\tools\ReTTR     # 自定义前缀
+.\scripts\install.ps1 -SkipTest                  # 跳过单元测试构建
+.\scripts\install.ps1 -SkipExamples              # 跳过示例程序构建
+.\scripts\install.ps1 -NoReflectionTs            # 禁用 C++26 反射 TS
 .\scripts\install.ps1 -WhatIf                    # 预览不执行
 ```
 
@@ -52,13 +55,16 @@ target_link_libraries(your_target RETTR::rettr)
 
 | PowerShell 参数         | Unix 风格            | 说明                                    |
 |-------------------------|----------------------|-----------------------------------------|
-| `-Prefix <path>`        | `--prefix <path>`    | 安装前缀（默认：`<build-dir>\install`） |
-| `-Static`               | `--static`           | 构建静态库而非动态库                    |
-| `-Debug`                | `--debug`            | Debug 构建（含调试符号）                |
-| `-BuildDir <path>`      | `--build-dir <path>` | CMake 构建目录（默认：`build`）         |
-| `-Jobs <N>` / `-Jobs:N` | `-j <N>`             | 并行编译任务数（默认：自动检测）        |
-| `-WhatIf`               | `--dry-run`          | 仅打印将要执行的命令，不实际执行        |
-| `-Help`                 | `--help` / `-h`      | 显示帮助信息                            |
+| `-Prefix <path>`        | `--prefix <path>`       | 安装前缀（默认：`<build-dir>\install`） |
+| `-Static`               | `--static`              | 构建静态库而非动态库                    |
+| `-Debug`                | `--debug`               | Debug 构建（含调试符号）                |
+| `-BuildDir <path>`      | `--build-dir <path>`    | CMake 构建目录（默认：`build`）         |
+| `-Jobs <N>` / `-Jobs:N` | `-j <N>`                | 并行编译任务数（默认：自动检测）        |
+| `-SkipTest`             | `--skip-test`           | 跳过单元测试构建                        |
+| `-SkipExamples`         | `--skip-examples`       | 跳过示例程序构建                        |
+| `-NoReflectionTs`       | `--no-reflection-ts`    | 禁用 C++26 反射 TS 支持（默认启用）     |
+| `-WhatIf`               | `--dry-run`             | 仅打印将要执行的命令，不实际执行        |
+| `-Help`                 | `--help` / `-h`         | 显示帮助信息                            |
 
 ### uninstall.ps1
 
@@ -73,10 +79,13 @@ target_link_libraries(your_target RETTR::rettr)
 
 | PowerShell 参数    | Unix 风格            | 说明                                              |
 |--------------------|----------------------|---------------------------------------------------|
-| `-Prefix <path>`   | `--prefix <path>`    | 安装前缀（默认：`<build-dir>\install`）           |
-| `-BuildDir <path>` | `--build-dir <path>` | CMake 构建目录（用于查找 `install_manifest.txt`） |
-| `-WhatIf`          | `--dry-run`          | 仅打印将要删除的文件，不实际删除                  |
-| `-Help`            | `--help` / `-h`      | 显示帮助信息                                      |
+| `-Prefix <path>`     | `--prefix <path>`       | 安装前缀（默认：`<build-dir>\install`）           |
+| `-BuildDir <path>`   | `--build-dir <path>`   | CMake 构建目录（用于查找 `install_manifest.txt`） |
+| `-SkipTest`          | `--skip-test`          | 忽略，构建时选项，仅用于与安装脚本保持参数一致    |
+| `-SkipExamples`      | `--skip-examples`      | 忽略，构建时选项，仅用于与安装脚本保持参数一致    |
+| `-NoReflectionTs`    | `--no-reflection-ts`   | 忽略，构建时选项，仅用于与安装脚本保持参数一致    |
+| `-WhatIf`            | `--dry-run`            | 仅打印将要删除的文件，不实际删除                  |
+| `-Help`              | `--help` / `-h`        | 显示帮助信息                                      |
 
 **卸载策略：**
 
