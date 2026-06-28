@@ -20,6 +20,7 @@
 
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
 #include <rettr/annotations/lunar/mark_as_constructor_func.hpp>
+#include <rettr/implements/annotations/common.hpp>
 
 namespace rettr::implements::entity {
     enum class constructor_category {
@@ -60,6 +61,65 @@ namespace rettr::implements::entity {
 
         return std::define_static_array(members);
     }();
+
+    template <typename... Args>
+    constexpr std::size_t eval_for_constructor_args_hash =
+        static_cast<std::size_t>((std::size_t{0} + ... + typeinfo::create<std::remove_cvref_t<Args>>().hash_code()));
+
+    template <typename Fx>
+    constexpr std::size_t eval_for_constructor_func_args_hash = []<std::size_t... Count>(std::index_sequence<Count...>) {
+        return static_cast<std::size_t>(
+            (std::size_t{0} + ... +
+             typeinfo::create<std::remove_cvref_t<helper::type_at_t<Count, typename function_traits<Fx>::argument_list>>>()
+                 .hash_code()));
+    }(std::make_index_sequence<function_traits<Fx>::arity>{});
+
+    template <std::meta::info Constructor>
+    constexpr auto eval_constructor_args_types = [] {
+        using namespace std::meta;
+        auto params = parameters_of(Constructor);
+        std::vector<info> types;
+        for (const auto &param: params) {
+            types.emplace_back(type_of(param));
+        }
+        return std::define_static_array(types);
+    }();
+
+    template <std::meta::info Constructor>
+    consteval rettr_fn eval_for_native_constructor_hash() {
+        using namespace std::meta;
+        std::size_t hash = 0;
+        template for (constexpr auto type: eval_constructor_args_types<Constructor>) {
+            hash += typeinfo::create<typename[:type:]>().hash_code();
+        }
+        return hash;
+    }
+
+    struct constructor_entity {
+        std::size_t param_hash;
+        constructor_category category;
+
+        metadatas_t metadatas;
+        parameter_names_t parameter_names;
+    };
+
+    template <std::meta::info Type>
+    consteval auto make_constructor_entites() -> std::span<const constructor_entity> {
+        using namespace std::meta;
+        std::vector<constructor_entity> entries;
+        template for (constexpr auto member: rettr::implements::entity::type_constructors<Type>) {
+            entries.push_back(
+                constructor_entity{eval_for_native_constructor_hash<member>(),
+                                   is_constructor(member) ? rettr::implements::entity::constructor_category::native_ctor
+                                                          : rettr::implements::entity::constructor_category::ctor_func,
+                                   metadatas_t{member_metadatas<member>.data(), member_metadatas<member>.size()},
+                                   parameter_names_t{get_parameter_names<member>.data(), get_parameter_names<member>.size()}});
+        }
+        return define_static_array(entries);
+    }
+
+    template <typename Class>
+    static constexpr auto constructor_entites_v = make_constructor_entites<Class>();
 }
 
 #endif
