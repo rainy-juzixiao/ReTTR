@@ -21,32 +21,9 @@
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
 
 #include <rettr/annotations/lunar/metadata.hpp>
+#include <rettr/implements/annotations/common.hpp>
 
 namespace rettr::implements::entity {
-    template <std::meta::info Member>
-    constexpr auto member_metadatas = [] {
-        std::vector<annotations::metadata_t> items;
-        auto attns = std::meta::annotations_of_with_type(Member, ^^annotations::metadata_t);
-        for (const auto attn: attns) {
-            items.emplace_back(std::meta::extract<annotations::metadata_t>(attn));
-        }
-        return std::define_static_array(items);
-    }();
-
-    template <std::meta::info Method>
-    constexpr auto get_parameter_names = [] {
-        using namespace std::meta;
-        std::vector<const char *> parameter_names;
-        for (auto param: parameters_of(Method)) {
-            if (has_identifier(param)) {
-                parameter_names.emplace_back(std::define_static_string(identifier_of(param)));
-            } else {
-                parameter_names.emplace_back(std::define_static_string(std::string_view{"<unnamed>"}));
-            }
-        }
-        return std::define_static_array(parameter_names);
-    }();
-
     template <std::meta::info Type>
     constexpr auto method_members = [] {
         using namespace std::meta;
@@ -67,23 +44,13 @@ namespace rettr::implements::entity {
         return std::define_static_array(members);
     }();
 
-    struct annotation_t {
-        const annotations::metadata_t *const start;
-        std::size_t count;
-    } ;
-
-    struct parameter_info_t {
-        const char *const *start;
-        std::size_t count;
-    } ;
-
     template <typename Ptr>
     struct method_entity {
         Ptr ptr;
         const char *const name_ptr;
 
-        annotation_t annotation;
-        parameter_info_t parameter_info;
+        metadatas_t metadatas;
+        parameter_names_t parameter_names;
     };
 
     template <typename Class>
@@ -93,11 +60,11 @@ namespace rettr::implements::entity {
             return std::make_tuple(method_entity<decltype(&[:method_members<^^Class>[Is]:])>{
                 &[:method_members<^^Class>[Is]:],
                 std::define_static_string(std::meta::identifier_of(method_members<^^Class>[Is])),
-                annotation_t{
+                metadatas_t {
                     member_metadatas<method_members<^^Class>[Is]>.data(),
                     member_metadatas<method_members<^^Class>[Is]>.size()
                 },
-                parameter_info_t{
+                parameter_names_t {
                     get_parameter_names<method_members<^^Class>[Is]>.data(),
                     get_parameter_names<method_members<^^Class>[Is]>.size()
                 }

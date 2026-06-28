@@ -395,13 +395,13 @@ namespace rettr {
                         using ptr = std::decay_t<decltype(entry.ptr)>;
                         if constexpr (std::is_same_v<Func, ptr>) {
                             if (func == entry.ptr) {
-                                for (const auto& item : std::span{entry.annotation.start, entry.annotation.count}) {
+                                for (const auto& item : std::span{entry.metadatas.start, entry.metadatas.count}) {
                                     inject_metadatas.emplace_back(
                                         implements::internal_construct_tag,
                                         item.key_storage(),
                                         item.value_storage());
                                 }
-                                for (const auto& name : std::span{entry.parameter_info.start, entry.parameter_info.count}) {
+                                for (const auto& name : std::span{entry.parameter_names.start, entry.parameter_names.count}) {
                                     names.emplace_back(name);
                                 }
                             }
