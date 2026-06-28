@@ -17,39 +17,31 @@
 #   limitations under the License.
 
 # =============================================================================
-# ReTTR — Docker build
+# ReTTR — Docker build (Fedora)
 # =============================================================================
 #
 #   Build arguments:
 #     BUILD_TYPE    Release (default) | Debug
 #     SHARED_LIBS   ON (default)      | OFF (static library)
-#     BASE_IMAGE    ubuntu:24.04      (default)
 #
 #   Usage:
-#     docker build -t rettr:release .
-#
-#     docker build \
-#       --build-arg BUILD_TYPE=Debug \
-#       --build-arg SHARED_LIBS=OFF \
-#       -t rettr:debug-static .
+#     docker build -f docker/Dockerfile.fedora -t rettr:fedora .
+#     docker build -f docker/Dockerfile.fedora --build-arg BUILD_TYPE=Debug -t rettr:fedora-debug .
 #
 #   Consume in a downstream CMake project:
-#     FROM rettr:release AS deps
-#     FROM ubuntu:24.04
+#     FROM rettr:fedora AS deps
+#     FROM fedora:41
 #     COPY --from=deps /usr/local /usr/local
-#     # then: find_package(ReTTR REQUIRED)
 # =============================================================================
 
-ARG BASE_IMAGE=ubuntu:24.04
-
-FROM ${BASE_IMAGE} AS builder
+FROM fedora:41 AS builder
 
 ARG BUILD_TYPE=Release
 ARG SHARED_LIBS=ON
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    cmake g++ make git ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+RUN dnf install -y --setopt=install_weak_deps=False \
+    cmake gcc-c++ make git ca-certificates \
+    && dnf clean all
 
 WORKDIR /src
 COPY . .
@@ -63,19 +55,18 @@ RUN cmake -S . -B build \
     -DRETTR_USE_CXX26_REFLECTION_TS=OFF \
     && cmake --build build --parallel "$(nproc)" \
     && cmake --install build \
-    && printf "ReTTR %s  Build: %s  Shared: %s\n" \
+    && printf "ReTTR %s  Distro: Fedora  Build: %s  Shared: %s\n" \
        "$(cat version.txt 2>/dev/null || echo unknown)" "${BUILD_TYPE}" "${SHARED_LIBS}"
 
-FROM ${BASE_IMAGE} AS rettr
+FROM fedora:41 AS rettr
 
 ARG BUILD_TYPE=Release
 ARG SHARED_LIBS=ON
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libstdc++6 \
-    && rm -rf /var/lib/apt/lists/*
+RUN dnf install -y --setopt=install_weak_deps=False \
+    libstdc++ \
+    && dnf clean all
 
-# Runtime library search path
 ENV LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH}
 
 COPY --from=builder /usr/local/include /usr/local/include
@@ -86,5 +77,6 @@ LABEL org.opencontainers.image.title="ReTTR"
 LABEL org.opencontainers.image.description="Rewrite Technology Type Reflection — C++ runtime reflection library"
 LABEL org.opencontainers.image.source="https://github.com/rainy-juzixiao/ReTTR"
 LABEL org.opencontainers.image.licenses="Apache-2.0"
+LABEL rettr.distro="fedora"
 LABEL rettr.build-type="${BUILD_TYPE}"
 LABEL rettr.shared-libs="${SHARED_LIBS}"
