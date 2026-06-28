@@ -185,7 +185,7 @@ namespace rettr {
 
                     for (auto &entry: constructors) {
                         if (args_hash == entry.parameters_hash &&
-                            entry.category == rettr::implements::entity::constructor_category::native_ctor) {
+                            entry.category == rettr::implements::entity::constructor_category::ctor_func) {
                             for (std::size_t i = 0; i < entry.count; ++i) {
                                 names.emplace_back(entry.parameter_names_start[i]);
                             }
