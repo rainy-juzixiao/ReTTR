@@ -23,6 +23,7 @@
 #include <rettr/annotations/lunar/metadata.hpp>
 
 #include <rettr/implements/entity/method.hpp>
+#include <rettr/implements/entity/property.hpp>
 #include <rettr/implements/entity/constructor.hpp>
 
 namespace rettr::annotations::implements {

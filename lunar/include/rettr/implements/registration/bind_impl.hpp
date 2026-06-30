@@ -87,14 +87,13 @@ namespace rettr {
                 std::vector<metadata_item> inject_metadatas;
                 std::vector<string_view> names;
 
-                for (const auto& entry : implements::entity::constructor_entites_v<Clazz>) {
-                    if (args_hash == entry.param_hash &&
-                        entry.category == implements::entity::constructor_category::native_ctor) {
-                        for (const auto& item : std::span{entry.metadatas.start, entry.metadatas.count}) {
-                            inject_metadatas.emplace_back(implements::internal_construct_tag,
-                                                          item.key_storage(), item.value_storage());
+                for (const auto &entry: implements::entity::constructor_entites_v<Clazz>) {
+                    if (args_hash == entry.param_hash && entry.category == implements::entity::constructor_category::native_ctor) {
+                        for (const auto &item: std::span{entry.metadatas.start, entry.metadatas.count}) {
+                            inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(),
+                                                          item.value_storage());
                         }
-                        for (const auto& name : std::span{entry.parameter_names.start, entry.parameter_names.count}) {
+                        for (const auto &name: std::span{entry.parameter_names.start, entry.parameter_names.count}) {
                             names.emplace_back(name);
                         }
                         break;
@@ -151,14 +150,13 @@ namespace rettr {
                 std::vector<metadata_item> inject_metadatas;
                 std::vector<string_view> names;
 
-                for (const auto& entry : implements::entity::constructor_entites_v<Clazz>) {
-                    if (args_hash == entry.param_hash &&
-                        entry.category == implements::entity::constructor_category::ctor_func) {
-                        for (const auto& item : std::span{entry.metadatas.start, entry.metadatas.count}) {
-                            inject_metadatas.emplace_back(implements::internal_construct_tag,
-                                                          item.key_storage(), item.value_storage());
+                for (const auto &entry: implements::entity::constructor_entites_v<Clazz>) {
+                    if (args_hash == entry.param_hash && entry.category == implements::entity::constructor_category::ctor_func) {
+                        for (const auto &item: std::span{entry.metadatas.start, entry.metadatas.count}) {
+                            inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(),
+                                                          item.value_storage());
                         }
-                        for (const auto& name : std::span{entry.parameter_names.start, entry.parameter_names.count}) {
+                        for (const auto &name: std::span{entry.parameter_names.start, entry.parameter_names.count}) {
                             names.emplace_back(name);
                         }
                         break;
@@ -210,22 +208,26 @@ namespace rettr {
             implements::register_accessor_class_type_when_needed<Clazz, Acc>();
             reg_exec_->add_registration_func(static_cast<const void *>(this));
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
-            using class_type = typename helper::member_pointer_traits<Acc>::class_type;
-            if constexpr (!std::is_void_v<class_type>) {
-                static constexpr auto entries = rettr::annotations::implements::scan_data_member_metadata<^^class_type>();
-                std::vector<metadata_item> inject_metadatas;
-                for (auto &entry: entries) {
-                    if (name == entry.name) {
-                        std::span<const rettr::annotations::metadata_t> items{entry.items, entry.count};
-                        for (const auto &item: items) {
+            using trait_class_type = typename helper::member_pointer_traits<Acc>::class_type;
+
+            using class_type = std::conditional_t<std::is_void_v<trait_class_type>, Clazz, trait_class_type>;
+
+            std::vector<metadata_item> inject_metadatas;
+
+            template for (constexpr auto &entry: implements::entity::properties_entites_v<class_type>) {
+                using entry_ptr = std::decay_t<decltype(entry.ptr)>;
+                if constexpr (std::is_same_v<Acc, entry_ptr>) {
+                    if (accessor == entry.ptr) {
+                        for (const auto &item: std::span{entry.metadatas.start, entry.metadatas.count}) {
                             inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(),
                                                           item.value_storage());
                         }
                         break;
                     }
                 }
-                implements::property_bind<Clazz, Acc>::apply_metadatas(std::move(inject_metadatas));
             }
+
+            implements::property_bind<Clazz, Acc>::apply_metadatas(std::move(inject_metadatas));
 #endif
         }
 
@@ -262,17 +264,43 @@ namespace rettr {
             reg_exec_(std::move(reg_exec)) {
             reg_exec_->add_registration_func(static_cast<const void *>(this));
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
-            static constexpr auto entries = rettr::annotations::implements::scan_data_member_metadata<^^Clazz>();
             std::vector<metadata_item> inject_metadatas;
-            for (auto &entry: entries) {
-                if (name == entry.name) {
-                    std::span<const rettr::annotations::metadata_t> items{entry.items, entry.count};
-                    for (const auto &item: items) {
-                        inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(), item.value_storage());
+
+            if constexpr (std::is_pointer_v<typename function_traits<Getter>::return_type> ||
+                          std::is_reference_v<typename function_traits<Getter>::return_type>) {
+                using return_raw = std::remove_cvref_t<typename function_traits<Getter>::return_type>;
+                template for (constexpr auto &entry: implements::entity::properties_entites_v<Clazz>) {
+                    using entry_ptr = std::decay_t<decltype(entry.ptr)>;
+                    if constexpr (helper::member_pointer_traits<entry_ptr>::valid) {
+                        using member_type = typename helper::member_pointer_traits<entry_ptr>::type;
+                        if constexpr (std::is_same_v<return_raw, member_type>) {
+                            for (const auto &item: std::span{entry.metadatas.start, entry.metadatas.count}) {
+                                inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(),
+                                                              item.value_storage());
+                            }
+                            break;
+                        }
                     }
-                    break;
+                }
+            } else {
+                using return_type = typename function_traits<Getter>::return_type;
+                template for (constexpr auto &entry: implements::entity::properties_entites_v<Clazz>) {
+                    using entry_ptr = std::decay_t<decltype(entry.ptr)>;
+                    if constexpr (helper::member_pointer_traits<entry_ptr>::valid) {
+                        using member_type = typename helper::member_pointer_traits<entry_ptr>::type;
+                        if constexpr (std::is_same_v<return_type, member_type>) {
+                            if (name == entry.name_ptr) {
+                                for (const auto &item: std::span{entry.metadatas.start, entry.metadatas.count}) {
+                                    inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(),
+                                                                  item.value_storage());
+                                }
+                                break;
+                            }
+                        }
+                    }
                 }
             }
+
             implements::property_bind<Clazz, Getter>::apply_metadatas(std::move(inject_metadatas));
 #endif
         }
@@ -310,17 +338,43 @@ namespace rettr {
             reg_exec_(std::move(reg_exec)) {
             reg_exec_->add_registration_func(static_cast<const void *>(this));
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
-            static constexpr auto entries = rettr::annotations::implements::scan_data_member_metadata<^^Clazz>();
             std::vector<metadata_item> inject_metadatas;
-            for (auto &entry: entries) {
-                if (name == entry.name) {
-                    std::span<const rettr::annotations::metadata_t> items{entry.items, entry.count};
-                    for (const auto &item: items) {
-                        inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(), item.value_storage());
+
+            if constexpr (std::is_pointer_v<typename function_traits<Getter>::return_type> ||
+                          std::is_reference_v<typename function_traits<Getter>::return_type>) {
+                using ReturnRaw = std::remove_cvref_t<typename function_traits<Getter>::return_type>;
+                template for (constexpr auto &entry: implements::entity::properties_entites_v<Clazz>) {
+                    using EntryPtr = std::decay_t<decltype(entry.ptr)>;
+                    if constexpr (helper::member_pointer_traits<EntryPtr>::valid) {
+                        using MemberType = typename helper::member_pointer_traits<EntryPtr>::type;
+                        if constexpr (std::is_same_v<ReturnRaw, MemberType>) {
+                            for (const auto &item: std::span{entry.metadatas.start, entry.metadatas.count}) {
+                                inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(),
+                                                              item.value_storage());
+                            }
+                            break;
+                        }
                     }
-                    break;
+                }
+            } else {
+                using ReturnType = typename function_traits<Getter>::return_type;
+                template for (constexpr auto &entry: implements::entity::properties_entites_v<Clazz>) {
+                    using EntryPtr = std::decay_t<decltype(entry.ptr)>;
+                    if constexpr (helper::member_pointer_traits<EntryPtr>::valid) {
+                        using MemberType = typename helper::member_pointer_traits<EntryPtr>::type;
+                        if constexpr (std::is_same_v<ReturnType, MemberType>) {
+                            if (name == entry.name_ptr) {
+                                for (const auto &item: std::span{entry.metadatas.start, entry.metadatas.count}) {
+                                    inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(),
+                                                                  item.value_storage());
+                                }
+                                break;
+                            }
+                        }
+                    }
                 }
             }
+
             implements::property_bind_readonly<Clazz>::apply_metadatas(std::move(inject_metadatas));
 #endif
         }
@@ -365,17 +419,15 @@ namespace rettr {
                     std::vector<metadata_item> inject_metadatas;
                     std::vector<string_view> names;
 
-                    template for (constexpr auto& entry : implements::entity::method_entites_v<Clazz>) {
+                    template for (constexpr auto &entry: implements::entity::method_entites_v<Clazz>) {
                         using ptr = std::decay_t<decltype(entry.ptr)>;
                         if constexpr (std::is_same_v<Func, ptr>) {
                             if (func == entry.ptr) {
-                                for (const auto& item : std::span{entry.metadatas.start, entry.metadatas.count}) {
-                                    inject_metadatas.emplace_back(
-                                        implements::internal_construct_tag,
-                                        item.key_storage(),
-                                        item.value_storage());
+                                for (const auto &item: std::span{entry.metadatas.start, entry.metadatas.count}) {
+                                    inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(),
+                                                                  item.value_storage());
                                 }
-                                for (const auto& name : std::span{entry.parameter_names.start, entry.parameter_names.count}) {
+                                for (const auto &name: std::span{entry.parameter_names.start, entry.parameter_names.count}) {
                                     names.emplace_back(name);
                                 }
                             }

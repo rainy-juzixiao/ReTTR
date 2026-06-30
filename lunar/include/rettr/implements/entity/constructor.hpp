@@ -119,7 +119,7 @@ namespace rettr::implements::entity {
     }
 
     template <typename Class>
-    static constexpr auto constructor_entites_v = make_constructor_entites<Class>();
+    static constexpr auto constructor_entites_v = make_constructor_entites<^^Class>();
 }
 
 #endif

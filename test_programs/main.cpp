@@ -376,6 +376,7 @@ int main() {
 
         auto ctor_func = t.constructor({rettr_typeid(int)});
         std::cout << ctor_func.metadatas().size() << '\n';
+        std::cout << ctor_func.parameter_infos().at(0).name() << '\n';
 
         {
             ctor_func = t.constructor({rettr_typeid(std::string)});

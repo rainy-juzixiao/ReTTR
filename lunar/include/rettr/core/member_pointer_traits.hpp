@@ -117,6 +117,8 @@ namespace rettr::helper {
          *        成员指针所属的类类型。
          */
         using class_type = Class;
+
+        static RETTR_CONSTEXPR_BOOL valid = true;
     };
 }
 
