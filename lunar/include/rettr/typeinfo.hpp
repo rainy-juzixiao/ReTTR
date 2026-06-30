@@ -148,7 +148,7 @@ namespace rettr::implements {
 
 namespace rettr::implements {
     template <typename Ty>
-    static constexpr rettr_fn eval_traits_for_properties() noexcept -> traits {
+    constexpr rettr_fn eval_traits_for_properties() noexcept -> traits {
         traits traits_{0};
 
         if constexpr (std::is_lvalue_reference_v<Ty>) {
@@ -178,7 +178,7 @@ namespace rettr::implements {
     }
 
     template <typename Ty>
-    static constexpr rettr_fn eval_traits_for_fundamental() noexcept -> traits {
+    constexpr rettr_fn eval_traits_for_fundamental() noexcept -> traits {
         traits traits_{0};
 
         if constexpr (std::is_void_v<Ty>) {
@@ -224,7 +224,7 @@ namespace rettr::implements {
     }
 
     template <typename Ty>
-    static constexpr rettr_fn eval_traits_for_compound() noexcept -> traits {
+    constexpr rettr_fn eval_traits_for_compound() noexcept -> traits {
         traits traits_{0};
 
         using decay_type = std::decay_t<Ty>;
@@ -489,7 +489,7 @@ namespace rettr::implements {
     }
 #endif
 
-    RETTR_INLINE static constexpr std::size_t fnv1a_hash(std::string_view val) noexcept {
+    RETTR_INLINE constexpr std::size_t fnv1a_hash(std::string_view val) noexcept {
         constexpr std::size_t fnv_offset_basis = 14695981039346656037ULL;
         std::size_t hash = fnv_offset_basis;
         for (const char i: val) {
@@ -585,7 +585,7 @@ namespace rettr::implements {
     constexpr typeinfo_component<MainTypeInfo> empty_component;
 
     template <typename MainTypeInfo, typename Ty>
-    static constexpr typeinfo_component<MainTypeInfo> typeinfo = typeinfo_component<MainTypeInfo>::template make<Ty>();
+    inline constexpr typeinfo_component<MainTypeInfo> typeinfo = typeinfo_component<MainTypeInfo>::template make<Ty>();
 
     template <typename MainTypeInfo>
     constexpr rettr_fn typeinfo_component<MainTypeInfo>::empty_is_compatible(const typeinfo_component &) -> bool {
