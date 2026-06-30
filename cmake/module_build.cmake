@@ -40,13 +40,6 @@ function(rettr_has_compiler_module_support result_var)
         else()
             set(${result_var} FALSE PARENT_SCOPE)
         endif()
-    elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-        # GCC modules support: 14+
-        if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "14.0.0")
-            set(${result_var} TRUE PARENT_SCOPE)
-        else()
-            set(${result_var} FALSE PARENT_SCOPE)
-        endif()
     else()
         set(${result_var} FALSE PARENT_SCOPE)
     endif()
@@ -88,17 +81,8 @@ macro(rettr_add_module_target target_name)
             BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}"
             FILES ${ARGN}
     )
-    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-        target_compile_options(${target_name} PRIVATE
-            -fmodules-ts
-            -Wno-expose-global-module-tu-local
-        )
-    elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        if(MSVC)
-            target_compile_options(${target_name} PRIVATE /experimental:module)
-        else()
-            target_compile_options(${target_name} PRIVATE -fmodules-ts)
-        endif()
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND MSVC)
+        target_compile_options(${target_name} PRIVATE /experimental:module)
     elseif(MSVC)
         target_compile_options(${target_name} PRIVATE /experimental:module /std:c++20)
     endif()
@@ -129,11 +113,7 @@ function(rettr_apply_module_flags target)
         CXX_EXTENSIONS OFF
     )
 
-    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-        target_compile_options(${target} PRIVATE -fmodules-ts)
-    elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT MSVC)
-        target_compile_options(${target} PRIVATE -fmodules-ts)
-    elseif(MSVC)
+    if(MSVC)
         target_compile_options(${target} PRIVATE /experimental:module /std:c++20)
     endif()
 

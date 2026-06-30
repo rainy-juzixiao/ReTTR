@@ -52,6 +52,21 @@ include(${PROJECT_SOURCE_DIR}/cmake/utility.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/config.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/module_build.cmake)
 
+# GCC is NOT supported for module builds in ReTTR
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND RETTR_USE_MODULE_BUILD)
+    if(RETTR_USE_CXX26_REFLECTION_TS)
+        message(FATAL_ERROR
+            "GCC does NOT support C++20 modules together with C++26 Reflection TS.\n"
+            "Please choose one:\n"
+            "  - Set RETTR_USE_CXX26_REFLECTION_TS=OFF to use module build, OR\n"
+            "  - Set RETTR_USE_MODULE_BUILD=OFF to use reflection")
+    endif()
+    message(FATAL_ERROR
+        "GCC is not supported for C++20 module builds in ReTTR.\n"
+        "Please use Clang 17+ or MSVC 2022 17.5+ instead,\n"
+        "or set RETTR_USE_MODULE_BUILD=OFF to build without modules.")
+endif()
+
 if (RETTR_HAS_MODULE_SUPPORT)
     add_subdirectory(${PROJECT_SOURCE_DIR}/lunar/modules)
 endif ()
@@ -70,9 +85,16 @@ if (RETTR_BUILD_UNIT_TESTS)
     target_link_libraries(test_program rettr)
 
     if(RETTR_HAS_MODULE_SUPPORT)
-        add_executable(module_test_program ${PROJECT_SOURCE_DIR}/misc/modules_test/main.cppm)
+        add_executable(module_test_program)
+
+        target_sources(module_test_program
+                PRIVATE
+                FILE_SET CXX_MODULES
+                FILES
+                misc/modules_test/main.cppm
+        )
+
         set_target_properties(module_test_program PROPERTIES CXX_STANDARD 23)
-        target_compile_options(module_test_program PRIVATE -fmodules-ts)
         target_link_libraries(module_test_program PRIVATE rettr_module)
         target_compile_definitions(module_test_program PRIVATE RETTR_HAS_MODULE_SUPPORT=1)
    endif()
