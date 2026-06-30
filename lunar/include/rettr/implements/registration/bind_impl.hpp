@@ -524,9 +524,11 @@ namespace rettr {
 //////////////
 // vvv变量模板
 
+#if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
 namespace rettr {
     template <auto Entity, typename Clazz, typename AccLevel, typename... ConstructorArgs>
     class registration::bind_entity<Entity, implements::ctor, Clazz, AccLevel, ConstructorArgs...> {};
 }
+#endif
 
 #endif

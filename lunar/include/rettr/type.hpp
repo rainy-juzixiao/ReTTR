@@ -41,7 +41,9 @@ namespace rettr::implements::type_private {
 
     template <typename Type = type>
     RETTR_LOCAL_API RETTR_INLINE type create_type(type_data<Type> *) noexcept;
-    RETTR_API type invalid_type() noexcept;
+
+    template <typename Type>
+    RETTR_API Type invalid_type() noexcept;
 
     template <typename Ty, typename Type>
     RETTR_LOCAL_API std::unique_ptr<type_data<Type>> make_type_data();
@@ -254,7 +256,9 @@ namespace rettr {
 
         template <typename Type>
         friend type implements::type_private::create_type(implements::type_private::type_data<Type> *) noexcept;
-        friend type implements::type_private::invalid_type() noexcept;
+
+        template <typename Type>
+        friend Type implements::type_private::invalid_type() noexcept;
 
         template <typename Ty, typename Type>
         friend std::unique_ptr<implements::type_private::type_data<Type>> implements::type_private::make_type_data();

@@ -23,6 +23,9 @@ namespace rettr::implements {
     template <typename Ty, typename... CtorArgs>
     class constructor_bind;
 
+    template <typename Func>
+    class constructor_func_bind;
+
     template <typename Fx>
     class method_bind;
 }
@@ -413,6 +416,9 @@ namespace rettr {
     private:
         template <typename Ty, typename... CtorArgs>
         friend class implements::constructor_bind;
+
+        template <typename Func>
+        friend class implements::constructor_func_bind;
 
         template <typename Ty>
         friend class implements::method_bind;

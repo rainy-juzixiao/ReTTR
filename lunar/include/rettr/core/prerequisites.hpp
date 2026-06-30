@@ -364,7 +364,9 @@ static_assert(
 #define RETTR_CAT_IMPL(a, b) a##b
 #define RETTR_CAT(a, b) RETTR_CAT_IMPL(a, b)
 
-#if RETTR_USING_WINDOWS
+#if RETTR_HAS_MODULE_SUPPORT && RETTR_HAS_MODULE_SUPPORT
+#define RETTR_API
+#elif RETTR_USING_WINDOWS
 #if RETTR_USING_DYNAMIC
 #ifdef RETTR_DYNAMIC_EXPORTS
 #define RETTR_API __declspec(dllexport)

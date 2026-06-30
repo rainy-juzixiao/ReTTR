@@ -74,10 +74,10 @@ namespace rettr::implements {
 }
 
 namespace rettr::implements::type_private {
-    template <>
-    struct RETTR_API type_data<type> {
-        type_data *raw_type_data;
-        type_data *array_raw_type;
+    template <typename Type>
+    struct RETTR_API type_data {
+        type_data<Type> *raw_type_data;
+        type_data<Type> *array_raw_type;
 
         std::size_t pointer_dimension;
 
@@ -85,7 +85,7 @@ namespace rettr::implements::type_private {
 
         enumeration_data *enumeration_data_;
         bool valid;
-        class_data<> my_class_data;
+        class_data<Type> my_class_data;
 
         get_metadata_func metadata;
 

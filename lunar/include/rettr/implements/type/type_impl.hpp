@@ -37,6 +37,14 @@ namespace rettr::implements::type_private {
         return data ? type(data) : type();
     }
 
+    template <typename Type>
+    Type invalid_type() noexcept {
+        auto data = type_private::invalid_type_data();
+        Type t;
+        t.type_data_ = data;
+        return t;
+    }
+
     template <typename T>
     RETTR_LOCAL_API RETTR_INLINE type create_or_get_type() noexcept {
         if constexpr (is_complete_type<T>::value) {
@@ -266,7 +274,7 @@ namespace rettr {
 
     template <>
     RETTR_INLINE type type::from<struct implements::invalid_type_t>() noexcept {
-        return implements::type_private::invalid_type();
+        return implements::type_private::invalid_type<type>();
     }
 
     template <typename Ty, std::enable_if_t<!std::is_same_v<Ty, rettr::typeinfo>, int>>
