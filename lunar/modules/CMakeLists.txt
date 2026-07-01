@@ -36,6 +36,7 @@ if (RETTR_CAN_BUILD_MODULES)
             rettr/registration.cppm
             rettr/type.cppm
             rettr/typeinfo.cppm
+            rettr/rettr.cppm
     )
 
     target_include_directories(rettr_module PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

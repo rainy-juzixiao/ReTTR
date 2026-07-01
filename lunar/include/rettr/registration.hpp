@@ -127,6 +127,9 @@ namespace rettr {
             class_ &operator=(const class_ &right) = default;
 
             std::shared_ptr<implements::registration_executer> reg_exec;
+
+            template <typename... Types>
+            friend class bind;
         };
 
         static const implements::registration_private::public_access public_access;

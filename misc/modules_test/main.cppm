@@ -1,7 +1,6 @@
 export module main;
 
-import rettr.any;
-import rettr.registration;
+import rettr;
 import std;
 
 class MyStruct {
