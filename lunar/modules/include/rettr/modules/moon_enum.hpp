@@ -1,5 +1,5 @@
 /*
-* Copyright 2026 rainy-juzixiao
+ * Copyright 2026 rainy-juzixiao
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module;
-#include <rettr/any.hpp>
 
-export module rettr.any;
+#ifndef RETTR_MODULES_MOON_ENUM_HPP
+#define RETTR_MODULES_MOON_ENUM_HPP
 
-export namespace rettr {
-    /* main stub */
-    using rettr::any;
+#include <rettr/modules/compiler_detection.hpp>
 
-    /* 转换器模板 */
-    using rettr::any_converter;
+#if !RETTR_HAS_CXX26
+#define ENUM_SCAN_BEGIN -127
+#define ENUM_SCAN_END 128
+#endif
 
-    /* factory函数 */
-    using rettr::make_any;
-
-    /* match自动推导 */
-    using rettr::auto_deduce_t;
-    using rettr::auto_deduce;
-}
+#endif

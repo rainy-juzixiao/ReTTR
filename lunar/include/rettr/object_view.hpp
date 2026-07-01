@@ -306,7 +306,7 @@ namespace rettr {
     // 用于表示不存在的实例
     struct non_exists_instance_t {};
 
-    static constexpr inline non_exists_instance_t non_exists_instance;
+    constexpr inline non_exists_instance_t non_exists_instance;
 
     class RETTR_API object_view {
     public:

@@ -1,5 +1,5 @@
 /*
-* Copyright 2026 rainy-juzixiao
+ * Copyright 2026 rainy-juzixiao
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,14 @@
  * limitations under the License.
  */
 module;
-#include <rettr/any.hpp>
+#include <rettr/enum_flags.hpp>
 
-export module rettr.any;
+export module rettr.enum_flags;
 
 export namespace rettr {
-    /* main stub */
-    using rettr::any;
+    using rettr::enum_flags;
+}
 
-    /* 转换器模板 */
-    using rettr::any_converter;
-
-    /* factory函数 */
-    using rettr::make_any;
-
-    /* match自动推导 */
-    using rettr::auto_deduce_t;
-    using rettr::auto_deduce;
+export namespace rettr::implements {
+    using rettr::implements::enum_flag;
 }

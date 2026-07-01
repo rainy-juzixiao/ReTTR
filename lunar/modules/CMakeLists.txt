@@ -32,10 +32,33 @@ if (RETTR_CAN_BUILD_MODULES)
     set(RETTR_HAS_MODULE_SUPPORT TRUE PARENT_SCOPE)
 
     rettr_add_module_target(rettr_module
+            # 基础支持类型
+            rettr/access_levels.cppm
+            rettr/array_range.cppm
+            rettr/enum_flags.cppm
+            rettr/filter_item.cppm
+            rettr/string_view.cppm
+            # 类型信息
             rettr/any.cppm
-            rettr/registration.cppm
             rettr/type.cppm
             rettr/typeinfo.cppm
+            # 对象模型
+            rettr/object_view.cppm
+            rettr/object.cppm
+            rettr/shared_object.cppm
+            # 反射核心
+            rettr/registration.cppm
+            rettr/function.cppm
+            rettr/method.cppm
+            rettr/property.cppm
+            rettr/constructor.cppm
+            rettr/destructor.cppm
+            rettr/enumeration.cppm
+            rettr/parameter_info.cppm
+            rettr/library.cppm
+            # 转换支持
+            rettr/rettr_cast.cppm
+            # 汇总导出
             rettr/rettr.cppm
     )
 

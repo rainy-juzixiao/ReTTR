@@ -46,7 +46,7 @@ namespace rettr {
         explicit constexpr auto_deduce_t() = default;
     };
 
-    static constexpr auto_deduce_t auto_deduce{};
+    constexpr inline auto_deduce_t auto_deduce{};
 }
 
 namespace rettr {

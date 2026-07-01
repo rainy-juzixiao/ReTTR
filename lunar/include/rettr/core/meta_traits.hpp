@@ -2991,6 +2991,30 @@ namespace rettr::implements {
     template <typename Ty>
     struct has_rettr_private_stub_for_this_pointer<Ty, std::void_t<decltype(std::declval<Ty>().rettr_private_stub_for_this_pointer())>>
         : std::true_type {};
+
+    template <typename Ty, typename = void>
+    struct has_reflect_this_func : std::false_type {};
+
+    template <typename Ty>
+    struct has_reflect_this_func<Ty, std::void_t<decltype(std::declval<Ty>().reflect_this())>> : std::true_type {};
+
+    template <typename T>
+    class has_base_class_list_impl {
+        typedef char YesType[1];
+        typedef char NoType[2];
+
+        template <typename C>
+        static YesType &test(typename C::base_class_list *);
+
+        template <typename>
+        static NoType &test(...);
+
+    public:
+        static constexpr bool value = (sizeof(YesType) == sizeof(test<T>(0)));
+    };
+
+    template <typename T>
+    using has_base_class_list = std::bool_constant<has_base_class_list_impl<T>::value>;
 }
 
 #endif

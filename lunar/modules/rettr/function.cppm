@@ -14,21 +14,11 @@
  * limitations under the License.
  */
 module;
-#include <rettr/any.hpp>
 
-export module rettr.any;
+#include <rettr/function.hpp>
+
+export module rettr.function;
 
 export namespace rettr {
-    /* main stub */
-    using rettr::any;
-
-    /* 转换器模板 */
-    using rettr::any_converter;
-
-    /* factory函数 */
-    using rettr::make_any;
-
-    /* match自动推导 */
-    using rettr::auto_deduce_t;
-    using rettr::auto_deduce;
+    using rettr::function;
 }
