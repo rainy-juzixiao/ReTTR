@@ -27,10 +27,6 @@ if (RETTR_MODULE_CMAKE_OK AND RETTR_MODULE_COMPILER_OK)
     set(RETTR_CAN_BUILD_MODULES TRUE)
 endif ()
 
-if (RETTR_IMPORT_STD_UUID AND DEFINED RETTR_IMPORT_STD_UUID_VALUE)
-    rettr_setup_import_std("${RETTR_IMPORT_STD_UUID_VALUE}")
-endif ()
-
 if (RETTR_CAN_BUILD_MODULES)
     message(STATUS "C++20 modules available — building rettr module targets")
     set(RETTR_HAS_MODULE_SUPPORT TRUE PARENT_SCOPE)
@@ -38,7 +34,11 @@ if (RETTR_CAN_BUILD_MODULES)
     rettr_add_module_target(rettr_module
             rettr/any.cppm
             rettr/registration.cppm
+            rettr/type.cppm
+            rettr/typeinfo.cppm
     )
+
+    target_include_directories(rettr_module PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
     set_target_properties(rettr_module PROPERTIES
             OUTPUT_NAME "rettr"
