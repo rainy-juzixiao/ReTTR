@@ -38,6 +38,7 @@ if (RETTR_CAN_BUILD_MODULES)
             rettr/enum_flags.cppm
             rettr/filter_item.cppm
             rettr/string_view.cppm
+            rettr/type_list.cppm
             # 类型信息
             rettr/any.cppm
             rettr/type.cppm
