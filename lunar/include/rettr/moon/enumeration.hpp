@@ -31,6 +31,7 @@
 
 #if RETTR_USING_CLANG || RETTR_USING_LLVM_GCC
 #pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunknown-warning-option"
 #pragma GCC diagnostic ignored "-Wenum-constexpr-conversion"
 #endif
 
