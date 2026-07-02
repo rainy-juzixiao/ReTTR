@@ -98,6 +98,8 @@ namespace rettr {
         return {create_if_empty(reg_exec), name};
     }
 
+#if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
+
     template <typename Clazz>
     template <typename AccLevel, typename Tp>
     registration::bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_all, AccLevel> registration::class_<
@@ -132,6 +134,8 @@ namespace rettr {
         Clazz>::make_constructor_available(AccLevel level) {
         return {create_if_empty(reg_exec)};
     }
+
+#endif
 
     template <typename Clazz>
     registration::class_<Clazz>::class_(const std::shared_ptr<implements::registration_executer> &reg_exec) : reg_exec(reg_exec) {
