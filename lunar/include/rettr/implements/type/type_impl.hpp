@@ -20,14 +20,6 @@
 #include <rettr/implements/registration/registration_manager.hpp>
 #include <rettr/implements/type/type_data.hpp>
 
-namespace rettr::implements {
-    template <typename Ty, typename = void>
-    struct has_reflect_this_func : std::false_type {};
-
-    template <typename Ty>
-    struct has_reflect_this_func<Ty, std::void_t<decltype(std::declval<Ty>().reflect_this())>> : std::true_type {};
-}
-
 namespace rettr::implements::type_private {
     template <typename T>
     using is_complete_type = std::integral_constant<bool, !std::is_function<T>::value && !std::is_same<T, void>::value>;
@@ -35,6 +27,14 @@ namespace rettr::implements::type_private {
     template <typename Type>
     RETTR_INLINE type create_type(type_data<Type> *data) noexcept {
         return data ? type(data) : type();
+    }
+
+    template <typename Type>
+    Type invalid_type() noexcept {
+        auto data = type_private::invalid_type_data();
+        Type t;
+        t.type_data_ = data;
+        return t;
     }
 
     template <typename T>
@@ -93,24 +93,6 @@ namespace rettr::implements {
 }
 
 namespace rettr::implements {
-    template <typename T>
-    class has_base_class_list_impl {
-        typedef char YesType[1];
-        typedef char NoType[2];
-
-        template <typename C>
-        static YesType &test(typename C::base_class_list *);
-
-        template <typename>
-        static NoType &test(...);
-
-    public:
-        static constexpr bool value = (sizeof(YesType) == sizeof(test<T>(0)));
-    };
-
-    template <typename T>
-    using has_base_class_list = std::bool_constant<has_base_class_list_impl<T>::value>;
-
     template <typename Type, typename DerivedClass, typename... T>
     struct RETTR_LOCAL_API type_from_base_classes;
 
@@ -266,7 +248,7 @@ namespace rettr {
 
     template <>
     RETTR_INLINE type type::from<struct implements::invalid_type_t>() noexcept {
-        return implements::type_private::invalid_type();
+        return implements::type_private::invalid_type<type>();
     }
 
     template <typename Ty, std::enable_if_t<!std::is_same_v<Ty, rettr::typeinfo>, int>>

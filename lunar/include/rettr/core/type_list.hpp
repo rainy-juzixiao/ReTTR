@@ -249,6 +249,18 @@ namespace rettr::helper {
     };
 
     /**
+     * @brief Alias template for type_list_push_back.
+     *        type_list_push_back 的别名模板。
+     *
+     * @tparam Ty The type to add
+     *            要添加的类型
+     * @tparam TypeList The type list to modify
+     *                  要修改的类型列表
+     */
+    template<typename Ty, typename TypeList>
+    using type_list_push_back_t = typename type_list_push_back<Ty, TypeList>::type;
+
+    /**
      * @brief Adds multiple types to the front of a type list.
      *        在类型列表的前面添加多个类型。
      *

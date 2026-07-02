@@ -299,7 +299,7 @@ namespace rettr {
     };
 
     template <typename Ty>
-    static inline constexpr std::size_t member_count_v = member_count<Ty>::value;
+    inline constexpr std::size_t member_count_v = member_count<Ty>::value;
 
     template <typename Ty>
     constexpr rettr_fn struct_to_tuple() -> auto {

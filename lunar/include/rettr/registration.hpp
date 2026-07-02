@@ -51,8 +51,10 @@ namespace rettr {
         template <typename... Types>
         class bind;
 
+#if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
         template <auto Entity, typename... Types>
         class bind_entity;
+#endif
 
         template <typename Clazz>
         class class_ {
@@ -117,8 +119,7 @@ namespace rettr {
 
 
 #endif
-
-        private:
+        protected:
             class_(const std::shared_ptr<implements::registration_executer> &reg_exec);
 
             class_(const class_ &right) = default;

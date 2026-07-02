@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #ifndef RETTR_IMPLEMENTS_REGISTRATION_REGISTRATION_STATE_SAVER_HPP
-#define RETTR_IMPLEMENTS_REGISTRATION_EGISTRATION_STATE_SAVER_HPP
+#define RETTR_IMPLEMENTS_REGISTRATION_REGISTRATION_STATE_SAVER_HPP
 
 #include <rettr/array_range.hpp>
 #include <rettr/core/prerequisites.hpp>

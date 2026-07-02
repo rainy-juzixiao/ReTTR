@@ -23,8 +23,9 @@ namespace rettr {
 }
 
 namespace rettr::implements::type_private {
-    type invalid_type() noexcept;
-
+    template <typename Type>
+    Type invalid_type() noexcept;
+    
     template <typename Ty, typename Enable = void>
     struct raw_type {
         using type = std::remove_cv_t<Ty>;
@@ -44,7 +45,7 @@ namespace rettr::implements::type_private {
     template <typename Ty, bool = std::is_same_v<Ty, typename raw_type<Ty>::type>, typename Type = type>
     struct RETTR_LOCAL_API raw_type_info {
         static RETTR_INLINE Type extract() noexcept {
-            return invalid_type();
+            return invalid_type<Type>();
         }
     };
 
@@ -65,7 +66,7 @@ namespace rettr::implements::type_private {
     template <typename Ty, typename Type>
     struct RETTR_LOCAL_API array_raw_type<Ty, false, Type> {
         static RETTR_INLINE Type extract() noexcept {
-            return invalid_type();
+            return invalid_type<Type>();
         }
     };
 }

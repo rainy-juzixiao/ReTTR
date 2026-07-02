@@ -19,7 +19,7 @@
 namespace rettr {
     rettr::type destructor::declaring_type() const noexcept {
         if (!empty()) {
-            return implements::type_private::invalid_type();
+            return implements::type_private::invalid_type<type>();
         }
         return rettr::type::from_typeid(vtable_->destructed_type().remove_cvref());
     }

@@ -146,7 +146,7 @@ namespace rettr {
         template <typename Clazz, typename Fx>
         friend class implements::property_bind;
 
-        template <typename Clazz, typename Fx>
+        template <typename Clazz>
         friend class implements::property_bind_readonly;
 
         struct property_accessor {

@@ -22,13 +22,6 @@
 #include <rettr/shared_object.hpp>
 
 namespace rettr::implements::type_private {
-    type invalid_type() noexcept {
-        auto data = type_private::invalid_type_data();
-        type t;
-        t.type_data_ = data;
-        return t;
-    }
-
     template <typename Ty>
     const Ty &invalid_item() {
         static const Ty empty;
