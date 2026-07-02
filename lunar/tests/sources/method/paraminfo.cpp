@@ -112,26 +112,30 @@ TEST_CASE("method - parameter info - names provided", "[method]") {
     CHECK_FALSE(infos[2].default_value().has_value());
 }
 
+
 TEST_CASE("method - parameter info - no names provided & default values", "[method]") {
     method meth = type::from<method_param_info_test>().method("method_4");
     REQUIRE_FALSE(meth.empty());
 
     std::vector<parameter_info> infos(meth.parameter_infos().begin(), meth.parameter_infos().end());
     REQUIRE(infos.size() == 3);
-
+#if !(RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION)
     CHECK(infos[0].name() == std::string());
+#endif
     CHECK(infos[0].has_default_value() == false);
     CHECK(infos[0].type() == type::from<int>());
     CHECK(infos[0].index() == 0);
     CHECK_FALSE(infos[0].default_value().has_value());
-
+#if !(RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION)
     CHECK(infos[1].name() == std::string());
+#endif
     CHECK(infos[1].has_default_value() == true);
     CHECK(infos[1].type() == type::from<double>());
     CHECK(infos[1].index() == 1);
     CHECK(infos[1].default_value() == 23.0);
-
+#if !(RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION)
     CHECK(infos[2].name() == std::string());
+#endif
     CHECK(infos[2].has_default_value() == true);
     CHECK(infos[2].type() == type::from<bool>());
     CHECK(infos[2].index() == 2);
