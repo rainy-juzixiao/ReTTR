@@ -354,10 +354,7 @@ int main() {
     {
         std::cout << rettr::type::from<xxx::MyStruct>().constructors().size() << '\n';
         std::cout << rettr::type::from<xxx::MyStruct>().constructors()[0].parameter_count() << '\n';
-        std::cout << rettr::type::from<xxx::MyStruct>()
-                         .properties(rettr::filter_item::non_public_access | rettr::filter_item::public_access)
-                         .size()
-                  << '\n';
+        std::cout << rettr::type::from<xxx::MyStruct>().methods().size() << '\n';
     }
     {
         {

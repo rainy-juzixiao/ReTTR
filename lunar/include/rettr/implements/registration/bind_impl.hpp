@@ -659,6 +659,35 @@ namespace rettr::implements {
         return std::define_static_array(properties);
     }();
 
+    template <typename Clazz, typename AccLevel>
+    constexpr auto auto_scan_method_members = [] {
+        auto level = implements::make_access_level_tag<AccLevel>::make().value;
+        std::vector<std::meta::info> properties;
+
+        template for (const auto item: entity::method_members<^^Clazz>) {
+            switch (level) {
+                case access_levels::public_access:
+                    if (std::meta::is_public(item)) {
+                        properties.emplace_back(item);
+                    }
+                    break;
+                case access_levels::protected_access:
+                    if (std::meta::is_protected(item)) {
+                        properties.emplace_back(item);
+                    }
+                    break;
+                case access_levels::private_access:
+                    if (std::meta::is_private(item)) {
+                        properties.emplace_back(item);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        return std::define_static_array(properties);
+    }();
+
     template <std::meta::info Constructor>
     constexpr auto constructor_arguments_types = [] {
         static constexpr auto parameters = std::define_static_array(std::meta::parameters_of(Constructor));
@@ -686,8 +715,7 @@ namespace rettr::implements {
     };
 
     template <typename Clazz, typename AccLevel>
-    void make_constructor_available_impl(std::shared_ptr<implements::registration_executer> &self_reg_exec,
-                                         auto &holders_) {
+    void make_constructor_available_impl(std::shared_ptr<implements::registration_executer> &self_reg_exec, auto &holders_) {
         /* constructor */
         template for (constexpr auto ctor_ref: implements::auto_scan_constructors_members<Clazz, AccLevel>) {
             using param_type_list =
@@ -711,13 +739,24 @@ namespace rettr::implements {
     }
 
     template <typename Clazz, typename AccLevel>
-    void make_member_data_available(std::shared_ptr<implements::registration_executer> &self_reg_exec, auto &holders_) {
+    void make_member_data_available_impl(std::shared_ptr<implements::registration_executer> &self_reg_exec, auto &holders_) {
         template for (constexpr auto item: auto_scan_properties_members<Clazz, AccLevel>) {
             using member_ptr_t = decltype(&[:item:]);
             auto name = std::define_static_string(std::meta::identifier_of(item));
             using propbind = registration::bind<implements::prop, Clazz, member_ptr_t, AccLevel>;
             auto *ptr = new propbind(self_reg_exec, name, &[:item:]);
             holders_.emplace_back(ptr, [](void *p) { delete static_cast<propbind *>(p); });
+        }
+    }
+
+    template <typename Clazz, typename AccLevel>
+    void make_member_functions_available_impl(std::shared_ptr<implements::registration_executer> &self_reg_exec, auto &holders_) {
+        template for (constexpr auto item: auto_scan_method_members<Clazz, AccLevel>) {
+            using member_ptr_t = decltype(&[:item:]);
+            auto name = std::define_static_string(std::meta::identifier_of(item));
+            using methbind = registration::bind<implements::meth, Clazz, member_ptr_t, AccLevel>;
+            auto *ptr = new methbind(self_reg_exec, name, &[:item:]);
+            holders_.emplace_back(ptr, [](void *p) { delete static_cast<methbind *>(p); });
         }
     }
 }
@@ -730,7 +769,8 @@ namespace rettr {
         bind(std::shared_ptr<implements::registration_executer> reg_exec) : registration::class_<Clazz>(reg_exec) {
             std::vector<std::unique_ptr<void, void (*)(void *)>> holders_;
             implements::make_constructor_available_impl<Clazz, AccLevel>(this->reg_exec, holders_);
-            implements::make_member_data_available<Clazz, AccLevel>(this->reg_exec, holders_);
+            implements::make_member_data_available_impl<Clazz, AccLevel>(this->reg_exec, holders_);
+            implements::make_member_functions_available_impl<Clazz, AccLevel>(this->reg_exec, holders_);
         }
     };
 }
@@ -739,7 +779,6 @@ namespace rettr {
     template <typename Clazz, typename AccLevel>
     class registration::bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_constructors, AccLevel>
         : public registration::class_<Clazz> {
-
     public:
         bind(std::shared_ptr<implements::registration_executer> reg_exec) : registration::class_<Clazz>(reg_exec) {
             std::vector<std::unique_ptr<void, void (*)(void *)>> holders_;
@@ -750,11 +789,20 @@ namespace rettr {
     template <typename Clazz, typename AccLevel>
     class registration::bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_data_members, AccLevel>
         : public registration::class_<Clazz> {
-
     public:
         bind(std::shared_ptr<implements::registration_executer> reg_exec) : registration::class_<Clazz>(reg_exec) {
             std::vector<std::unique_ptr<void, void (*)(void *)>> holders_;
-            implements::make_member_data_available<Clazz, AccLevel>(this->reg_exec, holders_);
+            implements::make_member_data_available_impl<Clazz, AccLevel>(this->reg_exec, holders_);
+        }
+    };
+
+    template <typename Clazz, typename AccLevel>
+    class registration::bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_function_members, AccLevel>
+        : public registration::class_<Clazz> {
+    public:
+        bind(std::shared_ptr<implements::registration_executer> reg_exec) : registration::class_<Clazz>(reg_exec) {
+            std::vector<std::unique_ptr<void, void (*)(void *)>> holders_;
+            implements::make_member_functions_available_impl<Clazz, AccLevel>(this-reg_exec, holders_);
         }
     };
 }
