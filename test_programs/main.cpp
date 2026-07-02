@@ -256,6 +256,24 @@ namespace xxx {
         value1 = 1,
         value2 = 2
     };
+
+    struct MyStruct {
+        MyStruct() {};
+
+        explicit MyStruct(int data) : data(data) {
+        }
+
+        [[= rettr::annotations::mark_as_constructor_func]] MyStruct create_my_structure(std::string) {
+            return {};
+        }
+
+        void func(double) {};
+
+        int data;
+
+    private:
+        int data2;
+    };
 }
 
 #endif
@@ -275,6 +293,8 @@ RETTR_REGISTRATION {
         .method("free_function", [](int value) { std::cout << "free_function" << '\n'; });
 
     registration::enumeration<xxx::enums>("enums");
+
+    registration::class_<xxx::MyStruct>("MyStruct").make_this_available().make_member_data_available(registration::private_access);
 
 #endif
 
@@ -331,6 +351,14 @@ RETTR_REGISTRATION {
 
 int main() {
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
+    {
+        std::cout << rettr::type::from<xxx::MyStruct>().constructors().size() << '\n';
+        std::cout << rettr::type::from<xxx::MyStruct>().constructors()[0].parameter_count() << '\n';
+        std::cout << rettr::type::from<xxx::MyStruct>()
+                         .properties(rettr::filter_item::non_public_access | rettr::filter_item::public_access)
+                         .size()
+                  << '\n';
+    }
     {
         {
             auto members = rettr::implements::entity::make_method_entites<xxx::MyAnnoTest>();

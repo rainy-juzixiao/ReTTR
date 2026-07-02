@@ -99,6 +99,41 @@ namespace rettr {
     }
 
     template <typename Clazz>
+    template <typename AccLevel, typename Tp>
+    registration::bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_all, AccLevel> registration::class_<
+        Clazz>::make_this_available(AccLevel) {
+        return {create_if_empty(reg_exec)};
+    }
+
+    template <typename Clazz>
+    template <typename AccLevel, typename Tp>
+    registration::bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_enumerators, AccLevel> registration::class_<
+        Clazz>::make_enumerators_available(AccLevel) {
+        return {create_if_empty(reg_exec)};
+    }
+
+    template <typename Clazz>
+    template <typename AccLevel, typename Tp>
+    registration::bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_function_members, AccLevel> registration::class_<
+        Clazz>::make_member_functions_available(AccLevel) {
+        return {create_if_empty(reg_exec)};
+    }
+
+    template <typename Clazz>
+    template <typename AccLevel, typename Tp>
+    registration::bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_data_members, AccLevel> registration::class_<
+        Clazz>::make_member_data_available(AccLevel) {
+        return {create_if_empty(reg_exec)};
+    }
+
+    template <typename Clazz>
+    template <typename AccLevel, typename Tp>
+    registration::bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_data_members, AccLevel> registration::class_<
+        Clazz>::make_constructor_available(AccLevel level) {
+        return {create_if_empty(reg_exec)};
+    }
+
+    template <typename Clazz>
     registration::class_<Clazz>::class_(const std::shared_ptr<implements::registration_executer> &reg_exec) : reg_exec(reg_exec) {
     }
 

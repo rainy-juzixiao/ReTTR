@@ -47,21 +47,21 @@ namespace rettr::implements {
 
     template <>
     struct make_access_level_tag<registration_private::private_access> {
-        static auto make() {
+        static constexpr auto make() {
             return access_level_tag{access_levels::private_access};
         }
     };
 
     template <>
     struct make_access_level_tag<registration_private::public_access> {
-        static auto make() {
+        static constexpr auto make() {
             return access_level_tag{access_levels::public_access};
         }
     };
 
     template <>
     struct make_access_level_tag<registration_private::protected_access> {
-        static auto make() {
+        static constexpr auto make() {
             return access_level_tag{access_levels::protected_access};
         }
     };
@@ -540,6 +540,7 @@ namespace rettr {
     };
 }
 
+
 // ^^^运行时参数
 //////////////
 // vvv变量模板
@@ -549,6 +550,215 @@ namespace rettr {
     template <auto Entity, typename Clazz, typename AccLevel, typename... ConstructorArgs>
     class registration::bind_entity<Entity, implements::ctor, Clazz, AccLevel, ConstructorArgs...> {};
 }
+#endif
+
+#if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
+
+
+namespace rettr::implements {
+    template <typename Clazz, typename AccLevel>
+    constexpr auto auto_scan_constructors_members = [] {
+        auto vec = std::meta::members_of(^^Clazz, std::meta::access_context::unchecked());
+
+        auto level = implements::make_access_level_tag<AccLevel>::make().value;
+
+        std::vector<std::meta::info> ctors;
+
+        for (const auto item: vec) {
+            if (std::meta::is_constructor(item)) {
+                switch (level) {
+                    case access_levels::public_access:
+                        if (std::meta::is_public(item)) {
+                            ctors.emplace_back(item);
+                        }
+                        break;
+                    case access_levels::protected_access:
+                        if (std::meta::is_protected(item)) {
+                            ctors.emplace_back(item);
+                        }
+                        break;
+                    case access_levels::private_access:
+                        if (std::meta::is_private(item)) {
+                            ctors.emplace_back(item);
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        return std::define_static_array(ctors);
+    }();
+
+    template <typename Clazz, typename AccLevel>
+    constexpr auto auto_scan_marked_constructors_members = [] {
+        static constexpr auto vec = std::define_static_array(std::meta::members_of(^^Clazz, std::meta::access_context::unchecked()));
+
+        auto level = implements::make_access_level_tag<AccLevel>::make().value;
+
+        std::vector<std::meta::info> ctors;
+
+        template for (constexpr auto item: vec) {
+            if constexpr (is_function(item) && !is_constructor(item) && !is_destructor(item) && !is_operator_function(item)) {
+                if constexpr (annotations::make_member_anno(item).template has<annotations::mark_as_constructor_func_t>()) {
+                    static_assert(remove_cvref(return_type_of(item)) == ^^Clazz,
+                                  "You mark this constructor func, but, the return type is not This type itself!");
+                }
+                if (remove_cvref(return_type_of(item)) == ^^Clazz) {
+                    switch (level) {
+                        case access_levels::public_access:
+                            if (std::meta::is_public(item)) {
+                                ctors.emplace_back(item);
+                            }
+                            break;
+                        case access_levels::protected_access:
+                            if (std::meta::is_protected(item)) {
+                                ctors.emplace_back(item);
+                            }
+                            break;
+                        case access_levels::private_access:
+                            if (std::meta::is_private(item)) {
+                                ctors.emplace_back(item);
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+        return std::define_static_array(ctors);
+    }();
+
+    template <typename Clazz, typename AccLevel>
+    constexpr auto auto_scan_properties_members = [] {
+        auto level = implements::make_access_level_tag<AccLevel>::make().value;
+        std::vector<std::meta::info> properties;
+
+        template for (const auto item: entity::property_members<^^Clazz>) {
+            switch (level) {
+                case access_levels::public_access:
+                    if (std::meta::is_public(item)) {
+                        properties.emplace_back(item);
+                    }
+                    break;
+                case access_levels::protected_access:
+                    if (std::meta::is_protected(item)) {
+                        properties.emplace_back(item);
+                    }
+                    break;
+                case access_levels::private_access:
+                    if (std::meta::is_private(item)) {
+                        properties.emplace_back(item);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        return std::define_static_array(properties);
+    }();
+
+    template <std::meta::info Constructor>
+    constexpr auto constructor_arguments_types = [] {
+        static constexpr auto parameters = std::define_static_array(std::meta::parameters_of(Constructor));
+
+        std::vector<std::meta::info> infos{};
+        template for (constexpr auto param: parameters) {
+            infos.emplace_back(std::meta::type_of(param));
+        }
+        return std::define_static_array(infos);
+    }();
+
+    template <std::meta::info Constructor, typename TypeList, std::size_t Remain>
+    struct concat_constructor_paramlist {
+        using type = typename concat_constructor_paramlist<
+            Constructor,
+            helper::type_list_push_back_t<
+                typename[:constructor_arguments_types<Constructor>[constructor_arguments_types<Constructor>.size() - Remain
+        ]:], TypeList>,
+            Remain - 1>::type;
+    };
+
+    template <std::meta::info Constructor, typename TypeList>
+    struct concat_constructor_paramlist<Constructor, TypeList, 0> {
+        using type = TypeList;
+    };
+
+    template <typename Clazz, typename AccLevel>
+    void make_constructor_available_impl(std::shared_ptr<implements::registration_executer> &self_reg_exec,
+                                         auto &holders_) {
+        /* constructor */
+        template for (constexpr auto ctor_ref: implements::auto_scan_constructors_members<Clazz, AccLevel>) {
+            using param_type_list =
+                typename implements::concat_constructor_paramlist<ctor_ref, helper::type_list<>,
+                                                                  implements::constructor_arguments_types<ctor_ref>.size()>::type;
+            [&self_reg_exec, &holders_]<typename... Args>(helper::type_list<Args...>) {
+                using ctorbind = registration::bind<implements::ctor, Clazz, AccLevel, Args...>;
+                auto *ptr = new ctorbind(self_reg_exec);
+                holders_.emplace_back(ptr, [](void *p) {
+                    delete static_cast<ctorbind *>(p); // 已注册
+                });
+            }(param_type_list{});
+        }
+        /* constructor_func_bind */
+        template for (constexpr auto ctor: implements::auto_scan_marked_constructors_members<Clazz, AccLevel>) {
+            using fx_t = decltype(&[:ctor:]);
+            using ctorbind = registration::bind<implements::ctor_func, Clazz, fx_t, AccLevel>;
+            auto *ptr = new ctorbind(self_reg_exec, &[:ctor:]);
+            holders_.emplace_back(ptr, [](void *p) { delete static_cast<ctorbind *>(p); });
+        }
+    }
+
+    template <typename Clazz, typename AccLevel>
+    void make_member_data_available(std::shared_ptr<implements::registration_executer> &self_reg_exec, auto &holders_) {
+        template for (constexpr auto item: auto_scan_properties_members<Clazz, AccLevel>) {
+            using member_ptr_t = decltype(&[:item:]);
+            auto name = std::define_static_string(std::meta::identifier_of(item));
+            using propbind = registration::bind<implements::prop, Clazz, member_ptr_t, AccLevel>;
+            auto *ptr = new propbind(self_reg_exec, name, &[:item:]);
+            holders_.emplace_back(ptr, [](void *p) { delete static_cast<propbind *>(p); });
+        }
+    }
+}
+
+namespace rettr {
+    template <typename Clazz, typename AccLevel>
+    class registration::bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_all, AccLevel>
+        : public registration::class_<Clazz> {
+    public:
+        bind(std::shared_ptr<implements::registration_executer> reg_exec) : registration::class_<Clazz>(reg_exec) {
+            std::vector<std::unique_ptr<void, void (*)(void *)>> holders_;
+            implements::make_constructor_available_impl<Clazz, AccLevel>(this->reg_exec, holders_);
+            implements::make_member_data_available<Clazz, AccLevel>(this->reg_exec, holders_);
+        }
+    };
+}
+
+namespace rettr {
+    template <typename Clazz, typename AccLevel>
+    class registration::bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_constructors, AccLevel>
+        : public registration::class_<Clazz> {
+
+    public:
+        bind(std::shared_ptr<implements::registration_executer> reg_exec) : registration::class_<Clazz>(reg_exec) {
+            std::vector<std::unique_ptr<void, void (*)(void *)>> holders_;
+            implements::make_constructor_available_impl<Clazz, AccLevel>(this->reg_exec, holders_);
+        }
+    };
+
+    template <typename Clazz, typename AccLevel>
+    class registration::bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_data_members, AccLevel>
+        : public registration::class_<Clazz> {
+
+    public:
+        bind(std::shared_ptr<implements::registration_executer> reg_exec) : registration::class_<Clazz>(reg_exec) {
+            std::vector<std::unique_ptr<void, void (*)(void *)>> holders_;
+            implements::make_member_data_available<Clazz, AccLevel>(this->reg_exec, holders_);
+        }
+    };
+}
+
 #endif
 
 #endif

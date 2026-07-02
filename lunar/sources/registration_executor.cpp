@@ -31,7 +31,7 @@ namespace rettr::implements {
         if (itr != list.end()) {
             itr->second = std::move(func);
         } else {
-            list.emplace_back(std::make_pair(key, func));
+            list.emplace_back(std::make_pair(key, std::move(func)));
         }
     }
 }

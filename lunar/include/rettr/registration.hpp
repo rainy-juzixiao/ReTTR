@@ -23,6 +23,10 @@
 #include <rettr/string_view.hpp>
 #include <rettr/type.hpp>
 
+#if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
+#include <rettr/implements/registration/registration_auto_scan_tag.hpp>
+#endif
+
 namespace rettr::implements::registration_private {
     struct public_access {};
     struct protected_access {};
@@ -72,7 +76,8 @@ namespace rettr {
 
             template <typename F, typename AccLevel = implements::registration_private::public_access,
                       typename Tp = std::enable_if_t<
-                          helper::type_list_contains<AccLevel, implements::registration_private::access_levels_list>::value>>
+                          helper::type_list_contains<AccLevel, implements::registration_private::access_levels_list>::value &&
+                          !helper::type_list_contains<F, implements::registration_private::access_levels_list>::value>>
             bind<implements::ctor_func, Clazz, F, AccLevel> constructor(F func, AccLevel level = AccLevel());
 
             template <typename Acc, typename AccLevel = implements::registration_private::public_access,
@@ -101,6 +106,36 @@ namespace rettr {
             bind<implements::enum_, Clazz, EnumType> enumeration(string_view name);
 
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
+            template <typename AccLevel = implements::registration_private::public_access,
+                      typename Tp = std::enable_if_t<
+                          helper::type_list_contains<AccLevel, implements::registration_private::access_levels_list>::value>>
+            bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_all, AccLevel> make_this_available(
+                AccLevel level = AccLevel());
+
+            template <typename AccLevel = implements::registration_private::public_access,
+                      typename Tp = std::enable_if_t<
+                          helper::type_list_contains<AccLevel, implements::registration_private::access_levels_list>::value>>
+            bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_enumerators, AccLevel> make_enumerators_available(
+                AccLevel level = AccLevel());
+
+            template <typename AccLevel = implements::registration_private::public_access,
+                      typename Tp = std::enable_if_t<
+                          helper::type_list_contains<AccLevel, implements::registration_private::access_levels_list>::value>>
+            bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_function_members, AccLevel>
+            make_member_functions_available(AccLevel level = AccLevel());
+
+            template <typename AccLevel = implements::registration_private::public_access,
+                      typename Tp = std::enable_if_t<
+                          helper::type_list_contains<AccLevel, implements::registration_private::access_levels_list>::value>>
+            bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_data_members, AccLevel> make_member_data_available(
+                AccLevel level = AccLevel());
+
+            template <typename AccLevel = implements::registration_private::public_access,
+                      typename Tp = std::enable_if_t<
+                          helper::type_list_contains<AccLevel, implements::registration_private::access_levels_list>::value>>
+            bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_data_members, AccLevel> make_constructor_available(
+                AccLevel level = AccLevel());
+
             template <auto Entity, typename AccLevel = implements::registration_private::public_access,
                       typename Tp = std::enable_if_t<
                           helper::type_list_contains<AccLevel, implements::registration_private::access_levels_list>::value>>

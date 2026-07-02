@@ -13,21 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef RETTR_ANNOTATIONS_LUNAR_MARK_AS_CONSTRUCTOR_FUNC_HPP
-#define RETTR_ANNOTATIONS_LUNAR_MARK_AS_CONSTRUCTOR_FUNC_HPP
+#ifndef RETTR_IMPLEMENTS_REGISTRATION_REGISTRATION_AUTO_SCAN_TAG_HPP
+#define RETTR_IMPLEMENTS_REGISTRATION_REGISTRATION_AUTO_SCAN_TAG_HPP
 
-#include <rettr/core/prerequisites.hpp>
+namespace rettr::implements {
+    class registration_auto_scan_for_all {};
 
-#if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
+    class registration_auto_scan_for_data_members {};
 
-namespace rettr::annotations {
-    struct mark_as_constructor_func_t {
-        consteval mark_as_constructor_func_t() = default;
-    };
+    class registration_auto_scan_for_function_members {};
 
-    constexpr auto mark_as_constructor_func = mark_as_constructor_func_t{};
+    class registration_auto_scan_for_enumerators {};
+
+    class registration_auto_scan_for_constructors {};
 }
-
-#endif
 
 #endif

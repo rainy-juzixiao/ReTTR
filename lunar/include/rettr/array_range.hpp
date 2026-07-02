@@ -20,7 +20,11 @@
 
 #if RETTR_USING_GCC
 #pragma GCC diagnostic push
+#if RETTR_USING_CLANG
 #pragma GCC diagnostic ignored "-Wunknown-warning-option"
+#else
+#pragma GCC diagnostic ignored "-Wpragmas"
+#endif
 #pragma GCC diagnostic ignored "-Winit-list-lifetime"
 #endif
 
