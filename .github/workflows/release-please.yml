@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   release-please:
@@ -18,10 +19,25 @@ jobs:
       - uses: google-github-actions/release-please-action@v4
         id: release
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.RELEASE_PLEASE_PAT }}
           release-type: simple
           tag-prefix: v
           target-branch: master
+          pull-request-title-pattern: 'chore(master): release ${version}'
+          pull-request-header: ':package: ReTTR Release'
+          changelog-sections: >
+            [
+              {"type": "feat", "section": "Features", "hidden": false},
+              {"type": "fix", "section": "Bug Fixes", "hidden": false},
+              {"type": "perf", "section": "Performance Improvements", "hidden": false},
+              {"type": "refactor", "section": "Code Refactoring", "hidden": false},
+              {"type": "revert", "section": "Reverts", "hidden": false},
+              {"type": "docs", "section": "Documentation", "hidden": false},
+              {"type": "test", "section": "Tests", "hidden": false},
+              {"type": "build", "section": "Build System", "hidden": false},
+              {"type": "ci", "section": "Continuous Integration", "hidden": false},
+              {"type": "style", "section": "Code Style", "hidden": false}
+            ]
 
   sync-version:
     needs: release-please
