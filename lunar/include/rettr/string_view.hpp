@@ -18,6 +18,10 @@
 #include <rettr/core/prerequisites.hpp>
 #include <rettr/core/meta_traits.hpp>
 
+#if RETTR_HAS_CXX20
+#include <format>
+#endif
+
 RETTR_MSVC_WARNING_DISABLE_C4251_BEGIN
 
 namespace rettr {
@@ -684,6 +688,21 @@ namespace rettr {
         return left.write(right.data(), right.size());
     }
 }
+
+#if RETTR_HAS_CXX20
+template<typename CharType, typename Traits>
+struct std::formatter<rettr::basic_string_view<CharType, Traits>, CharType>
+    : std::formatter<std::basic_string_view<CharType, Traits>, CharType> {
+    template<typename FormatContext>
+    auto format(const rettr::basic_string_view<CharType, Traits>& str, FormatContext& ctx) const
+        -> decltype(std::formatter<std::basic_string_view<CharType, Traits>, CharType>::format(
+            static_cast<std::basic_string_view<CharType, Traits>>(str), ctx))
+    {
+        return std::formatter<std::basic_string_view<CharType, Traits>, CharType>::format(
+            static_cast<std::basic_string_view<CharType, Traits>>(str), ctx);
+    }
+};
+#endif
 
 RETTR_MSVC_WARNING_DISABLE_C4251_END
 
