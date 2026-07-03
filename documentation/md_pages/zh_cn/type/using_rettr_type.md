@@ -94,7 +94,7 @@ type::from<D>() == type::from<const D*>(); // false
 > [!CAUTION]
 > 不要传入typeinfo类的对象给此函数，否则会导致编译错误。
 
-## rettr::type::from_name (string_view)
+## rettr::type::from_name (std::string_view)
 
 此函数仅接受类型名称作为参数。当您只知道类型名称而无法将类型本身包含在源代码中时，此函数非常有用。
 
@@ -168,7 +168,7 @@ std::unordered_map<rettr::type, std::string> type_names;
 - 主要获取方式包括：
   - type::from<T>()：直接通过模板类型参数获取类型句柄。 
   - type::from<T>(T&& obj)：根据对象表达式获取类型，支持多态派生类型识别（需启用 `RETTR_ENABLE()`），且会忽略 cv 限定符。 
-  - type::from_name(string_view)：通过类型名称字符串获取，但需确保该类型已预先注册。 
+  - type::from_name(std::string_view)：通过类型名称字符串获取，但需确保该类型已预先注册。 
   - type::from_typeid(typeinfo)：通过 typeid 标识获取，同样需预先注册。
   - type::from_base()：通过基类指针获取派生类的真实类型信息，支持 void* 手动指定源类型和模板自动推导两种方式，需要派生类已注册。
 - 类型比较基于内部哈希码，而非字符串比较。

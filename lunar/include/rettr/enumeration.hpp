@@ -19,7 +19,7 @@
 #include <rettr/any.hpp>
 #include <rettr/core/prerequisites.hpp>
 #include <rettr/implements/metadata.hpp>
-#include <rettr/string_view.hpp>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -28,8 +28,8 @@ namespace rettr::implements {
         rettr::typeinfo enum_type{};
         rettr::typeinfo underlying_type{};
         rettr::typeinfo declaring_type{};
-        string_view name;
-        std::vector<string_view> names;
+        std::string_view name;
+        std::vector<std::string_view> names;
         std::vector<any> values;
         std::vector<rettr::metadata_item> metadata;
     };
@@ -60,21 +60,21 @@ namespace rettr {
             return !empty();
         }
 
-        string_view name() const noexcept;
+        std::string_view name() const noexcept;
 
         rettr::type type() const noexcept;
         rettr::type underlying_type() const noexcept;
 
         rettr::type declaring_type() const noexcept;
-        array_range<string_view> names() const noexcept;
+        array_range<std::string_view> names() const noexcept;
         RETTR_NODISCARD array_range<any> values() const noexcept;
 
         RETTR_NODISCARD const rettr::metadata_item &metadata(const any &key) const noexcept;
 
         RETTR_NODISCARD array_range<rettr::metadata_item> metadatas() const noexcept;
-        any name_to_value(string_view name) const;
+        any name_to_value(std::string_view name) const;
 
-        string_view value_to_name(const any &value) const;
+        std::string_view value_to_name(const any &value) const;
 
         bool operator==(const enumeration &other) const noexcept {
             return data_ == other.data_;

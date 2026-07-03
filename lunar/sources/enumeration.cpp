@@ -2,7 +2,7 @@
 #include <rettr/enumeration.hpp>
 #include <rettr/type.hpp>
 namespace rettr {
-    string_view enumeration::name() const noexcept {
+    std::string_view enumeration::name() const noexcept {
         if (empty()) {
             return {};
         }
@@ -30,7 +30,7 @@ namespace rettr {
         return rettr::type::from_typeid(data_->declaring_type.remove_cvref());
     }
 
-    array_range<string_view> enumeration::names() const noexcept {
+    array_range<std::string_view> enumeration::names() const noexcept {
         if (empty()) {
             return {};
         }
@@ -63,7 +63,7 @@ namespace rettr {
         return {data_->metadata.data(), data_->metadata.size()};
     }
 
-    any enumeration::name_to_value(string_view name) const {
+    any enumeration::name_to_value(std::string_view name) const {
         if (empty()) {
             return {};
         }
@@ -75,7 +75,7 @@ namespace rettr {
         return {};
     }
 
-    string_view enumeration::value_to_name(const any &value) const {
+    std::string_view enumeration::value_to_name(const any &value) const {
         if (empty()) {
             return {};
         }

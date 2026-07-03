@@ -100,7 +100,7 @@ namespace rettr {
         return {metadatas_.data(), metadatas_.size()};
     }
 
-    string_view property::name() const noexcept {
+    std::string_view property::name() const noexcept {
         return name_;
     }
 

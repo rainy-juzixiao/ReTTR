@@ -24,14 +24,14 @@ namespace rettr::implements {
     template <typename T, std::size_t Index>
     class parameter_info_wrapper : public parameter_info_base {
     public:
-        explicit parameter_info_wrapper(string_view name = {}) : name_(name) {
+        explicit parameter_info_wrapper(std::string_view name = {}) : name_(name) {
         }
 
-        string_view name() const noexcept override {
+        std::string_view name() const noexcept override {
             return name_;
         }
         
-        void set_name(string_view name) noexcept override {
+        void set_name(std::string_view name) noexcept override {
             name_ = name;
         }
 
@@ -65,7 +65,7 @@ namespace rettr::implements {
         }
 
     private:
-        string_view name_;
+        std::string_view name_;
         std::optional<any> default_val_;
     };
 }

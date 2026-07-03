@@ -34,7 +34,7 @@ namespace rettr::implements {
         using param_list = typename traits::argument_list;
         static constexpr std::size_t arity = traits::arity;
 
-        explicit method_bind(string_view name, Fx &&fx, rettr::typeinfo which_belongs, std::function<void(method)> commit) noexcept :
+        explicit method_bind(std::string_view name, Fx &&fx, rettr::typeinfo which_belongs, std::function<void(method)> commit) noexcept :
             name_(name), fn_(std::forward<Fx>(fx)), commit_(std::move(commit)), which_belongs_(which_belongs) {
             parameter_wrappers_ = init_parameter_wrappers_(std::make_index_sequence<arity>{});
         }
@@ -59,7 +59,7 @@ namespace rettr::implements {
             metadatas_ = std::move(metadatas);
         }
 
-        void apply_parameter_names(std::vector<string_view>&& metadatas) {
+        void apply_parameter_names(std::vector<std::string_view>&& metadatas) {
             for (std::size_t i = 0; i < arity; ++i) {
                 parameter_wrappers_[i]->set_name(metadatas[i]);
             }
@@ -148,7 +148,7 @@ namespace rettr::implements {
             commit_(method{std::move(fn), name_, access_level_, std::move(params), std::move(metadatas_), which_belongs_});
         }
 
-        string_view name_;
+        std::string_view name_;
         Fx fn_;
         std::function<void(method)> commit_;
         std::function<void(function &)> defaults_applier_;

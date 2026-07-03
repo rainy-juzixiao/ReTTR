@@ -55,7 +55,7 @@ namespace rettr::implements {
             metadatas_ = std::move(metadatas);
         }
 
-        void apply_parameter_names(std::vector<string_view>&& metadatas) {
+        void apply_parameter_names(std::vector<std::string_view>&& metadatas) {
             for (std::size_t i = 0; i < arity; ++i) {
                 wrappers_[i]->set_name(metadatas[i]);
             }
@@ -67,7 +67,7 @@ namespace rettr::implements {
             std::vector<std::unique_ptr<parameter_info_base>> result;
             result.reserve(arity);
             ((result.emplace_back(
-                 std::make_unique<parameter_info_wrapper<std::tuple_element_t<Is, std::tuple<CtorArgs...>>, Is>>(string_view{}))),
+                 std::make_unique<parameter_info_wrapper<std::tuple_element_t<Is, std::tuple<CtorArgs...>>, Is>>(std::string_view{}))),
              ...);
             return result;
         }
@@ -188,7 +188,7 @@ namespace rettr::implements {
             metadatas_ = std::move(metadatas);
         }
 
-        void apply_parameter_names(std::vector<string_view>&& metadatas) {
+        void apply_parameter_names(std::vector<std::string_view>&& metadatas) {
             for (std::size_t i = 0; i < arity; ++i) {
                 wrappers_[i]->set_name(metadatas[i]);
             }
@@ -201,7 +201,7 @@ namespace rettr::implements {
             result.reserve(arity);
             ((result.emplace_back(
                  std::make_unique<parameter_info_wrapper<helper::type_at_t<Is, typename function_traits<Func>::argument_list>, Is>>(
-                     string_view{}))),
+                     std::string_view{}))),
              ...);
             return result;
         }

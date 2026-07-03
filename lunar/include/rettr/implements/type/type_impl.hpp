@@ -209,7 +209,7 @@ namespace rettr {
         return type_data_->type_info.hash_code();
     }
 
-    RETTR_INLINE string_view type::name() const noexcept {
+    RETTR_INLINE std::string_view type::name() const noexcept {
         if (!type_data_) {
             return {};
         }
@@ -395,27 +395,27 @@ namespace rettr {
     }
 
     template <typename... Args>
-    any type::invoke(string_view name, object_view instance, Args &&...args) const {
+    any type::invoke(std::string_view name, object_view instance, Args &&...args) const {
         return invoke_helper<false>(name, instance, std::forward<Args>(args)...);
     }
 
     template <typename... Args>
-    any type::invoke(follow_cpp_rule_tag, string_view name, object_view instance, Args &&...args) const {
+    any type::invoke(follow_cpp_rule_tag, std::string_view name, object_view instance, Args &&...args) const {
         return invoke_helper<true>(name, instance, std::forward<Args>(args)...);
     }
 
     template <typename... Args>
-    any type::invoke(static_invoke_tag, string_view name, Args &&...args) const {
+    any type::invoke(static_invoke_tag, std::string_view name, Args &&...args) const {
         return static_invoke_helper<false>(name, std::forward<Args>(args)...);
     }
 
     template <typename... Args>
-    any type::invoke(static_invoke_tag, follow_cpp_rule_tag, string_view name, Args &&...args) const {
+    any type::invoke(static_invoke_tag, follow_cpp_rule_tag, std::string_view name, Args &&...args) const {
         return static_invoke_helper<true>(name, std::forward<Args>(args)...);
     }
 
     template <typename... Args>
-    any type::global_invoke(string_view name, Args &&...args) {
+    any type::global_invoke(std::string_view name, Args &&...args) {
         constexpr bool has_dynamic =
             (implements::is_dynamic_object<Args> || ...) || helper::is_any_of_v<object_view, std::decay_t<Args>...>;
         if constexpr (has_dynamic) {
@@ -440,7 +440,7 @@ namespace rettr {
     }
 
     template <bool FollowCppRule, typename... Args>
-    any type::invoke_helper(string_view name, object_view instance, Args &&...args) const {
+    any type::invoke_helper(std::string_view name, object_view instance, Args &&...args) const {
         if (empty()) {
             return {};
         }
@@ -490,7 +490,7 @@ namespace rettr {
     }
 
     template <bool IgnoreCppRule, typename... Args>
-    any type::static_invoke_helper(string_view name, Args &&...args) const {
+    any type::static_invoke_helper(std::string_view name, Args &&...args) const {
         if (empty()) {
             return {};
         }
@@ -559,7 +559,7 @@ namespace rettr {
 }
 
 namespace rettr {
-    RETTR_INLINE const rettr::method &type::method(const string_view name) const noexcept {
+    RETTR_INLINE const rettr::method &type::method(const std::string_view name) const noexcept {
         static const rettr::method empty;
         if (rettr_unlikely(this->empty())) {
             return empty;
@@ -599,40 +599,40 @@ namespace rettr {
 
 namespace rettr {
     template <typename... Args>
-    any object_view::invoke(string_view name, Args &&...args) const {
+    any object_view::invoke(std::string_view name, Args &&...args) const {
         return reflect_type().invoke(name, std::forward<Args>(args)...);
     }
 
     template <typename... Args>
-    any object_view::invoke(static_invoke_tag, string_view name, Args &&...args) const {
+    any object_view::invoke(static_invoke_tag, std::string_view name, Args &&...args) const {
         return reflect_type().invoke(static_invoke, name, std::forward<Args>(args)...);
     }
 
     template <typename... Args>
-    any object_view::invoke(follow_cpp_rule_tag, string_view name, Args &&...args) const {
+    any object_view::invoke(follow_cpp_rule_tag, std::string_view name, Args &&...args) const {
         return reflect_type().invoke(follow_cpp_rule, name, std::forward<Args>(args)...);
     }
 
     template <typename... Args>
-    any object_view::invoke(follow_cpp_rule_tag, static_invoke_tag, string_view name, Args &&...args) const {
+    any object_view::invoke(follow_cpp_rule_tag, static_invoke_tag, std::string_view name, Args &&...args) const {
         return reflect_type().invoke(follow_cpp_rule, static_invoke, name, std::forward<Args>(args)...);
     }
 
-    RETTR_INLINE const rettr::method &object_view::method(string_view name) const noexcept {
+    RETTR_INLINE const rettr::method &object_view::method(std::string_view name) const noexcept {
         return reflect_type().method(name);
     }
 
-    RETTR_INLINE const rettr::method &object_view::method(follow_cpp_rule_tag, const string_view name) const noexcept {
+    RETTR_INLINE const rettr::method &object_view::method(follow_cpp_rule_tag, const std::string_view name) const noexcept {
         return reflect_type().method(follow_cpp_rule, name);
     }
 
-    RETTR_INLINE const rettr::method &object_view::method(const string_view name,
+    RETTR_INLINE const rettr::method &object_view::method(const std::string_view name,
                                                           const array_range<rettr::typeinfo> &overload_version_paramlist,
                                                           const method_flags filter_method_flag) const noexcept {
         return reflect_type().method(name, overload_version_paramlist, filter_method_flag);
     }
 
-    RETTR_INLINE const rettr::method &object_view::method(follow_cpp_rule_tag, const string_view name,
+    RETTR_INLINE const rettr::method &object_view::method(follow_cpp_rule_tag, const std::string_view name,
                                                           const array_range<rettr::typeinfo> &overload_version_paramlist,
                                                           const method_flags filter_method_flag) const noexcept {
         return reflect_type().method(follow_cpp_rule, name, overload_version_paramlist, filter_method_flag);
@@ -646,7 +646,7 @@ namespace rettr {
         return reflect_type().methods(filter);
     }
 
-    RETTR_INLINE const rettr::property &object_view::property(string_view name) const noexcept {
+    RETTR_INLINE const rettr::property &object_view::property(std::string_view name) const noexcept {
         return reflect_type().property(name);
     }
 
@@ -658,7 +658,7 @@ namespace rettr {
         return reflect_type().properties(filter);
     }
 
-    RETTR_INLINE implements::functor_operation object_view::operator()(string_view name) const {
+    RETTR_INLINE implements::functor_operation object_view::operator()(std::string_view name) const {
         using namespace rettr::implements;
         const auto meth = method(name);
         const auto prop = property(name);

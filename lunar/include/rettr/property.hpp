@@ -21,7 +21,7 @@
 #include <rettr/core/prerequisites.hpp>
 #include <rettr/implements/metadata.hpp>
 #include <rettr/object_view.hpp>
-#include <rettr/string_view.hpp>
+#include <string_view>
 
 #if RETTR_USING_MSVC
 #pragma warning(push)
@@ -136,7 +136,7 @@ namespace rettr {
         operator bool() const noexcept;
         void clear() noexcept;
         RETTR_NODISCARD bool empty() const noexcept;
-        RETTR_NODISCARD string_view name() const noexcept;
+        RETTR_NODISCARD std::string_view name() const noexcept;
 
         RETTR_NODISCARD const metadata_item &metadata(const any &key) const noexcept;
         RETTR_NODISCARD array_range<rettr::metadata_item> metadatas() const noexcept;
@@ -320,21 +320,21 @@ namespace rettr {
         };
 
         template <typename Class, typename Type>
-        property(std::in_place_type_t<Class>, string_view name, Type Class::*prop,
+        property(std::in_place_type_t<Class>, std::string_view name, Type Class::*prop,
                  access_levels levels = access_levels::public_access) : name_{name}, access_levels_{levels}, is_empty_(false) {
             accessor_ = std::make_unique<property_accessor_impl<Type, Type Class::*, Class>>(prop, &rettr_typeid(Class));
         }
 
         template <typename Derived, typename Base, typename Type,
                   std::enable_if_t<std::is_base_of_v<Base, Derived> && (!std::is_same_v<Base, Derived>), int> = 0>
-        property(std::in_place_type_t<Derived>, string_view name, Type Base::*prop,
+        property(std::in_place_type_t<Derived>, std::string_view name, Type Base::*prop,
                  access_levels levels = access_levels::public_access) : name_{name}, access_levels_{levels}, is_empty_(false) {
             accessor_ = std::make_unique<property_accessor_impl<Type, Type Derived::*, Derived>>(static_cast<Type Derived::*>(prop),
                                                                                                  &rettr_typeid(Derived));
         }
 
         template <typename Type, typename Clazz>
-        property(std::in_place_type_t<Clazz>, string_view name, Type *static_prop,
+        property(std::in_place_type_t<Clazz>, std::string_view name, Type *static_prop,
                  access_levels levels = access_levels::public_access) : name_{name}, access_levels_{levels}, is_empty_(false) {
             if constexpr (std::is_void_v<Clazz>) {
                 accessor_ = std::make_unique<property_accessor_impl<Type, Type *, void>>(static_prop);
@@ -344,7 +344,7 @@ namespace rettr {
         }
 
         template <typename Class, typename Getter, typename Setter>
-        property(std::in_place_type_t<Class>, string_view name, Getter &&getter, Setter &&setter, const typeinfo *belongs,
+        property(std::in_place_type_t<Class>, std::string_view name, Getter &&getter, Setter &&setter, const typeinfo *belongs,
                  access_levels levels) : name_{name}, access_levels_{levels}, is_empty_(false) {
             using Type = std::decay_t<std::invoke_result_t<Getter, std::conditional_t<std::is_void_v<Class>, int, Class &>>>;
             accessor_ = std::make_unique<getter_setter_accessor_impl<Type, Class, std::decay_t<Getter>, std::decay_t<Setter>>>(
@@ -352,25 +352,25 @@ namespace rettr {
         }
 
         template <typename Class, typename Getter, typename Setter>
-        static property make(string_view name, Getter &&getter, Setter &&setter, access_levels levels = access_levels::public_access) {
+        static property make(std::string_view name, Getter &&getter, Setter &&setter, access_levels levels = access_levels::public_access) {
             return property(std::in_place_type<Class>, name, std::forward<Getter>(getter), std::forward<Setter>(setter),
                             &rettr_typeid(Class), levels);
         }
 
         template <typename Class, typename Getter>
-        static property make_readonly(string_view name, Getter &&getter, access_levels levels = access_levels::public_access) {
+        static property make_readonly(std::string_view name, Getter &&getter, access_levels levels = access_levels::public_access) {
             return property(std::in_place_type<Class>, name, std::forward<Getter>(getter), nullptr, &rettr_typeid(Class), levels);
         }
 
         template <typename Getter, typename Setter>
-        static property make_static(string_view name, Getter &&getter, Setter &&setter,
+        static property make_static(std::string_view name, Getter &&getter, Setter &&setter,
                                     access_levels levels = access_levels::public_access) {
             return property(std::in_place_type<void>, name, std::forward<Getter>(getter), std::forward<Setter>(setter), nullptr,
                             levels);
         }
 
         std::unique_ptr<property_accessor> accessor_;
-        string_view name_;
+        std::string_view name_;
         std::vector<metadata_item> metadatas_;
         access_levels access_levels_{};
         bool is_empty_{true};

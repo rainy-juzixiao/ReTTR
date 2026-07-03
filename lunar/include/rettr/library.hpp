@@ -18,7 +18,7 @@
 
 #include <rettr/array_range.hpp>
 #include <rettr/core/prerequisites.hpp>
-#include <rettr/string_view.hpp>
+#include <string_view>
 
 RETTR_MSVC_WARNING_DISABLE_C4251_BEGIN
 
@@ -29,14 +29,14 @@ namespace rettr {
 
     class RETTR_API library {
     public:
-        library(string_view file_name, string_view version = {});
+        library(std::string_view file_name, std::string_view version = {});
 
         library(const library &) = delete;
         library(library &&) = delete;
 
         ~library();
 
-        string_view file_name() const noexcept;
+        std::string_view file_name() const noexcept;
 
         array_range<property> global_properties() const noexcept;
         array_range<method> global_methods() const noexcept;
@@ -49,7 +49,7 @@ namespace rettr {
 
         bool unload();
 
-        string_view error_string() const noexcept;
+        std::string_view error_string() const noexcept;
 
     private:
         class library_private;

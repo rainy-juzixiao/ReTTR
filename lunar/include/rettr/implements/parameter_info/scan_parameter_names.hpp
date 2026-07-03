@@ -23,7 +23,7 @@
 
 #include <rettr/implements/entity/constructor.hpp>
 #include <rettr/implements/entity/method.hpp>
-#include <rettr/string_view.hpp>
+#include <string_view>
 
 namespace rettr::implements {
     struct scan_method_parameter_results {

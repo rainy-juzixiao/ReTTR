@@ -90,8 +90,7 @@ int main() {
     }
 
     for (const auto &prop: t.properties()) {
-        std::println("property: {} : {}", prop.name(),
-                     rettr::type::from_typeid(prop.property_type()).name());
+        std::println("property: {} : {}", prop.name(), rettr::type::from_typeid(prop.property_type()).name());
     }
 #endif
     return 0;

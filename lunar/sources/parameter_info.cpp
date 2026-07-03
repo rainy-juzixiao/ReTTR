@@ -38,7 +38,7 @@ namespace rettr {
         return *this;
     }
 
-    string_view parameter_info::name() const noexcept {
+    std::string_view parameter_info::name() const noexcept {
         return base_->name();
     }
 

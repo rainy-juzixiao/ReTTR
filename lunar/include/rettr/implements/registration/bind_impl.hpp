@@ -87,7 +87,7 @@ namespace rettr {
                 rettr::annotations::implements::eval_for_constructor_args_hash<ConstructorArgs...>;
             {
                 std::vector<metadata_item> inject_metadatas;
-                std::vector<string_view> names;
+                std::vector<std::string_view> names;
                 const auto e = implements::entity::constructor_entites_v<Clazz>;
                 const auto p  = args_hash;
                 for (const auto &entry: e) {
@@ -151,7 +151,7 @@ namespace rettr {
             static constexpr std::size_t args_hash = rettr::annotations::implements::eval_for_constructor_func_args_hash<Fx>;
             {
                 std::vector<metadata_item> inject_metadatas;
-                std::vector<string_view> names;
+                std::vector<std::string_view> names;
 
                 for (const auto &entry: implements::entity::constructor_entites_v<Clazz>) {
                     if (args_hash == entry.param_hash && entry.category == implements::entity::constructor_category::ctor_func) {
@@ -199,7 +199,7 @@ namespace rettr {
     class registration::bind<implements::prop, Clazz, Acc, AccLevel> : public registration::class_<Clazz>,
                                                                        implements::property_bind<Clazz, Acc> {
     public:
-        bind(std::shared_ptr<implements::registration_executer> reg_exec, string_view name, Acc accessor) :
+        bind(std::shared_ptr<implements::registration_executer> reg_exec, std::string_view name, Acc accessor) :
             registration::class_<Clazz>(reg_exec),
             implements::property_bind<Clazz, Acc>{std::move(accessor), name,
                                                   [this](rettr::property prop) {
@@ -257,7 +257,7 @@ namespace rettr {
     class registration::bind<implements::prop, Clazz, Getter, Setter, AccLevel> : public registration::class_<Clazz>,
                                                                                   implements::property_bind<Clazz, Getter> {
     public:
-        bind(std::shared_ptr<implements::registration_executer> reg_exec, string_view name, Getter getter, Setter setter) :
+        bind(std::shared_ptr<implements::registration_executer> reg_exec, std::string_view name, Getter getter, Setter setter) :
             registration::class_<Clazz>(reg_exec),
             implements::property_bind<Clazz, Getter>{
                 std::move(getter), std::move(setter), name,
@@ -331,7 +331,7 @@ namespace rettr {
     class registration::bind<implements::prop_readonly, Clazz, Getter, AccLevel> : public registration::class_<Clazz>,
                                                                                    implements::property_bind_readonly<Clazz> {
     public:
-        bind(std::shared_ptr<implements::registration_executer> reg_exec, string_view name, Getter getter) :
+        bind(std::shared_ptr<implements::registration_executer> reg_exec, std::string_view name, Getter getter) :
             registration::class_<Clazz>(reg_exec),
             implements::property_bind_readonly<Clazz>{
                 std::move(getter), name,
@@ -405,7 +405,7 @@ namespace rettr {
     class registration::bind<implements::meth, Clazz, Func, AccLevel> : public registration::class_<Clazz>,
                                                                         implements::method_bind<Func> {
     public:
-        bind(std::shared_ptr<implements::registration_executer> reg_exec, string_view name, Func func) :
+        bind(std::shared_ptr<implements::registration_executer> reg_exec, std::string_view name, Func func) :
             registration::class_<Clazz>(reg_exec),
             implements::method_bind<Func>{name, std::move(func), rettr::typeinfo::create<Clazz>(),
                                           [this](rettr::method meth) {
@@ -420,7 +420,7 @@ namespace rettr {
             {
                 if constexpr (!function_traits<Func>::is_function_object) {
                     std::vector<metadata_item> inject_metadatas;
-                    std::vector<string_view> names;
+                    std::vector<std::string_view> names;
 
                     template for (constexpr auto &entry: implements::entity::method_entites_v<Clazz>) {
                         using ptr = std::decay_t<decltype(entry.ptr)>;
@@ -446,7 +446,7 @@ namespace rettr {
                 }
 
                 if constexpr (function_traits<Func>::is_function_object && function_traits<Func>::arity != 0) {
-                    std::vector<string_view> names;
+                    std::vector<std::string_view> names;
 
                     static constexpr auto parameters = std::define_static_array(std::meta::parameters_of(^^Func::operator()));
                     // 由于C++26反射的在GCC的限制，如对于lambda表达式，尽管在许多实践被认为，它是一个匿名函数对象，以及源码可能考虑到了对隐式生成的lambda表达式扫描，但无论如何，我们只能用这种方式扫描
@@ -490,7 +490,7 @@ namespace rettr {
     class registration::bind<implements::enum_, Clazz, EnumType> : public registration::class_<Clazz>,
                                                                    implements::enumeration_bind<Clazz, EnumType> {
     public:
-        bind(std::shared_ptr<implements::registration_executer> reg_exec, string_view name) :
+        bind(std::shared_ptr<implements::registration_executer> reg_exec, std::string_view name) :
             registration::class_<Clazz>(reg_exec),
             implements::enumeration_bind<Clazz, EnumType>{
                 name,
@@ -517,7 +517,7 @@ namespace rettr {
             if (!called_bind) {
                 static constexpr auto enums = rettr::enum_entries<EnumType>();
 
-                std::vector<string_view> names;
+                std::vector<std::string_view> names;
                 std::vector<any> values;
 
                 for (const auto &entry: enums) {

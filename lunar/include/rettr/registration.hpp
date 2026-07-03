@@ -20,7 +20,7 @@
 #include <rettr/core/type_list.hpp>
 #include <rettr/implements/registration/bind_types.hpp>
 #include <rettr/implements/registration/registration_executor.hpp>
-#include <rettr/string_view.hpp>
+#include <string_view>
 #include <rettr/type.hpp>
 
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
@@ -63,7 +63,7 @@ namespace rettr {
         template <typename Clazz>
         class class_ {
         public:
-            class_(string_view name);
+            class_(std::string_view name);
             ~class_();
 
             template <typename... Args>
@@ -83,27 +83,27 @@ namespace rettr {
             template <typename Acc, typename AccLevel = implements::registration_private::public_access,
                       typename Tp = std::enable_if_t<
                           helper::type_list_contains<AccLevel, implements::registration_private::access_levels_list>::value>>
-            bind<implements::prop, Clazz, Acc, AccLevel> property(string_view name, Acc accessor, AccLevel level = AccLevel());
+            bind<implements::prop, Clazz, Acc, AccLevel> property(std::string_view name, Acc accessor, AccLevel level = AccLevel());
 
             template <typename Acc, typename AccLevel = implements::registration_private::public_access,
                       typename Tp = std::enable_if_t<
                           helper::type_list_contains<AccLevel, implements::registration_private::access_levels_list>::value>>
-            bind<implements::prop_readonly, Clazz, Acc, AccLevel> property_readonly(string_view name, Acc accessor,
+            bind<implements::prop_readonly, Clazz, Acc, AccLevel> property_readonly(std::string_view name, Acc accessor,
                                                                                     AccLevel level = AccLevel());
 
             template <typename A1, typename A2, typename AccLevel = implements::registration_private::public_access,
                       std::enable_if_t<!helper::type_list_contains<A2, implements::registration_private::access_levels_list>::value,
                                        int> = 0>
-            bind<implements::prop, Clazz, A1, A2, AccLevel> property(string_view name, A1 getter, A2 setter,
+            bind<implements::prop, Clazz, A1, A2, AccLevel> property(std::string_view name, A1 getter, A2 setter,
                                                                      AccLevel level = AccLevel());
 
             template <typename Func, typename AccLevel = implements::registration_private::public_access,
                       typename Tp = std::enable_if_t<
                           helper::type_list_contains<AccLevel, implements::registration_private::access_levels_list>::value>>
-            bind<implements::meth, Clazz, Func, AccLevel> method(string_view name, Func func, AccLevel level = AccLevel());
+            bind<implements::meth, Clazz, Func, AccLevel> method(std::string_view name, Func func, AccLevel level = AccLevel());
 
             template <typename EnumType>
-            bind<implements::enum_, Clazz, EnumType> enumeration(string_view name);
+            bind<implements::enum_, Clazz, EnumType> enumeration(std::string_view name);
 
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
             template <typename AccLevel = implements::registration_private::public_access,
@@ -155,7 +155,7 @@ namespace rettr {
             template <auto Entity, typename Acc, typename AccLevel = implements::registration_private::public_access,
                       typename Tp = std::enable_if_t<
                           helper::type_list_contains<AccLevel, implements::registration_private::access_levels_list>::value>>
-            bind_entity<Entity, implements::prop_readonly, Clazz, AccLevel> property_readonly(string_view name, Acc accessor,
+            bind_entity<Entity, implements::prop_readonly, Clazz, AccLevel> property_readonly(std::string_view name, Acc accessor,
                                                                                               AccLevel level = AccLevel());
 
 
@@ -179,25 +179,25 @@ namespace rettr {
 
         template <typename Acc>
         static bind<implements::prop, struct implements::invalid_type_t, Acc, implements::registration_private::public_access>
-        property(string_view name, Acc accessor);
+        property(std::string_view name, Acc accessor);
 
         template <typename Acc>
         static bind<implements::prop_readonly, struct implements::invalid_type_t, Acc, implements::registration_private::public_access>
-        property_readonly(string_view name, Acc accessor);
+        property_readonly(std::string_view name, Acc accessor);
 
         template <
             typename A1, typename A2, typename AccLevel = implements::registration_private::public_access,
             std::enable_if_t<!helper::type_list_contains<A2, implements::registration_private::access_levels_list>::value, int> = 0>
-        static bind<implements::prop, struct implements::invalid_type_t, A1, A2, AccLevel> property(string_view name, A1 getter,
+        static bind<implements::prop, struct implements::invalid_type_t, A1, A2, AccLevel> property(std::string_view name, A1 getter,
                                                                                                     A2 setter,
                                                                                                     AccLevel level = AccLevel());
 
         template <typename Func>
         static bind<implements::meth, struct implements::invalid_type_t, Func, implements::registration_private::public_access> method(
-            string_view name, Func func);
+            std::string_view name, Func func);
 
         template <typename EnumType>
-        static bind<implements::enum_, struct implements::invalid_type_t, EnumType> enumeration(string_view name);
+        static bind<implements::enum_, struct implements::invalid_type_t, EnumType> enumeration(std::string_view name);
     };
 }
 
@@ -220,7 +220,7 @@ namespace rettr {
     RETTR_INLINE implements::metadata_tag metadata(Ty1 &&key, Ty2 &&data) noexcept;
 
     template <typename Enum_Type>
-    RETTR_INLINE implements::enum_value_tag<Enum_Type> value(string_view, Enum_Type value);
+    RETTR_INLINE implements::enum_value_tag<Enum_Type> value(std::string_view, Enum_Type value);
 
     template <typename... TArgs>
     RETTR_INLINE implements::default_arguments_tag<TArgs...> default_arguments(TArgs &&...args);

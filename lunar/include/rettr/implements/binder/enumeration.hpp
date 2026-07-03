@@ -22,14 +22,14 @@
 namespace rettr::implements {
     template <typename EnumType>
     struct enum_value_tag {
-        string_view name;
+        std::string_view name;
         EnumType value;
     };
 }
 
 namespace rettr::implements {
     template <typename EnumType>
-    enum_value_tag<EnumType> value(string_view name, EnumType val) noexcept {
+    enum_value_tag<EnumType> value(std::string_view name, EnumType val) noexcept {
         return {name, val};
     }
 
@@ -49,7 +49,7 @@ namespace rettr::implements {
         static_assert(std::is_enum_v<EnumType>);
         using underlying = std::underlying_type_t<EnumType>;
 
-        explicit enumeration_bind(string_view name, std::function<void(enumeration)> commit) noexcept : commit_(std::move(commit)) {
+        explicit enumeration_bind(std::string_view name, std::function<void(enumeration)> commit) noexcept : commit_(std::move(commit)) {
             data_->name = name;
         }
 
@@ -69,7 +69,7 @@ namespace rettr::implements {
         }
 
     protected:
-        void apply_values(const std::vector<string_view> &names, const std::vector<any> &values) {
+        void apply_values(const std::vector<std::string_view> &names, const std::vector<any> &values) {
             data_->names = names;
             data_->values = values;
         }

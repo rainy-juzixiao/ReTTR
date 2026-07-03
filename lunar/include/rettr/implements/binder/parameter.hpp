@@ -17,7 +17,7 @@
 #define RETTR_IMPLEMENTS_BINDER_PARAMETER_HPP
 #include <array>
 #include <tuple>
-#include <rettr/string_view.hpp>
+#include <string_view>
 
 namespace rettr::implements {
     template<typename... Args>
@@ -27,7 +27,7 @@ namespace rettr::implements {
 
     template<std::size_t N>
     struct parameter_names_tag {
-        std::array<string_view, N> names;
+        std::array<std::string_view, N> names;
     };
 
     template<typename... Args>
@@ -37,7 +37,7 @@ namespace rettr::implements {
 
     template<typename... Args>
     parameter_names_tag<sizeof...(Args)> parameter_names(Args &&... args) {
-        return {std::array<string_view, sizeof...(Args)>{std::forward<Args>(args)...}};
+        return {std::array<std::string_view, sizeof...(Args)>{std::forward<Args>(args)...}};
     }
 }
 

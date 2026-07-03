@@ -19,7 +19,7 @@
 #include <rettr/core/prerequisites.hpp>
 #include <rettr/filter_item.hpp>
 #include <rettr/implements/invocable/method_flags.hpp>
-#include <rettr/string_view.hpp>
+#include <string_view>
 #include <rettr/typeinfo.hpp>
 
 namespace rettr {
@@ -461,28 +461,28 @@ namespace rettr {
         }
 
         template <typename... Args>
-        any invoke(string_view name, Args &&...args) const;
+        any invoke(std::string_view name, Args &&...args) const;
 
         template <typename... Args>
-        any invoke(static_invoke_tag, string_view name, Args &&...args) const;
+        any invoke(static_invoke_tag, std::string_view name, Args &&...args) const;
 
         template <typename... Args>
-        any invoke(follow_cpp_rule_tag, string_view name, Args &&...args) const;
+        any invoke(follow_cpp_rule_tag, std::string_view name, Args &&...args) const;
 
         template <typename... Args>
-        any invoke(follow_cpp_rule_tag, static_invoke_tag, string_view name, Args &&...args) const;
+        any invoke(follow_cpp_rule_tag, static_invoke_tag, std::string_view name, Args &&...args) const;
 
-        implements::functor_operation operator()(string_view name) const;
+        implements::functor_operation operator()(std::string_view name) const;
 
-        RETTR_NODISCARD const rettr::method &method(string_view name) const noexcept;
+        RETTR_NODISCARD const rettr::method &method(std::string_view name) const noexcept;
 
-        RETTR_NODISCARD const rettr::method &method(follow_cpp_rule_tag, const string_view name) const noexcept;
+        RETTR_NODISCARD const rettr::method &method(follow_cpp_rule_tag, const std::string_view name) const noexcept;
 
-        RETTR_NODISCARD const rettr::method &method(const string_view name,
+        RETTR_NODISCARD const rettr::method &method(const std::string_view name,
                                                     const array_range<rettr::typeinfo> &overload_version_paramlist,
                                                     const method_flags filter_method_flag = method_flags::none) const noexcept;
 
-        RETTR_NODISCARD const rettr::method &method(follow_cpp_rule_tag, const string_view name,
+        RETTR_NODISCARD const rettr::method &method(follow_cpp_rule_tag, const std::string_view name,
                                                     const array_range<rettr::typeinfo> &overload_version_paramlist,
                                                     const method_flags filter_method_flag = method_flags::none) const noexcept;
 
@@ -490,7 +490,7 @@ namespace rettr {
 
         RETTR_NODISCARD array_range<rettr::method> methods(filter_items filter) const noexcept;
 
-        RETTR_NODISCARD const rettr::property &property(string_view name) const noexcept;
+        RETTR_NODISCARD const rettr::property &property(std::string_view name) const noexcept;
 
         RETTR_NODISCARD array_range<rettr::property> properties() const noexcept;
 

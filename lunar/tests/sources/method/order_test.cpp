@@ -58,7 +58,7 @@ RETTR_REGISTRATION {
         .method("vwhoami", &method_order_test_derived::vwhoami);
 }
 
-std::string rettr_invoke_approach1(const object_view &object, const string_view &meth_name) {
+std::string rettr_invoke_approach1(const object_view &object, const std::string_view &meth_name) {
     const auto &inst_t = type::from_typeid(object.type());
 
     const auto &meth = inst_t.method(meth_name);
@@ -71,7 +71,7 @@ std::string rettr_invoke_approach1(const object_view &object, const string_view 
     return iam_var.as<std::string>();
 }
 
-std::string rettr_invoke_approach2(const object_view &object, const string_view &meth_name) {
+std::string rettr_invoke_approach2(const object_view &object, const std::string_view &meth_name) {
     const auto &inst_t = type::from_typeid(object.type());
 
     const auto &iam_var = inst_t.invoke(meth_name, object);

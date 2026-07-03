@@ -36,7 +36,7 @@ namespace rettr {
 
         ~parameter_info() = default;
 
-        string_view name() const noexcept;
+        std::string_view name() const noexcept;
         rettr::type type() const noexcept;
         bool has_default_value() const noexcept;
         any default_value() const;
