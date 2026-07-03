@@ -47,20 +47,26 @@ target_link_libraries(your_target RETTR::rettr)
 ./scripts/install.sh --prefix /opt/rettr # 自定义前缀
 ./scripts/install.sh --static            # 构建静态库（默认共享库）
 ./scripts/install.sh --debug             # Debug 构建
+./scripts/install.sh --skip-test         # 跳过单元测试构建
+./scripts/install.sh --skip-examples     # 跳过示例程序构建
+./scripts/install.sh --no-reflection-ts  # 禁用 C++26 反射 TS
 ./scripts/install.sh --dry-run           # 预览将要执行的步骤
 ```
 
 **脚本参数：**
 
-| 参数                 | 说明                                        |
-|----------------------|---------------------------------------------|
-| `--prefix <path>`    | 安装前缀（默认：`/usr/local`）              |
-| `--static`           | 构建静态库而非共享库                        |
-| `--debug`            | Debug 构建（含调试符号）                    |
-| `--build-dir <path>` | CMake 构建目录（默认：`build`）             |
-| `-j <N>`             | 并行编译任务数（默认：自动检测 CPU 核心数） |
-| `--dry-run`          | 仅打印将要执行的命令，不实际执行            |
-| `--help, -h`         | 显示帮助信息                                |
+| 参数                  | 说明                                        |
+|-----------------------|---------------------------------------------|
+| `--prefix <path>`     | 安装前缀（默认：`/usr/local`）              |
+| `--static`            | 构建静态库而非共享库                        |
+| `--debug`             | Debug 构建（含调试符号）                    |
+| `--build-dir <path>`  | CMake 构建目录（默认：`build`）             |
+| `-j <N>`              | 并行编译任务数（默认：自动检测 CPU 核心数） |
+| `--skip-test`         | 跳过单元测试构建                            |
+| `--skip-examples`     | 跳过示例程序构建                            |
+| `--no-reflection-ts`  | 禁用 C++26 反射 TS 支持（默认启用）         |
+| `--dry-run`           | 仅打印将要执行的命令，不实际执行            |
+| `--help, -h`          | 显示帮助信息                                |
 
 ### uninstall.sh
 
@@ -78,12 +84,15 @@ target_link_libraries(your_target RETTR::rettr)
 
 **脚本参数：**
 
-| 参数                 | 说明                                |
-|----------------------|-------------------------------------|
-| `--prefix <path>`    | 安装前缀（默认：`/usr/local`）      |
-| `--build-dir <path>` | CMake 构建目录（用于查找 manifest） |
-| `--dry-run`          | 仅打印将要删除的文件，不实际删除    |
-| `--help, -h`         | 显示帮助信息                        |
+| 参数                  | 说明                                                |
+|-----------------------|-----------------------------------------------------|
+| `--prefix <path>`     | 安装前缀（默认：`/usr/local`）                      |
+| `--build-dir <path>`  | CMake 构建目录（用于查找 manifest）                 |
+| `--skip-test`         | 忽略，构建时选项，仅用于与安装脚本保持参数一致      |
+| `--skip-examples`     | 忽略，构建时选项，仅用于与安装脚本保持参数一致      |
+| `--no-reflection-ts`  | 忽略，构建时选项，仅用于与安装脚本保持参数一致      |
+| `--dry-run`           | 仅打印将要删除的文件，不实际删除                    |
+| `--help, -h`          | 显示帮助信息                                        |
 
 ### 编译产物
 

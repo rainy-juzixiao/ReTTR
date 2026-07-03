@@ -40,12 +40,7 @@ namespace rettr {
 
 namespace rettr::implements {
     static bool is_valid_filter_item(filter_items filter) {
-        if ((filter.test_flag(filter_item::public_access) || filter.test_flag(filter_item::non_public_access)) &&
-            (filter.test_flag(filter_item::instance_item) || filter.test_flag(filter_item::static_item))) {
-            return true;
-            }
-
-        return false;
+        return filter.test_flag(filter_item::public_access) || filter.test_flag(filter_item::non_public_access);
     }
 
     template <typename Ty>

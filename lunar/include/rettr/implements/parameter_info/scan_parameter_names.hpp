@@ -23,7 +23,7 @@
 
 #include <rettr/implements/entity/constructor.hpp>
 #include <rettr/implements/entity/method.hpp>
-#include <rettr/string_view.hpp>
+#include <string_view>
 
 namespace rettr::implements {
     struct scan_method_parameter_results {
@@ -78,6 +78,9 @@ namespace rettr::implements {
         }
         return std::define_static_array(parameters);
     }
+
+    template <typename Clazz>
+    constexpr auto scan_method_parameter_names_v = scan_method_parameter_names<Clazz>();
 }
 
 namespace rettr::implements {

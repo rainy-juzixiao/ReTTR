@@ -48,7 +48,6 @@ ReTTR的代码依赖了rainy-toolkit项目中的源代码，按照Apache 2.0许�
   - [x] 完成"Metadata"部分
   - [] 完成"Default Arguments"部分
   - [] 完成"Parameter Names"部分
-  - [] 完成"Policies"部分
   - [x] 完成"Plugins"部分
 - 完成“使用rettr::moon”文档部分
   - [] 完成"编译期反射enumeration"部分
@@ -63,9 +62,9 @@ C++26预览特性：
 
 - [x] 自动扫描元数据支持（已合并master）
 - [x] 自动枚举数据（已合并master）
-- [] 自动参数名称填充（已部分合并master）
-- [] 自动扫描并注册基类（评估中）
-- [] 自动扫描并注册函数（评估中）
-- [] 自动扫描并注册属性（评估中）
+- [x] 自动参数名称填充（已部分合并master）
+- [x] 自动扫描并注册基类（开发完成）
+- [x] 自动扫描并注册函数（开发完成）
+- [x] 自动扫描并注册属性（开发完成）
 - [] auto_register注解（评估中）
 - [] Stub Hint元数据植入（评估中）

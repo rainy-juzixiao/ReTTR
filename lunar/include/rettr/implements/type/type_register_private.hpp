@@ -53,7 +53,7 @@ namespace rettr::implements {
         bool register_enumeration(enumeration_data *edata) noexcept;
         bool unregister_enumeration(enumeration_data *edata) noexcept;
 
-        void register_custom_name(rettr::type &t, string_view name) noexcept;
+        void register_custom_name(rettr::type &t, std::string_view name) noexcept;
 
         any metadata(const rettr::type &t, const any &key) noexcept;
         any metadata_from_list(const any &key, const std::vector<rettr::metadata_item> &data) noexcept;
@@ -63,8 +63,8 @@ namespace rettr::implements {
 
         bool register_base_class(const rettr::type &derived, const rettr::type &base) noexcept;
 
-        std::multimap<string_view, rettr::property> &get_global_property_storage() noexcept;
-        std::multimap<string_view, rettr::method> &get_global_method_storage() noexcept;
+        std::multimap<std::string_view, rettr::property> &get_global_property_storage() noexcept;
+        std::multimap<std::string_view, rettr::method> &get_global_method_storage() noexcept;
 
         std::vector<rettr::property> &get_global_properties() noexcept;
         std::vector<rettr::method> &get_global_methods() noexcept;
@@ -99,8 +99,8 @@ namespace rettr::implements {
         std::unordered_map<rettr::typeinfo, rettr::type> type_id_to_type_;
         std::vector<rettr::type> type_list_;
         std::vector<type_private::type_data<type> *> type_data_storage_;
-        std::multimap<string_view, rettr::property> global_property_storage_;
-        std::multimap<string_view, rettr::method> global_method_storage_;
+        std::multimap<std::string_view, rettr::property> global_property_storage_;
+        std::multimap<std::string_view, rettr::method> global_method_storage_;
         std::vector<rettr::property> global_properties_;
         std::vector<rettr::method> global_methods_;
         std::mutex mutex_;

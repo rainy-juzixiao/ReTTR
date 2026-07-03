@@ -22,9 +22,9 @@
 using namespace rettr;
 
 #ifdef NDEBUG
-static string_view library_name("plugin_example");
+static std::string_view library_name("plugin_example");
 #else
-static string_view library_name("plugin_example_d");
+static std::string_view library_name("plugin_example_d");
 #endif
 
 int main() {

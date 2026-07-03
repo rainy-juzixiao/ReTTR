@@ -251,9 +251,9 @@ namespace rettr::helper {
     }
 
     /**
-     * @brief Equality comparison between constexpr string and string_view.
+     * @brief Equality comparison between constexpr string and std::string_view.
      *
-     *        constexpr 字符串与 string_view 之间的相等比较。
+     *        constexpr 字符串与 std::string_view 之间的相等比较。
      */
     template <typename CharType, std::size_t N>
     constexpr rettr_fn operator==(const basic_constexpr_string<CharType, N> &lhs, std::basic_string_view<CharType> rhs) noexcept
@@ -262,9 +262,9 @@ namespace rettr::helper {
     }
 
     /**
-     * @brief Equality comparison between string_view and constexpr string.
+     * @brief Equality comparison between std::string_view and constexpr string.
      *
-     *        string_view 与 constexpr 字符串之间的相等比较。
+     *        std::string_view 与 constexpr 字符串之间的相等比较。
      */
     template <typename CharType, std::size_t N>
     constexpr rettr_fn operator==(std::basic_string_view<CharType> lhs, const basic_constexpr_string<CharType, N> &rhs) noexcept

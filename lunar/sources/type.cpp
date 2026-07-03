@@ -127,7 +127,7 @@ namespace rettr {
         return true;
     }
 
-    const rettr::property &type::property(string_view name) const noexcept {
+    const rettr::property &type::property(std::string_view name) const noexcept {
         static rettr::property empty;
         if (this->empty()) {
             return empty;
@@ -170,7 +170,7 @@ namespace rettr {
         return {};
     }
 
-    rettr::property type::global_property(string_view name) noexcept {
+    rettr::property type::global_property(std::string_view name) noexcept {
         auto &prop_list = implements::type_register_private::get_instance().get_global_property_storage();
 
         if (const auto it = prop_list.find(name); it != prop_list.end()) {
@@ -184,23 +184,23 @@ namespace rettr {
         return array_range<rettr::property>(vec.data(), vec.size());
     }
 
-    any type::property_value(string_view name, object_view obj) const {
+    any type::property_value(std::string_view name, object_view obj) const {
         return property(name)(obj).construct_from_this();
     }
 
-    any type::property_value(string_view name) {
+    any type::property_value(std::string_view name) {
         return global_property(name)(non_exists_instance).construct_from_this();
     }
 
-    void type::property_value(string_view name, object_view obj, any arg) const {
+    void type::property_value(std::string_view name, object_view obj, any arg) const {
         property(name)(obj) = arg;
     }
 
-    void type::global_property_value(const string_view name, any arg) {
+    void type::global_property_value(const std::string_view name, any arg) {
         global_property(name)(non_exists_instance) = arg;
     }
 
-    const rettr::method &type::method(follow_cpp_rule_tag, const string_view name) const noexcept {
+    const rettr::method &type::method(follow_cpp_rule_tag, const std::string_view name) const noexcept {
         static const rettr::method empty;
         if (this->empty()) {
             return empty;
@@ -235,7 +235,7 @@ namespace rettr {
         return empty;
     }
 
-    const rettr::method &type::method(follow_cpp_rule_tag, const string_view name,
+    const rettr::method &type::method(follow_cpp_rule_tag, const std::string_view name,
                                       const array_range<typeinfo> &overload_version_paramlist,
                                       const method_flags filter_method_flag) const noexcept {
         static const class method empty;
@@ -296,7 +296,7 @@ namespace rettr {
         return *best;
     }
 
-    const rettr::method &type::method(const string_view name, const array_range<typeinfo> &overload_version_paramlist,
+    const rettr::method &type::method(const std::string_view name, const array_range<typeinfo> &overload_version_paramlist,
                                       const method_flags filter_method_flag) const noexcept {
         static const class method empty;
         if (this->empty()) {
@@ -355,7 +355,7 @@ namespace rettr {
         return {};
     }
 
-    rettr::method type::global_method(const string_view name) noexcept {
+    rettr::method type::global_method(const std::string_view name) noexcept {
         auto &meth_list = implements::type_register_private::get_instance().get_global_method_storage();
 
         if (const auto it = meth_list.find(name); it != meth_list.end()) {
@@ -364,7 +364,7 @@ namespace rettr {
         return {};
     }
 
-    rettr::method type::global_method(const string_view name, const array_range<typeinfo> &overload_version_paramlist) noexcept {
+    rettr::method type::global_method(const std::string_view name, const array_range<typeinfo> &overload_version_paramlist) noexcept {
         const auto &meth_list = implements::type_register_private::get_instance().get_global_methods();
 
         const class method *best = nullptr;
@@ -432,7 +432,7 @@ namespace rettr {
         return {};
     }
 
-    type type::from_name(string_view name) noexcept {
+    type type::from_name(std::string_view name) noexcept {
         auto &custom_name_to_id = implements::type_register_private::get_instance().get_custom_name_to_id();
         const auto ret = custom_name_to_id.find(std::string{name.data(), name.size()});
         if (ret != custom_name_to_id.end()) {

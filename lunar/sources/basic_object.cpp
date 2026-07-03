@@ -76,7 +76,7 @@ namespace rettr::implements { // common part
     }
 
     template <bool Shared>
-    const rettr::property& basic_object<Shared>::property(string_view name) const noexcept {
+    const rettr::property& basic_object<Shared>::property(std::string_view name) const noexcept {
         return type_data_.property(name);
     }
 

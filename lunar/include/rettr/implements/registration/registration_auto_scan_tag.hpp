@@ -13,15 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module;
-#include <rettr/string_view.hpp>
+#ifndef RETTR_IMPLEMENTS_REGISTRATION_REGISTRATION_AUTO_SCAN_TAG_HPP
+#define RETTR_IMPLEMENTS_REGISTRATION_REGISTRATION_AUTO_SCAN_TAG_HPP
 
-export module rettr.string_view;
+namespace rettr::implements {
+    class registration_auto_scan_for_all {};
 
-export namespace rettr {
-    using rettr::basic_string_view;
-    using rettr::string_view;
-    using rettr::wstring_view;
-    using rettr::u16string_view;
-    using rettr::u32string_view;
+    class registration_auto_scan_for_all_bases {};
+
+    class registration_auto_scan_for_data_members {};
+
+    class registration_auto_scan_for_function_members {};
+
+    class registration_auto_scan_for_enumerators {};
+
+    class registration_auto_scan_for_constructors {};
 }
+
+#endif

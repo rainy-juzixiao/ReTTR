@@ -619,9 +619,4 @@ namespace rettr {
     static constexpr inline follow_cpp_rule_tag follow_cpp_rule{};
 }
 
-namespace rettr {
-    template<typename CharType, typename Traits = std::char_traits<CharType> >
-    class basic_string_view;
-}
-
 #endif

@@ -71,7 +71,7 @@ namespace rettr {
             std::swap(access_level_, right.access_level_);
         }
 
-        string_view name() const noexcept {
+        std::string_view name() const noexcept {
             return name_;
         }
 
@@ -113,13 +113,13 @@ namespace rettr {
         }
 
     private:
-        explicit method(function &&fn, string_view name, access_levels access_level, std::vector<parameter_info> &&params,
+        explicit method(function &&fn, std::string_view name, access_levels access_level, std::vector<parameter_info> &&params,
                         std::vector<rettr::metadata_item> &&metadata, typeinfo which_belongs) noexcept :
             function(std::move(fn)), name_(name), access_level_(access_level), params_(std::move(params)),
             metadatas_(std::move(metadata)), which_belongs_(which_belongs) {
         }
 
-        string_view name_;
+        std::string_view name_;
         access_levels access_level_{access_levels::public_access};
         std::vector<parameter_info> params_;
         std::vector<rettr::metadata_item> metadatas_;

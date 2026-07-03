@@ -76,15 +76,9 @@ TEST_CASE("method - methods(filter_items)", "[method]") {
     type t = type::from<method_query_test_derived>();
 
     SECTION("no valid search query") {
-        CHECK(t.methods(filter_item::public_access).empty() == true);
-        CHECK(t.methods(filter_item::non_public_access).empty() == true);
         CHECK(t.methods(filter_item::instance_item).empty() == true);
         CHECK(t.methods(filter_item::static_item).empty() == true);
         CHECK(t.methods(filter_item::declared_only).empty() == true);
-
-        CHECK(t.methods(filter_item::public_access | filter_item::declared_only).empty() == true);
-        CHECK(t.methods(filter_item::non_public_access | filter_item::declared_only).empty() == true);
-
         CHECK(t.methods(filter_item::instance_item | filter_item::declared_only).empty() == true);
         CHECK(t.methods(filter_item::static_item | filter_item::declared_only).empty() == true);
     }

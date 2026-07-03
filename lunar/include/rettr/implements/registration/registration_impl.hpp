@@ -30,7 +30,7 @@ namespace rettr {
     }
 
     template <typename Clazz>
-    RETTR_INLINE registration::class_<Clazz>::class_(string_view name) {
+    RETTR_INLINE registration::class_<Clazz>::class_(std::string_view name) {
         implements::base_classes<Clazz>::ensure_types_is_register();
         auto t = type::from<Clazz>();
         implements::type_register::custom_name(t, name);
@@ -65,7 +65,7 @@ namespace rettr {
 
     template <typename Clazz>
     template <typename Acc, typename AccLevel, typename Tp>
-    registration::bind<implements::prop, Clazz, Acc, AccLevel> registration::class_<Clazz>::property(string_view name, Acc accessor,
+    registration::bind<implements::prop, Clazz, Acc, AccLevel> registration::class_<Clazz>::property(std::string_view name, Acc accessor,
                                                                                                      AccLevel level) {
         return {create_if_empty(reg_exec), name, accessor};
     }
@@ -73,30 +73,76 @@ namespace rettr {
     template <typename Clazz>
     template <typename Acc, typename AccLevel, typename Tp>
     registration::bind<implements::prop_readonly, Clazz, Acc, AccLevel> registration::class_<Clazz>::property_readonly(
-        string_view name, Acc accessor, AccLevel level) {
+        std::string_view name, Acc accessor, AccLevel level) {
         return {create_if_empty(reg_exec), name, accessor};
     }
 
     template <typename Clazz>
     template <typename A1, typename A2, typename AccLevel,
               std::enable_if_t<!helper::type_list_contains<A2, implements::registration_private::access_levels_list>::value, int>>
-    registration::bind<implements::prop, Clazz, A1, A2, AccLevel> registration::class_<Clazz>::property(string_view name, A1 getter,
+    registration::bind<implements::prop, Clazz, A1, A2, AccLevel> registration::class_<Clazz>::property(std::string_view name, A1 getter,
                                                                                                         A2 setter, AccLevel) {
         return {create_if_empty(reg_exec), name, getter, setter};
     }
 
     template <typename Clazz>
     template <typename Func, typename AccLevel, typename Tp>
-    registration::bind<implements::meth, Clazz, Func, AccLevel> registration::class_<Clazz>::method(string_view name, Func func,
+    registration::bind<implements::meth, Clazz, Func, AccLevel> registration::class_<Clazz>::method(std::string_view name, Func func,
                                                                                                     AccLevel level) {
         return {create_if_empty(reg_exec), name, func};
     }
 
     template <typename Clazz>
     template <typename EnumType>
-    registration::bind<implements::enum_, Clazz, EnumType> registration::class_<Clazz>::enumeration(string_view name) {
+    registration::bind<implements::enum_, Clazz, EnumType> registration::class_<Clazz>::enumeration(std::string_view name) {
         return {create_if_empty(reg_exec), name};
     }
+
+#if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
+
+    template <typename Clazz>
+    template <typename AccLevel, typename Tp>
+    registration::bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_all, AccLevel> registration::class_<
+        Clazz>::make_this_available(AccLevel) {
+        return {create_if_empty(reg_exec)};
+    }
+
+    template <typename Clazz>
+    template <typename AccLevel, typename Tp>
+    registration::bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_enumerators, AccLevel> registration::class_<
+        Clazz>::make_enumerators_available(AccLevel) {
+        return {create_if_empty(reg_exec)};
+    }
+
+    template <typename Clazz>
+    template <typename AccLevel, typename Tp>
+    registration::bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_function_members, AccLevel> registration::class_<
+        Clazz>::make_member_functions_available(AccLevel) {
+        return {create_if_empty(reg_exec)};
+    }
+
+    template <typename Clazz>
+    template <typename AccLevel, typename Tp>
+    registration::bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_data_members, AccLevel> registration::class_<
+        Clazz>::make_member_data_available(AccLevel) {
+        return {create_if_empty(reg_exec)};
+    }
+
+    template <typename Clazz>
+    template <typename AccLevel, typename Tp>
+    registration::bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_data_members, AccLevel> registration::class_<
+        Clazz>::make_constructor_available(AccLevel) {
+        return {create_if_empty(reg_exec)};
+    }
+
+    template <typename Clazz>
+    template <typename AccLevel, typename Tp>
+    registration::bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_all_bases, AccLevel> registration::class_<
+        Clazz>::make_bases_available(AccLevel) {
+        return {create_if_empty(reg_exec)};
+    }
+
+#endif
 
     template <typename Clazz>
     registration::class_<Clazz>::class_(const std::shared_ptr<implements::registration_executer> &reg_exec) : reg_exec(reg_exec) {
@@ -104,19 +150,19 @@ namespace rettr {
 
     template <typename Acc>
     registration::bind<implements::prop, struct implements::invalid_type_t, Acc, implements::registration_private::public_access>
-    registration::property(string_view name, Acc accessor) {
+    registration::property(std::string_view name, Acc accessor) {
         return {std::make_shared<implements::registration_executer>(), name, accessor};
     }
 
     template <typename Acc>
     registration::bind<implements::prop_readonly, struct implements::invalid_type_t, Acc,
                        implements::registration_private::public_access>
-    registration::property_readonly(string_view name, Acc accessor) {
+    registration::property_readonly(std::string_view name, Acc accessor) {
         return {std::make_shared<implements::registration_executer>(), name, accessor};
     }
     template <typename A1, typename A2, typename AccLevel,
               std::enable_if_t<!helper::type_list_contains<A2, implements::registration_private::access_levels_list>::value, int>>
-    registration::bind<implements::prop, implements::invalid_type_t, A1, A2, AccLevel> registration::property(string_view name,
+    registration::bind<implements::prop, implements::invalid_type_t, A1, A2, AccLevel> registration::property(std::string_view name,
                                                                                                               A1 getter, A2 setter,
                                                                                                               AccLevel level) {
         return {std::make_shared<implements::registration_executer>(), name, getter, setter};
@@ -124,12 +170,12 @@ namespace rettr {
 
     template <typename Func>
     registration::bind<implements::meth, struct implements::invalid_type_t, Func, implements::registration_private::public_access>
-    registration::method(string_view name, Func func) {
+    registration::method(std::string_view name, Func func) {
         return {std::make_shared<implements::registration_executer>(), name, func};
     }
 
     template <typename EnumType>
-    registration::bind<implements::enum_, struct implements::invalid_type_t, EnumType> registration::enumeration(string_view name) {
+    registration::bind<implements::enum_, struct implements::invalid_type_t, EnumType> registration::enumeration(std::string_view name) {
         return {std::make_shared<implements::registration_executer>(), name};
     }
 }
@@ -141,7 +187,7 @@ namespace rettr {
     }
 
     template <typename Enum_Type>
-    RETTR_INLINE implements::enum_value_tag<Enum_Type> value(string_view name, Enum_Type value) {
+    RETTR_INLINE implements::enum_value_tag<Enum_Type> value(std::string_view name, Enum_Type value) {
         return implements::value(name, value);
     }
 

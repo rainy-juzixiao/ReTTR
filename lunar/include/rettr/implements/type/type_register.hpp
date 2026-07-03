@@ -17,7 +17,7 @@
 #define RETTR_IMPLEMENTS_TYPE_TYPE_REGISTER_HPP
 
 #include <rettr/core/prerequisites.hpp>
-#include <rettr/string_view.hpp>
+#include <string_view>
 #include <rettr/implements/type/type_data.hpp>
 #include <rettr/implements/metadata.hpp>
 
@@ -45,7 +45,7 @@ namespace rettr::implements {
         static bool register_enumeration(enumeration_data *edata) noexcept;
         static bool unregister_enumeration(enumeration_data *edata) noexcept;
 
-        static void custom_name(rettr::type &t, string_view name) noexcept;
+        static void custom_name(rettr::type &t, std::string_view name) noexcept;
 
         static void metadata(const rettr::type &t,
                              std::vector<rettr::metadata_item> data) noexcept;

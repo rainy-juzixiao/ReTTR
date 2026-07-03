@@ -27,15 +27,20 @@
 #     ./install.sh                          # default prefix: /usr/local
 #     ./install.sh --prefix /usr            # custom prefix
 #     ./install.sh --prefix /usr --static   # build and install static library
+#     ./install.sh --skip-test --skip-examples  # skip tests and examples
+#     ./install.sh --no-reflection-ts           # disable C++26 Reflection TS support
 #     ./install.sh --help
 #
 #   Options:
-#     --prefix <path>    Installation prefix (default: /usr/local)
-#     --static           Build a static library instead of the default shared
-#     --debug            Build with debug symbols
-#     --build-dir <path> CMake build directory (default: build)
-#     -j <N>             Number of parallel jobs (default: auto-detect)
-#     --help, -h         Show this help message
+#     --prefix <path>         Installation prefix (default: /usr/local)
+#     --static                Build a static library instead of the default shared
+#     --debug                 Build with debug symbols
+#     --build-dir <path>      CMake build directory (default: build)
+#     -j <N>                  Number of parallel jobs (default: auto-detect)
+#     --skip-test             Skip building unit tests
+#     --skip-examples         Skip building example programs
+#     --no-reflection-ts      Disable C++26 Reflection TS support (enabled by default)
+#     --help, -h              Show this help message
 # =============================================================================
 
 set -eu
@@ -46,6 +51,9 @@ BUILD_DIR="build"
 SHARED_LIBS="ON"
 JOBS=""
 DRY_RUN=""
+SKIP_TESTS=""
+SKIP_EXAMPLES=""
+NO_REFLECTION_TS=""
 
 usage() {
     sed -n '/^# =/,/^# =/p' "$0" | sed '1d;$d;s/^# \?//'
@@ -80,6 +88,15 @@ while [ $# -gt 0 ]; do
         -j)
             [ $# -ge 2 ] || die "-j requires a number"
             JOBS="$2"; shift 2
+            ;;
+        --skip-test)
+            SKIP_TESTS="1"; shift
+            ;;
+        --skip-examples)
+            SKIP_EXAMPLES="1"; shift
+            ;;
+        --no-reflection-ts)
+            NO_REFLECTION_TS="1"; shift
             ;;
         --dry-run)
             DRY_RUN="1"; shift
@@ -119,26 +136,37 @@ printf "  Prefix      : %s\n" "${PREFIX}"
 printf "  Shared libs : %s\n" "${SHARED_LIBS}"
 printf "  Build dir   : %s\n" "${BUILD_DIR}"
 printf "  Jobs        : %s\n" "${JOBS}"
+printf "  Skip tests  : %s\n" "${SKIP_TESTS:-no}"
+printf "  Skip exmpls : %s\n" "${SKIP_EXAMPLES:-no}"
+printf "  No refl. TS : %s\n" "${NO_REFLECTION_TS:-no}"
 
 # Project root is one level above the scripts/ directory.
 PROJECT_ROOT="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)"
 
 [ -f "${PROJECT_ROOT}/CMakeLists.txt" ] || die "CMakeLists.txt not found at ${PROJECT_ROOT} — is the script inside the ReTTR source tree?"
 
+# Build up extra CMake options from flags
+CMAKE_EXTRA_OPTS=""
+[ -n "${SKIP_TESTS}" ]       && CMAKE_EXTRA_OPTS="${CMAKE_EXTRA_OPTS} -DRETTR_BUILD_UNIT_TESTS=OFF"
+[ -n "${SKIP_EXAMPLES}" ]    && CMAKE_EXTRA_OPTS="${CMAKE_EXTRA_OPTS} -DRETTR_BUILD_EXAMPLES=OFF"
+[ -n "${NO_REFLECTION_TS}" ] && CMAKE_EXTRA_OPTS="${CMAKE_EXTRA_OPTS} -DRETTR_USE_CXX26_REFLECTION_TS=OFF"
+
 if [ -n "${DRY_RUN}" ]; then
     printf "\nDry-run — would run:\n"
-    printf "  cmake -S %s -B %s -DCMAKE_BUILD_TYPE=%s -DCMAKE_INSTALL_PREFIX=%s -DRETTR_BUILD_WITH_DYNAMIC=%s\n" \
-        "${PROJECT_ROOT}" "${BUILD_DIR}" "${BUILD_TYPE}" "${PREFIX}" "${SHARED_LIBS}"
+    printf "  cmake -S %s -B %s -DCMAKE_BUILD_TYPE=%s -DCMAKE_INSTALL_PREFIX=%s -DRETTR_BUILD_WITH_DYNAMIC=%s%s\n" \
+        "${PROJECT_ROOT}" "${BUILD_DIR}" "${BUILD_TYPE}" "${PREFIX}" "${SHARED_LIBS}" "${CMAKE_EXTRA_OPTS}"
     printf "  cmake --build %s --parallel %s\n" "${BUILD_DIR}" "${JOBS}"
     printf "  cmake --install %s\n" "${BUILD_DIR}"
     exit 0
 fi
 
 phase "Configure"
+# shellcheck disable=SC2086
 cmake -S "${PROJECT_ROOT}" -B "${BUILD_DIR}" \
     -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
     -DCMAKE_INSTALL_PREFIX="${PREFIX}" \
-    -DRETTR_BUILD_WITH_DYNAMIC="${SHARED_LIBS}"
+    -DRETTR_BUILD_WITH_DYNAMIC="${SHARED_LIBS}" \
+    ${CMAKE_EXTRA_OPTS}
 
 phase "Build"
 cmake --build "${BUILD_DIR}" --parallel "${JOBS}"

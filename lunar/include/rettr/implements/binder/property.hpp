@@ -23,12 +23,12 @@ namespace rettr::implements {
     template <typename Clazz, typename Px>
     class property_bind {
     public:
-        explicit property_bind(Px &&px, string_view name, std::function<void(property)> commit) noexcept :
+        explicit property_bind(Px &&px, std::string_view name, std::function<void(property)> commit) noexcept :
             commit_(std::move(commit)), prop_(std::in_place_type<Clazz>, name, std::forward<Px>(px)) {
         }
 
         template <typename Getter, typename Setter>
-        property_bind(Getter &&getter, Setter &&setter, string_view name, std::function<void(property)> commit) noexcept :
+        property_bind(Getter &&getter, Setter &&setter, std::string_view name, std::function<void(property)> commit) noexcept :
             commit_(std::move(commit)),
             prop_(property::make<Clazz>(name, std::forward<Getter>(getter), std::forward<Setter>(setter))) {
         }
@@ -76,7 +76,7 @@ namespace rettr::implements {
     class property_bind_readonly {
     public:
         template <typename Getter>
-        property_bind_readonly(Getter &&getter, string_view name, std::function<void(property)> commit) noexcept :
+        property_bind_readonly(Getter &&getter, std::string_view name, std::function<void(property)> commit) noexcept :
             commit_(std::move(commit)),
             prop_(property::make_readonly<Clazz>(name, std::forward<Getter>(getter))) {
         }

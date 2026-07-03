@@ -17,7 +17,7 @@
 #define RETTR_IMPLEMENTS_PARAMETER_INFO_PARAMETER_INFO_BASE_HPP
 
 #include <rettr/core/prerequisites.hpp>
-#include <rettr/string_view.hpp>
+#include <string_view>
 #include <rettr/any.hpp>
 
 namespace rettr {
@@ -29,9 +29,9 @@ namespace rettr::implements {
     public:
         virtual ~parameter_info_base() = default;
 
-        virtual string_view name() const noexcept = 0;
+        virtual std::string_view name() const noexcept = 0;
         
-        virtual void set_name(string_view name) noexcept = 0;
+        virtual void set_name(std::string_view name) noexcept = 0;
 
         virtual rettr::type type() const noexcept = 0;
 

@@ -238,7 +238,7 @@ namespace rettr::implements {
         return true;
     }
 
-    void type_register_private::register_custom_name(rettr::type &t, string_view name) noexcept {
+    void type_register_private::register_custom_name(rettr::type &t, std::string_view name) noexcept {
         if (t.empty()) {
             return;
         }
@@ -354,11 +354,11 @@ namespace rettr::implements {
         }
     }
 
-    std::multimap<string_view, rettr::property> &type_register_private::get_global_property_storage() noexcept {
+    std::multimap<std::string_view, rettr::property> &type_register_private::get_global_property_storage() noexcept {
         return global_property_storage_;
     }
 
-    std::multimap<string_view, rettr::method> &type_register_private::get_global_method_storage() noexcept {
+    std::multimap<std::string_view, rettr::method> &type_register_private::get_global_method_storage() noexcept {
         return global_method_storage_;
     }
 
@@ -450,7 +450,7 @@ namespace rettr::implements {
         return type_register_private::get_instance().unregister_enumeration(edata);
     }
 
-    void type_register::custom_name(rettr::type &t, string_view name) noexcept {
+    void type_register::custom_name(rettr::type &t, std::string_view name) noexcept {
         type_register_private::get_instance().register_custom_name(t, name);
     }
 

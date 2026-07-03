@@ -37,8 +37,8 @@ namespace rettr::annotations {
 namespace rettr::annotations::implements {
     template <auto Value>
     consteval metadata_t::custom_factory get_custom_factory() {
-        if constexpr (requires { basic_string_view<char>{Value}; }) {
-            return +[]() -> any { return basic_string_view<char>{Value}; };
+        if constexpr (requires { std::basic_string_view<char>{Value}; }) {
+            return +[]() -> any { return std::basic_string_view<char>{Value}; };
         } else {
             return +[]() -> any { return Value; };
         }

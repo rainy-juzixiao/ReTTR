@@ -25,7 +25,7 @@ namespace rettr::annotations {
         consteval mark_as_constructor_func_t() = default;
     };
 
-    static constexpr auto mark_as_constructor_func = mark_as_constructor_func_t{};
+    constexpr auto mark_as_constructor_func = mark_as_constructor_func_t{};
 }
 
 #endif

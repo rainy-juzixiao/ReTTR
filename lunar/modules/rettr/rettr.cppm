@@ -20,7 +20,7 @@ export import rettr.access_levels;
 export import rettr.array_range;
 export import rettr.enum_flags;
 export import rettr.filter_item;
-export import rettr.string_view;
+
 export import rettr.type_list;
 
 // 类型信息

@@ -20,6 +20,9 @@
 
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
 
+#include <rettr/annotations/lunar/metadata.hpp>
+#include <rettr/implements/annotations/common.hpp>
+
 namespace rettr::implements::entity {
     template <std::meta::info Type>
     constexpr auto method_members = [] {
@@ -32,12 +35,46 @@ namespace rettr::implements::entity {
         template for (const auto &item: all_members) {
             if ((is_special_member_function(item) || is_function(item)) && !is_constructor(item) && !is_destructor(item) &&
                 !is_operator_function(item)) {
-                members.emplace_back(item);
+                if (is_accessible(item, access_context::current())) {
+                    members.emplace_back(item);
+                }
             }
         }
 
         return std::define_static_array(members);
     }();
+
+    template <typename Ptr>
+    struct method_entity {
+        Ptr ptr;
+        const char *const name_ptr;
+
+        metadatas_t metadatas;
+        parameter_names_t parameter_names;
+    };
+
+    template <typename Class>
+    consteval rettr_fn make_method_entites() -> auto {
+        return []<std::size_t... Is>(std::index_sequence<Is...>) {
+            // clang-format off
+            return std::make_tuple(method_entity<decltype(&[:method_members<^^Class>[Is]:])>{
+                &[:method_members<^^Class>[Is]:],
+                std::define_static_string(std::meta::identifier_of(method_members<^^Class>[Is])),
+                metadatas_t {
+                    member_metadatas<method_members<^^Class>[Is]>.data(),
+                    member_metadatas<method_members<^^Class>[Is]>.size()
+                },
+                parameter_names_t {
+                    get_parameter_names<method_members<^^Class>[Is]>.data(),
+                    get_parameter_names<method_members<^^Class>[Is]>.size()
+                }
+            }...);
+            // clang-format on
+        }(std::make_index_sequence<method_members<^^Class>.size()>{});
+    }
+
+    template <typename Class>
+    static constexpr auto method_entites_v = make_method_entites<Class>();
 }
 
 

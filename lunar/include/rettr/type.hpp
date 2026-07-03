@@ -21,7 +21,7 @@
 #include <rettr/filter_item.hpp>
 #include <rettr/implements/invocable/method_flags.hpp>
 #include <rettr/object_view.hpp>
-#include <rettr/string_view.hpp>
+#include <string_view>
 
 namespace rettr {
     class metadata_item;
@@ -82,7 +82,7 @@ namespace rettr {
 
         RETTR_NODISCARD RETTR_INLINE type_id id() const noexcept;
 
-        RETTR_NODISCARD RETTR_INLINE string_view name() const noexcept;
+        RETTR_NODISCARD RETTR_INLINE std::string_view name() const noexcept;
 
         RETTR_NODISCARD RETTR_INLINE bool empty() const noexcept;
 
@@ -106,7 +106,7 @@ namespace rettr {
         template <typename Ty>
         static type from_base(Ty *ptr) noexcept;
 
-        static type from_name(string_view name) noexcept;
+        static type from_name(std::string_view name) noexcept;
 
         RETTR_NODISCARD static type from_typeid(typeinfo const &type) noexcept;
 
@@ -177,30 +177,30 @@ namespace rettr {
 
         RETTR_NODISCARD bool destroy(const object_view &obj) const noexcept;
 
-        RETTR_NODISCARD const rettr::property &property(string_view name) const noexcept;
+        RETTR_NODISCARD const rettr::property &property(std::string_view name) const noexcept;
 
         RETTR_NODISCARD array_range<rettr::property> properties() const noexcept;
 
         RETTR_NODISCARD array_range<rettr::property> properties(filter_items filter) const noexcept;
 
-        RETTR_NODISCARD static rettr::property global_property(string_view name) noexcept;
+        RETTR_NODISCARD static rettr::property global_property(std::string_view name) noexcept;
 
         RETTR_NODISCARD static array_range<rettr::property> global_properties() noexcept;
 
-        RETTR_NODISCARD any property_value(string_view name, object_view obj) const;
+        RETTR_NODISCARD any property_value(std::string_view name, object_view obj) const;
 
-        RETTR_NODISCARD static any property_value(string_view name);
+        RETTR_NODISCARD static any property_value(std::string_view name);
 
-        void property_value(string_view name, object_view obj, any arg) const;
+        void property_value(std::string_view name, object_view obj, any arg) const;
 
-        static void global_property_value(string_view name, any arg);
+        static void global_property_value(std::string_view name, any arg);
 
-        RETTR_NODISCARD RETTR_INLINE const rettr::method &method(const string_view name) const noexcept;
-        RETTR_NODISCARD const rettr::method &method(follow_cpp_rule_tag, const string_view name) const noexcept;
+        RETTR_NODISCARD RETTR_INLINE const rettr::method &method(const std::string_view name) const noexcept;
+        RETTR_NODISCARD const rettr::method &method(follow_cpp_rule_tag, const std::string_view name) const noexcept;
 
-        RETTR_NODISCARD const rettr::method &method(const string_view name, const array_range<typeinfo> &overload_version_paramlist,
+        RETTR_NODISCARD const rettr::method &method(const std::string_view name, const array_range<typeinfo> &overload_version_paramlist,
                                                     const method_flags filter_method_flag = method_flags::none) const noexcept;
-        RETTR_NODISCARD const rettr::method &method(follow_cpp_rule_tag, const string_view name,
+        RETTR_NODISCARD const rettr::method &method(follow_cpp_rule_tag, const std::string_view name,
                                                     const array_range<typeinfo> &overload_version_paramlist,
                                                     const method_flags filter_method_flag = method_flags::none) const noexcept;
 
@@ -208,33 +208,33 @@ namespace rettr {
 
         RETTR_NODISCARD array_range<rettr::method> methods(filter_items filter) const noexcept;
 
-        static rettr::method global_method(string_view name) noexcept;
+        static rettr::method global_method(std::string_view name) noexcept;
 
-        static rettr::method global_method(const string_view name, const array_range<typeinfo> &overload_version_paramlist) noexcept;
+        static rettr::method global_method(const std::string_view name, const array_range<typeinfo> &overload_version_paramlist) noexcept;
 
         static array_range<rettr::method> global_methods() noexcept;
 
         template <typename... Args>
-        any invoke(string_view name, object_view instance, Args &&...args) const;
+        any invoke(std::string_view name, object_view instance, Args &&...args) const;
 
         template <typename... Args>
-        any invoke(follow_cpp_rule_tag, string_view name, object_view instance, Args &&...args) const;
+        any invoke(follow_cpp_rule_tag, std::string_view name, object_view instance, Args &&...args) const;
 
         template <typename... Args>
-        any invoke(static_invoke_tag, string_view name, Args &&...args) const;
+        any invoke(static_invoke_tag, std::string_view name, Args &&...args) const;
 
         template <typename... Args>
-        any invoke(static_invoke_tag, follow_cpp_rule_tag, string_view name, Args &&...args) const;
+        any invoke(static_invoke_tag, follow_cpp_rule_tag, std::string_view name, Args &&...args) const;
 
         template <typename... Args>
-        static any global_invoke(string_view name, Args &&...args);
+        static any global_invoke(std::string_view name, Args &&...args);
 
     private:
         template <bool IgnoreCppRule, typename... Args>
-        any invoke_helper(string_view name, object_view instance, Args &&...args) const;
+        any invoke_helper(std::string_view name, object_view instance, Args &&...args) const;
 
         template <bool IgnoreCppRule, typename... Args>
-        any static_invoke_helper(string_view name, Args &&...args) const;
+        any static_invoke_helper(std::string_view name, Args &&...args) const;
 
         template <typename Type = type>
         RETTR_INLINE type(implements::type_private::type_data<Type> *data) noexcept;

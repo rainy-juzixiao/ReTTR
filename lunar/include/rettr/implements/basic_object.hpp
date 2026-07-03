@@ -67,26 +67,26 @@ namespace rettr::implements {
         operator object_view() const noexcept;
 
         template <typename... Args>
-        any invoke(string_view name, Args &&...args) const {
+        any invoke(std::string_view name, Args &&...args) const {
             return type_data_.invoke(name, as_object_view(target()), std::forward<Args>(args)...);
         }
 
         template <typename... Args>
-        any invoke(static_invoke_tag, string_view name, Args &&...args) const {
+        any invoke(static_invoke_tag, std::string_view name, Args &&...args) const {
             return type_data_.invoke(static_invoke, name, std::forward<Args>(args)...);
         }
 
         template <typename... Args>
-        any invoke(follow_cpp_rule_tag, string_view name, Args &&...args) const {
+        any invoke(follow_cpp_rule_tag, std::string_view name, Args &&...args) const {
             return type_data_.invoke(follow_cpp_rule, as_object_view(target()), name, std::forward<Args>(args)...);
         }
 
         template <typename... Args>
-        any invoke(follow_cpp_rule_tag, static_invoke_tag, string_view name, Args &&...args) const {
+        any invoke(follow_cpp_rule_tag, static_invoke_tag, std::string_view name, Args &&...args) const {
             return type_data_.invoke(follow_cpp_rule, static_invoke, name, std::forward<Args>(args)...);
         }
 
-        functor_operation operator()(string_view name) const {
+        functor_operation operator()(std::string_view name) const {
             const auto meth = method(name);
             const auto prop = property(name);
             if (!meth.empty() && !prop.empty()) {
@@ -105,27 +105,27 @@ namespace rettr::implements {
 
         RETTR_NODISCARD const any &target() const noexcept;
 
-        RETTR_NODISCARD const rettr::property &property(string_view name) const noexcept;
+        RETTR_NODISCARD const rettr::property &property(std::string_view name) const noexcept;
 
         RETTR_NODISCARD array_range<rettr::property> properties() const noexcept;
 
         RETTR_NODISCARD array_range<rettr::property> properties(filter_items filter) const noexcept;
 
-        RETTR_NODISCARD const rettr::method &method(string_view name) const noexcept {
+        RETTR_NODISCARD const rettr::method &method(std::string_view name) const noexcept {
             return type_data_.method(name);
         }
 
-        RETTR_NODISCARD const rettr::method &method(follow_cpp_rule_tag, const string_view name) const noexcept {
+        RETTR_NODISCARD const rettr::method &method(follow_cpp_rule_tag, const std::string_view name) const noexcept {
             return type_data_.method(follow_cpp_rule, name);
         }
 
-        RETTR_NODISCARD const rettr::method &method(const string_view name,
+        RETTR_NODISCARD const rettr::method &method(const std::string_view name,
                                                     const array_range<rettr::typeinfo> &overload_version_paramlist,
                                                     const method_flags filter_method_flag = method_flags::none) const noexcept {
             return type_data_.method(name, overload_version_paramlist, filter_method_flag);
         }
 
-        RETTR_NODISCARD const rettr::method &method(follow_cpp_rule_tag, const string_view name,
+        RETTR_NODISCARD const rettr::method &method(follow_cpp_rule_tag, const std::string_view name,
                                                     const array_range<rettr::typeinfo> &overload_version_paramlist,
                                                     const method_flags filter_method_flag = method_flags::none) const noexcept {
             return type_data_.method(follow_cpp_rule, name, overload_version_paramlist, filter_method_flag);

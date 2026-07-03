@@ -64,7 +64,7 @@ static std::string dl_error() noexcept {
 namespace rettr {
     class library::library_private {
     public:
-        library_private(string_view file_name, string_view version) :
+        library_private(std::string_view file_name, std::string_view version) :
             file_name_(file_name.data(), file_name.size()), version_{version.data(), version.size()} {
             if (!version.empty()) {
                 ;
@@ -120,11 +120,11 @@ namespace rettr {
             return ok;
         }
 
-        string_view file_name() const noexcept {
+        std::string_view file_name() const noexcept {
             return file_name_;
         }
 
-        string_view error_string() const noexcept {
+        std::string_view error_string() const noexcept {
             return error_;
         }
 
@@ -155,10 +155,12 @@ namespace rettr {
                     const auto &sfx = suffix_list[si];
                     // NOLINTEND
 
-                    if (!pfx.empty() && string_view{file_name_}.starts_with(string_view{pfx})) {
+                    const std::string_view current{file_name_};
+                    if (!pfx.empty() && current.find(pfx) == 0) {
                         continue;
                     }
-                    if (!sfx.empty() && string_view{file_name_}.ends_with(string_view{sfx})) {
+                    if (!sfx.empty() && current.size() >= sfx.size() &&
+                        current.compare(current.size() - sfx.size(), sfx.size(), sfx) == 0) {
                         continue;
                     }
 
@@ -206,16 +208,16 @@ namespace rettr {
         implements::registration_state_saver state_;
     };
 
-    library::library(string_view file_name, string_view version) : private_(std::make_unique<library_private>(file_name, version)) {
+    library::library(std::string_view file_name, std::string_view version) : private_(std::make_unique<library_private>(file_name, version)) {
     }
 
     library::~library() = default;
 
-    string_view library::file_name() const noexcept {
+    std::string_view library::file_name() const noexcept {
         return private_->file_name();
     }
 
-    string_view library::error_string() const noexcept {
+    std::string_view library::error_string() const noexcept {
         return private_->error_string();
     }
 

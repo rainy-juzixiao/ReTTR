@@ -28,6 +28,8 @@ namespace rettr::implements {
     struct meth {};
 
     struct enum_ {};
+
+    struct clazz_ {};
 }
 
 #endif
