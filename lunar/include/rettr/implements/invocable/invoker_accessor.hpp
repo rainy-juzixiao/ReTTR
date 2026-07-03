@@ -64,7 +64,9 @@ namespace rettr::implements {
 
         RETTR_NODISCARD virtual const class typeinfo &function_signature() const noexcept = 0;
 
-        virtual invoker_accessor *construct_from_this(byte_t *soo_buffer) const noexcept = 0;
+        virtual invoker_accessor *move_to(byte_t *soo_buffer) noexcept = 0;
+
+        virtual invoker_accessor *copy_to(byte_t *soo_buffer) const = 0;
 
         RETTR_NODISCARD virtual const array_range<class typeinfo> &paramlists() const noexcept = 0;
 
@@ -94,7 +96,8 @@ namespace rettr::implements {
         invoker_accessor_impl(storage_t &&right) : storage(std::move(right)) {
         }
 
-        ~invoker_accessor_impl() {
+        ~invoker_accessor_impl() noexcept {
+            storage.~storage_t();
         }
 
         RETTR_NODISCARD const class typeinfo &return_type() const noexcept override {
@@ -114,7 +117,16 @@ namespace rettr::implements {
             return implements::which_belongs_res<Class>();
         }
 
-        RETTR_NODISCARD invoker_accessor *construct_from_this(byte_t *soo_buffer) const noexcept override {
+        invoker_accessor *move_to(byte_t *soo_buffer) noexcept override {
+            if constexpr (sizeof(std::decay_t<decltype(*this)>) >= fn_obj_soo_buffer_size) {
+                return ::new invoker_accessor_impl(std::move(storage));
+            } else {
+                return ::new (reinterpret_cast<invoker_accessor_impl *>(soo_buffer))
+                    invoker_accessor_impl(std::move(storage));
+            }
+        }
+
+        invoker_accessor *copy_to(byte_t *soo_buffer) const override {
             if constexpr (sizeof(std::decay_t<decltype(*this)>) >= fn_obj_soo_buffer_size) {
                 return ::new invoker_accessor_impl(storage);
             } else {
@@ -362,6 +374,7 @@ namespace rettr::implements {
 
         void destruct(const bool local) noexcept override {
             if (local) {
+                this->~invoker_accessor_impl();
             } else {
                 delete this;
             }

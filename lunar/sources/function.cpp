@@ -55,7 +55,8 @@ namespace rettr {
         if (this == std::addressof(right) || right.empty()) {
             return;
         }
-        invoke_accessor_ = right.invoke_accessor()->construct_from_this(this->invoker_storage);
+        reset();
+        invoke_accessor_ = right.invoke_accessor()->copy_to(this->invoker_storage);
     }
 
     void function::move_from_other(function &&right) noexcept {
@@ -63,7 +64,8 @@ namespace rettr {
             return;
         }
         if (right.is_local()) {
-            invoke_accessor_ = right.invoke_accessor()->construct_from_this(this->invoker_storage);
+            invoke_accessor_ = right.invoke_accessor()->move_to(this->invoker_storage);
+            right.invoke_accessor()->destruct(true);
             right.invoke_accessor_ = nullptr;
         } else {
             invoke_accessor_ = std::exchange(right.invoke_accessor_, nullptr);
