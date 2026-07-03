@@ -150,7 +150,7 @@ namespace rettr::annotations::implements {
 
     template <typename... Args>
     constexpr std::size_t eval_for_constructor_args_hash =
-        static_cast<std::size_t>((std::size_t{0} + ... + typeinfo::create<std::remove_cvref_t<Args>>().hash_code()));
+        static_cast<std::size_t>((std::size_t{0} + ... + typeinfo::create<Args>().hash_code()));
 
     template <typename Fx>
     constexpr std::size_t eval_for_constructor_func_args_hash = []<std::size_t... Count>(std::index_sequence<Count...>) {

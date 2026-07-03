@@ -131,7 +131,14 @@ namespace rettr {
     template <typename Clazz>
     template <typename AccLevel, typename Tp>
     registration::bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_data_members, AccLevel> registration::class_<
-        Clazz>::make_constructor_available(AccLevel level) {
+        Clazz>::make_constructor_available(AccLevel) {
+        return {create_if_empty(reg_exec)};
+    }
+
+    template <typename Clazz>
+    template <typename AccLevel, typename Tp>
+    registration::bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_all_bases, AccLevel> registration::class_<
+        Clazz>::make_bases_available(AccLevel) {
         return {create_if_empty(reg_exec)};
     }
 

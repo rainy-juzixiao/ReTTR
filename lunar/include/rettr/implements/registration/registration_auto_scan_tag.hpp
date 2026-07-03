@@ -19,6 +19,8 @@
 namespace rettr::implements {
     class registration_auto_scan_for_all {};
 
+    class registration_auto_scan_for_all_bases {};
+
     class registration_auto_scan_for_data_members {};
 
     class registration_auto_scan_for_function_members {};

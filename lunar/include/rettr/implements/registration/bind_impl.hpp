@@ -26,6 +26,8 @@
 #include <rettr/moon/enumeration.hpp>
 #include <rettr/registration.hpp>
 
+#include "rettr/implements/type/type_register_private.hpp"
+
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
 #include <rettr/implements/annotations/scan_metadata.hpp>
 #include <rettr/implements/parameter_info/scan_parameter_names.hpp>
@@ -86,8 +88,9 @@ namespace rettr {
             {
                 std::vector<metadata_item> inject_metadatas;
                 std::vector<string_view> names;
-
-                for (const auto &entry: implements::entity::constructor_entites_v<Clazz>) {
+                const auto e = implements::entity::constructor_entites_v<Clazz>;
+                const auto p  = args_hash;
+                for (const auto &entry: e) {
                     if (args_hash == entry.param_hash && entry.category == implements::entity::constructor_category::native_ctor) {
                         for (const auto &item: std::span{entry.metadatas.start, entry.metadatas.count}) {
                             inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(),
@@ -790,12 +793,21 @@ namespace rettr::implements {
         return std::define_static_array(dest);
     }();
 
+    template <typename Ty>
+    constexpr auto bases_of = [] {
+        std::vector<std::meta::info> dest;
+        for (const auto base: std::meta::bases_of(^^Ty, std::meta::access_context::unchecked())) {
+            dest.emplace_back(base);
+        }
+        return std::define_static_array(dest);
+    }();
+
     template <typename Clazz, typename AccLevel>
     void make_enumerators_available_impl(std::shared_ptr<implements::registration_executer> &self_reg_exec, auto &holders_) {
         template for (constexpr auto t: types_of<Clazz, AccLevel>) {
             if constexpr (std::meta::is_enum_type(t)) {
                 auto name = std::define_static_string(std::meta::identifier_of(t));
-                using enumbind = registration::bind<implements::enum_, Clazz, typename [:t:]>;
+                using enumbind = registration::bind<implements::enum_, Clazz, typename[:t:]>;
                 auto *ptr = new enumbind(self_reg_exec, name);
                 holders_.emplace_back(ptr, [](void *p) { delete static_cast<enumbind *>(p); });
             }
@@ -806,7 +818,8 @@ namespace rettr::implements {
     void make_sub_types_avaiable_impl() {
         template for (constexpr auto t: types_of<Clazz, AccLevel>) {
             if constexpr (std::meta::is_class_type(t)) {
-                registration::class_<typename [:t:]>(std::define_static_string(std::meta::identifier_of(t))).make_this_available(AccLevel());
+                registration::class_<typename[:t:]>(std::define_static_string(std::meta::identifier_of(t)))
+                    .make_this_available(AccLevel());
             }
         }
     }
@@ -869,6 +882,23 @@ namespace rettr {
         bind(std::shared_ptr<implements::registration_executer> reg_exec) : registration::class_<Clazz>(reg_exec) {
             std::vector<std::unique_ptr<void, void (*)(void *)>> holders_;
             implements::make_enumerators_available_impl<Clazz, AccLevel>(this->reg_exec, holders_);
+        }
+    };
+
+    template <typename Clazz, typename AccLevel>
+    class registration::bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_all_bases, AccLevel>
+        : public registration::class_<Clazz> {
+    public:
+        bind(std::shared_ptr<implements::registration_executer> reg_exec) : registration::class_<Clazz>(reg_exec) {
+            template for (constexpr auto base: implements::bases_of<Clazz>) {
+                using t = [:std::meta::type_of(base):];
+                {
+                    registration::class_<t>(std::define_static_string(std::meta::identifier_of(base)))
+                        .make_this_available(AccLevel())
+                        .make_bases_available(AccLevel());
+                    implements::type_register::register_base_class(type::from<Clazz>(), type::from<t>());
+                }
+            }
         }
     };
 }

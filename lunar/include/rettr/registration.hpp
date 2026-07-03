@@ -136,6 +136,12 @@ namespace rettr {
             bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_data_members, AccLevel> make_constructor_available(
                 AccLevel level = AccLevel());
 
+            template <typename AccLevel = implements::registration_private::public_access,
+                      typename Tp = std::enable_if_t<
+                          helper::type_list_contains<AccLevel, implements::registration_private::access_levels_list>::value>>
+            bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_all_bases, AccLevel> make_bases_available(
+                AccLevel level = AccLevel());
+
             template <auto Entity, typename AccLevel = implements::registration_private::public_access,
                       typename Tp = std::enable_if_t<
                           helper::type_list_contains<AccLevel, implements::registration_private::access_levels_list>::value>>

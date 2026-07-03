@@ -64,14 +64,13 @@ namespace rettr::implements::entity {
 
     template <typename... Args>
     constexpr std::size_t eval_for_constructor_args_hash =
-        static_cast<std::size_t>((std::size_t{0} + ... + typeinfo::create<std::remove_cvref_t<Args>>().hash_code()));
+        static_cast<std::size_t>((std::size_t{0} + ... + typeinfo::create<Args>().hash_code()));
 
     template <typename Fx>
     constexpr std::size_t eval_for_constructor_func_args_hash = []<std::size_t... Count>(std::index_sequence<Count...>) {
         return static_cast<std::size_t>(
             (std::size_t{0} + ... +
-             typeinfo::create<std::remove_cvref_t<helper::type_at_t<Count, typename function_traits<Fx>::argument_list>>>()
-                 .hash_code()));
+             typeinfo::create<helper::type_at_t<Count, typename function_traits<Fx>::argument_list>>().hash_code()));
     }(std::make_index_sequence<function_traits<Fx>::arity>{});
 
     template <std::meta::info Constructor>
@@ -103,17 +102,19 @@ namespace rettr::implements::entity {
         parameter_names_t parameter_names;
     };
 
+    constexpr std::array<const char *const, 1> unnamed_parameter_names = {"<unnamed>"};
+
     template <std::meta::info Type>
     consteval auto make_constructor_entites() -> std::span<const constructor_entity> {
         using namespace std::meta;
         std::vector<constructor_entity> entries;
         template for (constexpr auto member: rettr::implements::entity::type_constructors<Type>) {
-            entries.push_back(
-                constructor_entity{eval_for_native_constructor_hash<member>(),
-                                   is_constructor(member) ? rettr::implements::entity::constructor_category::native_ctor
-                                                          : rettr::implements::entity::constructor_category::ctor_func,
-                                   metadatas_t{member_metadatas<member>.data(), member_metadatas<member>.size()},
-                                   parameter_names_t{get_parameter_names<member>.data(), get_parameter_names<member>.size()}});
+            entries.push_back(constructor_entity{
+                eval_for_native_constructor_hash<member>(),
+                is_constructor(member) ? rettr::implements::entity::constructor_category::native_ctor
+                                       : rettr::implements::entity::constructor_category::ctor_func,
+                metadatas_t{.start = member_metadatas<member>.data(), .count = member_metadatas<member>.size()},
+                parameter_names_t{.start = get_parameter_names<member>.data(), .count = get_parameter_names<member>.size()}});
         }
         return define_static_array(entries);
     }
