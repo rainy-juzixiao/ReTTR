@@ -258,6 +258,22 @@ namespace xxx {
     };
 
     struct MyStruct {
+        enum class enum1 {
+            a,
+            b,
+            c
+        };
+
+        enum class enum2 {
+            one,
+            two,
+            three
+        };
+
+        struct t {
+            void func(double) {};
+        };
+
         MyStruct() {};
 
         explicit MyStruct(int data) : data(data) {
@@ -349,12 +365,16 @@ RETTR_REGISTRATION {
                                                               value("SOLID", mesh::render_mode::SOLID));
 }
 
+
 int main() {
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
     {
         std::cout << rettr::type::from<xxx::MyStruct>().constructors().size() << '\n';
         std::cout << rettr::type::from<xxx::MyStruct>().constructors()[0].parameter_count() << '\n';
         std::cout << rettr::type::from<xxx::MyStruct>().methods().size() << '\n';
+    }
+    {
+        std::cout << rettr::type::from<xxx::MyStruct::enum1>().enumeration().values().size() << '\n';
     }
     {
         {

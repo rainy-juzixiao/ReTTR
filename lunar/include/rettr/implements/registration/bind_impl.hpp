@@ -554,7 +554,6 @@ namespace rettr {
 
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
 
-
 namespace rettr::implements {
     template <typename Clazz, typename AccLevel>
     constexpr auto auto_scan_constructors_members = [] {
@@ -759,6 +758,58 @@ namespace rettr::implements {
             holders_.emplace_back(ptr, [](void *p) { delete static_cast<methbind *>(p); });
         }
     }
+
+    template <typename Ty, typename AccLevel>
+    constexpr auto types_of = [] {
+        auto level = implements::make_access_level_tag<AccLevel>::make().value;
+
+        std::vector<std::meta::info> dest;
+        for (auto src = std::meta::members_of(^^Ty, std::meta::access_context::unchecked()); auto item: src) {
+            if (std::meta::is_type(item)) {
+                switch (level) {
+                    case access_levels::public_access:
+                        if (std::meta::is_public(item)) {
+                            dest.emplace_back(item);
+                        }
+                        break;
+                    case access_levels::protected_access:
+                        if (std::meta::is_protected(item)) {
+                            dest.emplace_back(item);
+                        }
+                        break;
+                    case access_levels::private_access:
+                        if (std::meta::is_private(item)) {
+                            dest.emplace_back(item);
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        return std::define_static_array(dest);
+    }();
+
+    template <typename Clazz, typename AccLevel>
+    void make_enumerators_available_impl(std::shared_ptr<implements::registration_executer> &self_reg_exec, auto &holders_) {
+        template for (constexpr auto t: types_of<Clazz, AccLevel>) {
+            if constexpr (std::meta::is_enum_type(t)) {
+                auto name = std::define_static_string(std::meta::identifier_of(t));
+                using enumbind = registration::bind<implements::enum_, Clazz, typename [:t:]>;
+                auto *ptr = new enumbind(self_reg_exec, name);
+                holders_.emplace_back(ptr, [](void *p) { delete static_cast<enumbind *>(p); });
+            }
+        }
+    }
+
+    template <typename Clazz, typename AccLevel>
+    void make_sub_types_avaiable_impl() {
+        template for (constexpr auto t: types_of<Clazz, AccLevel>) {
+            if constexpr (std::meta::is_class_type(t)) {
+                registration::class_<typename [:t:]>(std::define_static_string(std::meta::identifier_of(t))).make_this_available(AccLevel());
+            }
+        }
+    }
 }
 
 namespace rettr {
@@ -771,6 +822,11 @@ namespace rettr {
             implements::make_constructor_available_impl<Clazz, AccLevel>(this->reg_exec, holders_);
             implements::make_member_data_available_impl<Clazz, AccLevel>(this->reg_exec, holders_);
             implements::make_member_functions_available_impl<Clazz, AccLevel>(this->reg_exec, holders_);
+            implements::make_enumerators_available_impl<Clazz, AccLevel>(this->reg_exec, holders_);
+
+            {
+                implements::make_sub_types_avaiable_impl<Clazz, AccLevel>();
+            }
         }
     };
 }
@@ -802,7 +858,17 @@ namespace rettr {
     public:
         bind(std::shared_ptr<implements::registration_executer> reg_exec) : registration::class_<Clazz>(reg_exec) {
             std::vector<std::unique_ptr<void, void (*)(void *)>> holders_;
-            implements::make_member_functions_available_impl<Clazz, AccLevel>(this-reg_exec, holders_);
+            implements::make_member_functions_available_impl<Clazz, AccLevel>(this->reg_exec, holders_);
+        }
+    };
+
+    template <typename Clazz, typename AccLevel>
+    class registration::bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_enumerators, AccLevel>
+        : public registration::class_<Clazz> {
+    public:
+        bind(std::shared_ptr<implements::registration_executer> reg_exec) : registration::class_<Clazz>(reg_exec) {
+            std::vector<std::unique_ptr<void, void (*)(void *)>> holders_;
+            implements::make_enumerators_available_impl<Clazz, AccLevel>(this->reg_exec, holders_);
         }
     };
 }
