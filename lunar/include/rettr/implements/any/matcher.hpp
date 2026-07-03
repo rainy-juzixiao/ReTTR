@@ -105,12 +105,20 @@ namespace rettr::implements {
                     static constexpr any_default_match default_match_obj{};
                     using type_list = function_argument_list<remove_cvref_t<handler_t> >;
                     if constexpr (constexpr std::size_t arity = type_list_size_v<type_list>; arity == 1) {
-                        handler(default_match_obj);
+                        if constexpr (std::is_void_v<function_return_type<handler_t>>) {
+                            handler(default_match_obj);
+                        } else {
+                            result = handler(default_match_obj);
+                        }
                     } else if constexpr (arity == 2) {
                         static_assert(std::is_convertible_v<const basic_any &,
                                           typename type_at<1, type_list>::type>,
                                       "param(2) not match");
-                        handler(default_match_obj, a);
+                        if constexpr (std::is_void_v<function_return_type<handler_t>>) {
+                            handler(default_match_obj, a);
+                        } else {
+                            result = handler(default_match_obj, a);
+                        }
                     } else {
                         static_assert(rettr::implements::always_false<handler_t>, "handler param lists not match!");
                     }

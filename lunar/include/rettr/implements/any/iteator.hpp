@@ -119,9 +119,21 @@ namespace rettr::implements {
             return *this;
         }
 
+        any_iterator_impl operator++(int) {
+            any_iterator_impl tmp = *this;
+            proxy->next();
+            return tmp;
+        }
+
         any_iterator_impl &operator--() {
             proxy->previous();
             return *this;
+        }
+
+        any_iterator_impl operator--(int) {
+            any_iterator_impl tmp = *this;
+            proxy->previous();
+            return tmp;
         }
 
         reference operator*() {

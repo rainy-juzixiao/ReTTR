@@ -1094,14 +1094,14 @@ namespace rettr::implements {
                             if (key->template is<key_type>() && value->template is<value_type>()) {
                                 auto [key_iterator, has_success] =
                                         this_pointer->template as<Ty>().insert(
-                                            key->template as<key_type>(), key->template as<value_type>());
+                                            key->template as<key_type>(), value->template as<value_type>());
                                 ::new(&pair->first) const_iterator(std::in_place_type<iterator>, key_iterator);
                                 pair->second = has_success;
                                 return true;
                             }
-                            if (key->template is_convertible<key_type>() && key->template is_convertible<value_type>()) {
+                            if (key->template is_convertible<key_type>() && value->template is_convertible<value_type>()) {
                                 auto [key_iterator, has_success] = this_pointer->template as<Ty>().insert(
-                                    key->template convert<key_type>(), key->template convert<value_type>());
+                                    key->template convert<key_type>(), value->template convert<value_type>());
                                 ::new(&pair->first) const_iterator(std::in_place_type<iterator>, key_iterator);
                                 pair->second = has_success;
                                 return true;

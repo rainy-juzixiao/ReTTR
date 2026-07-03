@@ -163,6 +163,7 @@ namespace rettr::implements {
         using basic_any::match;
         using basic_any::match_for;
         using basic_any::resize;
+        using basic_any::size;
         using basic_any::swap_value;
         using basic_any::target_as_void_ptr;
         using basic_any::type;

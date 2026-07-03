@@ -707,16 +707,20 @@ namespace rettr {
         template <implements::any_operation Operation>
         reference as_ref_impl() noexcept {
             reference reference;
-            auto tuple = std::make_tuple(true, this, &reference);
-            storage.executer->invoke(Operation, &tuple);
+            if (has_value()) {
+                auto tuple = std::make_tuple(true, this, &reference);
+                storage.executer->invoke(Operation, &tuple);
+            }
             return reference;
         }
 
         template <implements::any_operation Operation>
         RETTR_NODISCARD const_reference as_ref_impl() const noexcept {
             const_reference reference;
-            auto tuple = std::make_tuple(true, this, &reference);
-            storage.executer->invoke(Operation, &tuple);
+            if (has_value()) {
+                auto tuple = std::make_tuple(true, this, &reference);
+                storage.executer->invoke(Operation, &tuple);
+            }
             return reference;
         }
 

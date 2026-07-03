@@ -1790,7 +1790,7 @@ namespace rettr::helper {
      */
     template<typename Ty>
     RETTR_CONSTEXPR_BOOL has_insert_for_key_and_value_v<
-        Ty, std::void_t<decltype(std::declval<Ty &>().insert(std::declval<typename Ty::const_iterator>(),
+        Ty, std::void_t<decltype(std::declval<Ty &>().insert(std::declval<typename Ty::key_type>(),
                                                              std::declval<typename Ty::value_type>()))> > = true;
 
     /**
