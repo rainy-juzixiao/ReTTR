@@ -350,7 +350,7 @@ namespace rettr {
         }
 
         template<typename Any, std::enable_if_t<std::is_same_v<std::decay_t<Any>, any>, int> = 0>
-        object_view(Any &&any) noexcept : object_(any.target_as_void_ptr()), ctti_(any.type()) {
+        object_view(Any &&any) noexcept : object_(const_cast<void*>(any.target_as_void_ptr())), ctti_(any.type()) {
         }
 
         object_view(void *const object, const typeinfo &ctti) noexcept : object_{object}, ctti_{ctti} {
