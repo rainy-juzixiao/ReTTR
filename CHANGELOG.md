@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/rainy-juzixiao/ReTTR/compare/v1.0.0...v1.1.0) (2026-07-06)
+
+
+### Features
+
+* **core:** add object_view-from-any constructor and refine type constraints ([9f4ef4a](https://github.com/rainy-juzixiao/ReTTR/commit/9f4ef4a2252bc84d1af8f5d20dbd10b214f9d7e8))
+
 ## 1.0.0 (2026-07-03)
 
 
