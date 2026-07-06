@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.2.0](https://github.com/rainy-juzixiao/ReTTR/compare/v1.1.0...v1.2.0) (2026-07-06)
+
+
+### Features
+
+* **any:** add std::formatter specialization for rettr::any under C++20 ([5e9c4fa](https://github.com/rainy-juzixiao/ReTTR/commit/5e9c4fa2cdcdeb1e3fd6da94b3093fc9125ef828))
+* **metadata annotation:** fix factory construct. ([21491fd](https://github.com/rainy-juzixiao/ReTTR/commit/21491fd0ae9f3dae427efbe63d2cf1a2c18f8a14))
+
+
+### Bug Fixes
+
+* Fix invalid conversion from 'const void*' to 'void*' ([96f1791](https://github.com/rainy-juzixiao/ReTTR/commit/96f1791102b7332722d34c62f4fee240f1d404d5))
+
 ## [1.1.0](https://github.com/rainy-juzixiao/ReTTR/compare/v1.0.0...v1.1.0) (2026-07-06)
 
 
