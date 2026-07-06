@@ -22,7 +22,6 @@
 
 namespace rettr {
     class any;
-
 };
 
 namespace rettr::annotations {
@@ -35,10 +34,12 @@ namespace rettr::annotations {
 }
 
 namespace rettr::annotations::implements {
-    template <auto Value>
+    template<auto Value>
     consteval metadata_t::custom_factory get_custom_factory() {
         if constexpr (requires { std::basic_string_view<char>{Value}; }) {
             return +[]() -> any { return std::basic_string_view<char>{Value}; };
+        } else if constexpr (requires { std::basic_string_view<char>{Value.data(), Value.size()}; }) {
+            return +[]() -> any { return std::basic_string_view<char>{Value.data(), Value.size()}; };
         } else {
             return +[]() -> any { return Value; };
         }
@@ -46,22 +47,22 @@ namespace rettr::annotations::implements {
 }
 
 namespace rettr::annotations {
-    template <auto Key, auto Value>
+    template<auto Key, auto Value>
     consteval metadata_t metadata() {
         return {implements::get_custom_factory<Key>(), implements::get_custom_factory<Value>()};
     }
 
-    template <helper::constexpr_string Key, auto Value>
+    template<helper::constexpr_string Key, auto Value>
     consteval metadata_t metadata() {
         return {implements::get_custom_factory<Key>(), implements::get_custom_factory<Value>()};
     }
 
-    template <auto Key, helper::constexpr_string Value>
+    template<auto Key, helper::constexpr_string Value>
     consteval metadata_t metadata() {
         return {implements::get_custom_factory<Key>(), implements::get_custom_factory<Value>()};
     }
 
-    template <helper::constexpr_string Key, helper::constexpr_string Value>
+    template<helper::constexpr_string Key, helper::constexpr_string Value>
     consteval metadata_t metadata() {
         return {implements::get_custom_factory<Key>(), implements::get_custom_factory<Value>()};
     }
