@@ -32,6 +32,10 @@
 
 // NOLINTEND
 
+#if RETTR_HAS_CXX20
+#include <sstream>
+#endif
+
 #if RETTR_USING_MSVC
 #pragma warning(push)
 #pragma warning(disable : 4715 4702 6011 26439 26495)
@@ -1065,6 +1069,48 @@ namespace std { // NOLINT
         }
     };
 }
+
+#if RETTR_HAS_CXX20
+template <>
+struct std::formatter<::rettr::any, char> {
+    constexpr auto parse(auto &ctx) {
+        auto it = ctx.begin();
+        if (it != ctx.end() && *it != '}') {
+            throw std::format_error("Invalid format specifier for rettr::any");
+        }
+        return it;
+    }
+
+    auto format(const ::rettr::any &val, auto &ctx) const {
+        std::ostringstream ss;
+        ss << val;
+        for (auto c : ss.str()) {
+            *ctx.out()++ = c;
+        }
+        return ctx.out();
+    }
+};
+
+template <>
+struct std::formatter<::rettr::any, wchar_t> {
+    constexpr auto parse(auto &ctx) {
+        auto it = ctx.begin();
+        if (it != ctx.end() && *it != '}') {
+            throw std::format_error("Invalid format specifier for rettr::any");
+        }
+        return it;
+    }
+
+    auto format(const ::rettr::any &val, auto &ctx) const {
+        std::wostringstream ss;
+        ss << val;
+        for (auto c : ss.str()) {
+            *ctx.out()++ = c;
+        }
+        return ctx.out();
+    }
+};
+#endif
 
 #if RETTR_USING_MSVC
 #pragma warning(pop)
