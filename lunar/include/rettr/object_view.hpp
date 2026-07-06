@@ -39,13 +39,15 @@ namespace rettr::implements {
 }
 
 namespace rettr::implements {
-    struct fake_class {};
+    struct fake_class {
+    };
 
-    struct static_no_definite_class_type {};
+    struct static_no_definite_class_type {
+    };
 
     static const auto static_type = typeinfo::create<static_no_definite_class_type>();
 
-    template <typename Class>
+    template<typename Class>
     static const class typeinfo &which_belongs_res() noexcept {
         if constexpr (std::is_void_v<Class>) {
             return static_type;
@@ -54,33 +56,36 @@ namespace rettr::implements {
         }
     }
 
-    struct as_array {};
+    struct as_array {
+    };
 
-    struct as_reference {};
+    struct as_reference {
+    };
 
-    template <typename Type, typename = void>
+    template<typename Type, typename = void>
     RETTR_CONSTEXPR_BOOL has_target_as_void_ptr = false;
 
-    template <typename Type>
-    RETTR_CONSTEXPR_BOOL has_target_as_void_ptr<Type, std::void_t<decltype(std::declval<Type>().target_as_void_ptr())>> = true;
+    template<typename Type>
+    RETTR_CONSTEXPR_BOOL has_target_as_void_ptr<Type, std::void_t<decltype(std::declval<Type>().target_as_void_ptr())> >
+            = true;
 
-    template <typename Type, typename = void>
+    template<typename Type, typename = void>
     RETTR_CONSTEXPR_BOOL has_type_query_interface = false;
 
-    template <typename Type>
-    RETTR_CONSTEXPR_BOOL has_type_query_interface<Type, std::void_t<decltype(std::declval<Type>().type())>> = true;
+    template<typename Type>
+    RETTR_CONSTEXPR_BOOL has_type_query_interface<Type, std::void_t<decltype(std::declval<Type>().type())> > = true;
 
-    template <typename Type>
+    template<typename Type>
     RETTR_CONSTEXPR_BOOL is_dynamic_object = has_target_as_void_ptr<Type> && has_type_query_interface<Type>;
 }
 
 namespace rettr::implements::type_private {
-    template <typename Type>
+    template<typename Type>
     struct type_data;
 }
 
 namespace rettr::implements {
-    template <typename ObjectView = object_view>
+    template<typename ObjectView = object_view>
     class arg_view {
     public:
         using iterator = object_view *;
@@ -91,7 +96,7 @@ namespace rettr::implements {
         arg_view() : start_args(nullptr), size_(0) {
         }
 
-        template <std::size_t N>
+        template<std::size_t N>
         arg_view(std::array<ObjectView, N> &list) : start_args(list.data()), size_(list.size()) { // NOLINT
         }
 
@@ -128,14 +133,15 @@ namespace rettr::implements {
         std::size_t size_;
     };
 
-    template <std::size_t N, typename ObjectView = object_view>
+    template<std::size_t N, typename ObjectView = object_view>
     class arg_store {
     public:
         using object_view = ObjectView;
 
-        template <typename... Args>
-        explicit arg_store([[maybe_unused]] Args &&...args_in) noexcept :
-            args{make_object_view_helper(std::forward<Args>(args_in))...} {
+        template<typename... Args>
+        explicit arg_store([[maybe_unused]] Args &&... args_in) noexcept : args{
+            make_object_view_helper(std::forward<Args>(args_in))...
+        } {
             static_assert(sizeof...(Args) == N, "Argument count mismatch with N");
         }
 
@@ -148,18 +154,22 @@ namespace rettr::implements {
         }
 
     private:
-        template <typename Ty>
+        template<typename Ty>
         static object_view make_object_view_helper(Ty &&arg) noexcept {
-            if constexpr (std::is_array_v<std::remove_reference_t<Ty>>) {
+            if constexpr (std::is_array_v<std::remove_reference_t<Ty> >) {
                 volatile auto *ptr = &arg;
                 void *addr = const_cast<void *>(static_cast<const volatile void *>(ptr));
-                return object_view{implements::as_array{}, addr, typeinfo::of<std::decay_t<Ty>>()};
-            } else if constexpr (std::is_function_v<std::remove_pointer_t<std::remove_reference_t<Ty>>>) {
-                return object_view{const_cast<void *>(reinterpret_cast<const void *>(&arg)),
-                                   typeinfo::of<std::remove_reference_t<Ty>>()};
+                return object_view{implements::as_array{}, addr, typeinfo::of<std::decay_t<Ty> >()};
+            } else if constexpr (std::is_function_v<std::remove_pointer_t<std::remove_reference_t<Ty> > >) {
+                return object_view{
+                    const_cast<void *>(reinterpret_cast<const void *>(&arg)),
+                    typeinfo::of<std::remove_reference_t<Ty> >()
+                };
             } else if constexpr (helper::is_pointer_reference_v<Ty>) { // NOLINT
-                return object_view{implements::as_reference{}, const_cast<void *>(static_cast<const void *>(&arg)),
-                                   typeinfo::of<Ty>()};
+                return object_view{
+                    implements::as_reference{}, const_cast<void *>(static_cast<const void *>(&arg)),
+                    typeinfo::of<Ty>()
+                };
             } else if constexpr (std::is_pointer_v<Ty>) {
                 return object_view{const_cast<void *>(static_cast<const void *>(&arg)), typeinfo::of<Ty>()};
             } else if constexpr (std::is_same_v<std::decay_t<Ty>, object_view>) {
@@ -174,14 +184,14 @@ namespace rettr::implements {
         std::array<object_view, N> args;
     };
 
-    template <typename... Args>
+    template<typename... Args>
     arg_store(Args...) -> arg_store<sizeof...(Args)>;
 
-    template <std::size_t N>
+    template<std::size_t N>
     class make_paramlist {
     public:
-        template <typename... Args>
-        explicit make_paramlist(Args &&...args_in) : types{make_paramlist_helper(std::forward<Args>(args_in))...} {
+        template<typename... Args>
+        explicit make_paramlist(Args &&... args_in) : types{make_paramlist_helper(std::forward<Args>(args_in))...} {
         }
 
         RETTR_NODISCARD array_range<class typeinfo> get() const noexcept {
@@ -189,12 +199,12 @@ namespace rettr::implements {
         }
 
     private:
-        template <typename Ty>
+        template<typename Ty>
         static class typeinfo make_paramlist_helper(Ty &&arg) noexcept {
-            if constexpr (std::is_array_v<std::remove_reference_t<Ty>>) {
-                return typeinfo::of<std::decay_t<Ty>>();
-            } else if constexpr (std::is_function_v<std::remove_pointer_t<std::remove_reference_t<Ty>>>) {
-                return typeinfo::of<std::remove_reference_t<Ty>>();
+            if constexpr (std::is_array_v<std::remove_reference_t<Ty> >) {
+                return typeinfo::of<std::decay_t<Ty> >();
+            } else if constexpr (std::is_function_v<std::remove_pointer_t<std::remove_reference_t<Ty> > >) {
+                return typeinfo::of<std::remove_reference_t<Ty> >();
             } else if constexpr (helper::is_pointer_reference_v<Ty>) { // NOLINT
                 return typeinfo::of<Ty>();
             } else if constexpr (std::is_pointer_v<Ty>) {
@@ -211,10 +221,10 @@ namespace rettr::implements {
         std::array<class typeinfo, N> types;
     };
 
-    template <typename... Args>
+    template<typename... Args>
     make_paramlist(Args...) -> make_paramlist<sizeof...(Args)>;
 
-    template <typename... Args>
+    template<typename... Args>
     class make_nondynamic_paramlist {
     public:
         make_nondynamic_paramlist() : types{make_paramlist_helper<Args>()...} {
@@ -225,12 +235,12 @@ namespace rettr::implements {
         }
 
     private:
-        template <typename Ty>
+        template<typename Ty>
         static class typeinfo make_paramlist_helper() noexcept {
-            if constexpr (std::is_array_v<std::remove_reference_t<Ty>>) {
-                return typeinfo::of<std::decay_t<Ty>>();
-            } else if constexpr (std::is_function_v<std::remove_pointer_t<std::remove_reference_t<Ty>>>) {
-                return typeinfo::of<std::remove_reference_t<Ty>>();
+            if constexpr (std::is_array_v<std::remove_reference_t<Ty> >) {
+                return typeinfo::of<std::decay_t<Ty> >();
+            } else if constexpr (std::is_function_v<std::remove_pointer_t<std::remove_reference_t<Ty> > >) {
+                return typeinfo::of<std::remove_reference_t<Ty> >();
             } else if constexpr (helper::is_pointer_reference_v<Ty>) { // NOLINT
                 return typeinfo::of<Ty>();
             } else if constexpr (std::is_pointer_v<Ty>) {
@@ -243,7 +253,7 @@ namespace rettr::implements {
         std::array<class typeinfo, sizeof...(Args)> types;
     };
 
-    template <typename... Types>
+    template<typename... Types>
     struct default_arguments_store {
         default_arguments_store() {
         }
@@ -252,11 +262,11 @@ namespace rettr::implements {
 
         default_arguments_store(default_arguments_store &&) = default;
 
-        template <typename... UArgs>
-        default_arguments_store(UArgs &&...args) : store(std::forward<UArgs>(args)...) {
+        template<typename... UArgs>
+        default_arguments_store(UArgs &&... args) : store(std::forward<UArgs>(args)...) {
         }
 
-        template <std::size_t Index>
+        template<std::size_t Index>
         decltype(auto) get() noexcept {
             return std::get<Index>(store);
         }
@@ -264,7 +274,7 @@ namespace rettr::implements {
         std::tuple<std::decay_t<Types>...> store;
     };
 
-    template <>
+    template<>
     struct default_arguments_store<> {
         default_arguments_store() {
         }
@@ -276,7 +286,7 @@ namespace rettr::implements {
         std::tuple<> store;
     };
 
-    template <typename ParamList, std::size_t Index, typename FirstArg, typename... RestArgs>
+    template<typename ParamList, std::size_t Index, typename FirstArg, typename... RestArgs>
     constexpr bool check_args_at_index() {
         using param_type = typename helper::type_at<Index, ParamList>::type;
         constexpr bool current_compatible = std::is_convertible_v<FirstArg, param_type>;
@@ -287,12 +297,12 @@ namespace rettr::implements {
         }
     }
 
-    template <typename ParamList, std::size_t Index>
+    template<typename ParamList, std::size_t Index>
     constexpr bool check_args_at_index() {
         return true;
     }
 
-    template <typename ParamList, std::size_t StartIndex, typename... args>
+    template<typename ParamList, std::size_t StartIndex, typename... args>
     constexpr bool check_default_args_compatibility() {
         if constexpr (sizeof...(args) == 0) {
             return true;
@@ -304,14 +314,16 @@ namespace rettr::implements {
 
 namespace rettr {
     // 用于表示不存在的实例
-    struct non_exists_instance_t {};
+    struct non_exists_instance_t {
+    };
 
     constexpr inline non_exists_instance_t non_exists_instance;
 
     class RETTR_API object_view {
     public:
-        template <typename Ty>
-        using enable_if_t = std::enable_if_t<!std::is_same_v<Ty, object_view> && !std::is_same_v<Ty, non_exists_instance_t>, int>;
+        template<typename Ty>
+        using enable_if_t = std::enable_if_t<!std::is_same_v<Ty, object_view> && !std::is_same_v<Ty,
+                                                 non_exists_instance_t> && !std::is_same_v<Ty, any>, int>;
 
         object_view() = default;
 
@@ -319,36 +331,45 @@ namespace rettr {
 
         object_view &operator=(std::nullptr_t) = delete;
 
-        template <typename Ty, enable_if_t<Ty> = 0, typename Type = type>
+        template<typename Ty, enable_if_t<Ty> = 0, typename Type = type>
         object_view(Ty &object) noexcept : // NOLINT
             object_{const_cast<void *>(static_cast<const void *>(std::addressof(object)))}, ctti_{rettr_typeid(Ty)} {
         }
 
-        template <typename Ty,
-                  std::enable_if_t<!std::is_same_v<std::decay_t<Ty>, object_view> &&
-                                       !std::is_same_v<std::decay_t<Ty>, non_exists_instance_t> && std::is_rvalue_reference_v<Ty &&> &&
-                                       !std::is_lvalue_reference_v<Ty>,
-                                   int> = 0,
-                  typename Type = type>
+        template<typename Ty,
+            std::enable_if_t<!std::is_same_v<std::decay_t<Ty>, object_view> &&
+                             !std::is_same_v<std::decay_t<Ty>, non_exists_instance_t> &&
+                             !std::is_same_v<std::decay_t<Ty>, any> &&
+                             std::is_rvalue_reference_v<Ty
+                                 &&> &&
+                             !std::is_lvalue_reference_v<Ty>,
+                int> = 0,
+            typename Type = type>
         object_view(Ty &&object) : // NOLINT
             object_{const_cast<void *>(static_cast<const void *>(std::addressof(object)))}, ctti_{rettr_typeid(Ty &&)} {
+        }
+
+        template<typename Any, std::enable_if_t<std::is_same_v<std::decay_t<Any>, any>, int> = 0>
+        object_view(Any &&any) noexcept : object_(any.target_as_void_ptr()), ctti_(any.type()) {
         }
 
         object_view(void *const object, const typeinfo &ctti) noexcept : object_{object}, ctti_{ctti} {
         }
 
-        object_view(implements::as_array, void *const object, const typeinfo &ctti) noexcept : ctti_{ctti}, object_holder_(object) {
+        object_view(implements::as_array, void *const object, const typeinfo &ctti) noexcept : ctti_{ctti},
+            object_holder_(object) {
             object_ = static_cast<void *>(&object_holder_);
         }
 
-        object_view(implements::as_reference, void *const object, const typeinfo &ctti) noexcept : object_{object}, ctti_{ctti} {
+        object_view(implements::as_reference, void *const object, const typeinfo &ctti) noexcept : object_{object},
+            ctti_{ctti} {
         }
 
         object_view(non_exists_instance_t) noexcept {
         }
 
-        object_view(object_view &&right) noexcept :
-            object_(right.object_), ctti_(right.ctti_), object_holder_(right.object_holder_), impl_(right.impl_) {
+        object_view(object_view &&right) noexcept : object_(right.object_), ctti_(right.ctti_),
+                                                    object_holder_(right.object_holder_), impl_(right.impl_) {
             if (right.object_ == &right.object_holder_) {
                 object_ = &object_holder_;
             }
@@ -365,8 +386,8 @@ namespace rettr {
             return *this;
         }
 
-        object_view(const object_view &right) :
-            object_(right.object_), ctti_(right.ctti_), object_holder_(right.object_holder_), impl_(right.impl_) {
+        object_view(const object_view &right) : object_(right.object_), ctti_(right.ctti_),
+                                                object_holder_(right.object_holder_), impl_(right.impl_) {
             if (right.object_ == &right.object_holder_) {
                 object_ = &object_holder_;
             }
@@ -383,31 +404,31 @@ namespace rettr {
             return *this;
         }
 
-        template <typename Decayed, enable_if_t<Decayed> = 0>
+        template<typename Decayed, enable_if_t<Decayed> = 0>
         RETTR_NODISCARD Decayed *cast_to_pointer() noexcept {
             using remove_ref_t = std::remove_reference_t<Decayed>;
             return const_cast<remove_ref_t *>(static_cast<const object_view *>(this)->cast_to_pointer<Decayed>());
         }
 
-        template <typename Decayed, enable_if_t<Decayed> = 0>
+        template<typename Decayed, enable_if_t<Decayed> = 0>
         RETTR_NODISCARD const Decayed *cast_to_pointer() const noexcept {
             static constexpr typeinfo target_type = typeinfo::create<Decayed>();
             return type().is_compatible(target_type) ? static_cast<const Decayed *>(target_as_void_ptr()) : nullptr;
         }
 
-        template <typename Type>
+        template<typename Type>
         RETTR_NODISCARD auto as() noexcept -> decltype(auto) {
             return implements::as_impl<Type>(target_as_void_ptr(), type());
         }
 
-        template <typename Type, enable_if_t<Type> = 0>
+        template<typename Type, enable_if_t<Type> = 0>
         RETTR_NODISCARD auto as() const -> decltype(auto) {
             using ret_type = decltype(std::declval<object_view &>().template as<Type>());
             rettr_let nonconst = const_cast<object_view *>(this);
             if constexpr (std::is_rvalue_reference_v<ret_type>) {
-                return nonconst->as<helper::add_const_rvalue_ref_t<Type>>();
+                return nonconst->as<helper::add_const_rvalue_ref_t<Type> >();
             } else {
-                return nonconst->as<helper::add_const_lvalue_ref_t<Type>>();
+                return nonconst->as<helper::add_const_lvalue_ref_t<Type> >();
             }
         }
 
@@ -422,6 +443,7 @@ namespace rettr {
         RETTR_NODISCARD rettr::type info() const noexcept;
 
         RETTR_NODISCARD const typeinfo &derived_type() const noexcept;
+
         RETTR_NODISCARD rettr::type derived_info() const noexcept;
 
         RETTR_NODISCARD bool valid() const noexcept {
@@ -436,14 +458,14 @@ namespace rettr {
             return object_;
         }
 
-        template <typename TargetType>
+        template<typename TargetType>
         RETTR_NODISCARD TargetType *try_dynamic_cast() noexcept {
             return const_cast<TargetType *>(static_cast<const object_view *>(this)->try_dynamic_cast<TargetType>());
         }
 
-        template <typename TargetType>
+        template<typename TargetType>
         RETTR_NODISCARD const TargetType *try_dynamic_cast() const noexcept {
-            static constexpr typeinfo target_type = typeinfo::create<helper::remove_cvref_t<TargetType>>();
+            static constexpr typeinfo target_type = typeinfo::create<helper::remove_cvref_t<TargetType> >();
             const typeinfo &actual_type = type().remove_cvref().remove_pointer();
             void *actual_ptr = [&]() -> void * {
                 if (type().remove_cvref().is_pointer()) {
@@ -460,17 +482,17 @@ namespace rettr {
             return nullptr;
         }
 
-        template <typename... Args>
-        any invoke(std::string_view name, Args &&...args) const;
+        template<typename... Args>
+        any invoke(std::string_view name, Args &&... args) const;
 
-        template <typename... Args>
-        any invoke(static_invoke_tag, std::string_view name, Args &&...args) const;
+        template<typename... Args>
+        any invoke(static_invoke_tag, std::string_view name, Args &&... args) const;
 
-        template <typename... Args>
-        any invoke(follow_cpp_rule_tag, std::string_view name, Args &&...args) const;
+        template<typename... Args>
+        any invoke(follow_cpp_rule_tag, std::string_view name, Args &&... args) const;
 
-        template <typename... Args>
-        any invoke(follow_cpp_rule_tag, static_invoke_tag, std::string_view name, Args &&...args) const;
+        template<typename... Args>
+        any invoke(follow_cpp_rule_tag, static_invoke_tag, std::string_view name, Args &&... args) const;
 
         implements::functor_operation operator()(std::string_view name) const;
 
@@ -480,11 +502,13 @@ namespace rettr {
 
         RETTR_NODISCARD const rettr::method &method(const std::string_view name,
                                                     const array_range<rettr::typeinfo> &overload_version_paramlist,
-                                                    const method_flags filter_method_flag = method_flags::none) const noexcept;
+                                                    const method_flags filter_method_flag = method_flags::none) const
+            noexcept;
 
         RETTR_NODISCARD const rettr::method &method(follow_cpp_rule_tag, const std::string_view name,
                                                     const array_range<rettr::typeinfo> &overload_version_paramlist,
-                                                    const method_flags filter_method_flag = method_flags::none) const noexcept;
+                                                    const method_flags filter_method_flag = method_flags::none) const
+            noexcept;
 
         RETTR_NODISCARD array_range<rettr::method> methods() const noexcept;
 
@@ -497,6 +521,7 @@ namespace rettr {
         RETTR_NODISCARD array_range<rettr::property> properties(filter_items filter) const noexcept;
 
         RETTR_NODISCARD shared_object create_shared() const;
+
         RETTR_NODISCARD object create_object() const;
 
     private:
@@ -510,12 +535,13 @@ namespace rettr {
         mutable void *impl_{};
     };
 
-    template <typename Any, std::enable_if_t<std::is_same_v<helper::remove_cvref_t<Any>, any>, int> = 0>
+    template<typename Any, std::enable_if_t<std::is_same_v<helper::remove_cvref_t<Any>, any>, int> = 0>
     RETTR_INLINE object_view as_object_view(Any &&any) {
         return object_view{const_cast<void *>(any.target_as_void_ptr()), any.type()};
     }
 
-    template <typename Any, std::enable_if_t<std::is_same_v<helper::remove_cvref_t<Any>, typename any::reference>, int> = 0>
+    template<typename Any, std::enable_if_t<std::is_same_v<helper::remove_cvref_t<Any>, typename any::reference>, int> =
+            0>
     RETTR_INLINE object_view as_object_view(Any &&any) {
         return object_view{const_cast<void *>(any.target_as_void_ptr()), any.type()};
     }
