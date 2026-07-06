@@ -36,7 +36,8 @@
 namespace rettr::implements {
     class enumeration_proxy : enumeration {
     public:
-        enumeration_proxy(enumeration e) : enumeration(e) {
+        enumeration_proxy(enumeration e) :
+            enumeration(e) {
         }
 
         enumeration_data *get() {
@@ -45,7 +46,8 @@ namespace rettr::implements {
     };
 
     template <typename Ty>
-    struct make_access_level_tag {};
+    struct make_access_level_tag {
+    };
 
     template <>
     struct make_access_level_tag<registration_private::private_access> {
@@ -76,22 +78,30 @@ namespace rettr {
     public:
         bind(std::shared_ptr<implements::registration_executer> reg_exec) :
             registration::class_<Clazz>(reg_exec),
-            implements::constructor_bind<Clazz, ConstructorArgs...>{[this](rettr::constructor ctor) {
-                reg_exec_->add_registration_func(this,
-                                                 [c = std::move(ctor)]() mutable { implements::store_item<Clazz>(std::move(c)); });
-            }},
+            implements::constructor_bind<Clazz,
+                                         ConstructorArgs...>{
+                [this](rettr::constructor ctor) {
+                    reg_exec_->add_registration_func(
+                        this,
+                        [c = std::move(ctor)
+                        ]() mutable {
+                            implements::store_item<
+                                Clazz>(std::move(c));
+                        });
+                }
+            },
             reg_exec_(std::move(reg_exec)) {
             reg_exec_->add_registration_func(static_cast<const void *>(this));
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
             static constexpr std::size_t args_hash =
-                rettr::annotations::implements::eval_for_constructor_args_hash<ConstructorArgs...>;
-            {
+                rettr::annotations::implements::eval_for_constructor_args_hash<ConstructorArgs...>; {
                 std::vector<metadata_item> inject_metadatas;
                 std::vector<std::string_view> names;
                 const auto e = implements::entity::constructor_entites_v<Clazz>;
-                const auto p  = args_hash;
+                const auto p = args_hash;
                 for (const auto &entry: e) {
-                    if (args_hash == entry.param_hash && entry.category == implements::entity::constructor_category::native_ctor) {
+                    if (args_hash == entry.param_hash && entry.category ==
+                        implements::entity::constructor_category::native_ctor) {
                         for (const auto &item: std::span{entry.metadatas.start, entry.metadatas.count}) {
                             inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(),
                                                           item.value_storage());
@@ -106,7 +116,8 @@ namespace rettr {
                 implements::constructor_bind<Clazz, ConstructorArgs...>::apply_metadatas(std::move(inject_metadatas));
                 if constexpr (sizeof...(ConstructorArgs) != 0) {
                     if (!names.empty()) {
-                        implements::constructor_bind<Clazz, ConstructorArgs...>::apply_parameter_names(std::move(names));
+                        implements::constructor_bind<Clazz, ConstructorArgs
+                                                     ...>::apply_parameter_names(std::move(names));
                     }
                 }
             }
@@ -121,7 +132,7 @@ namespace rettr {
         }
 
         template <typename... Modifiers>
-        registration::class_<Clazz> operator()(Modifiers &&...mods) {
+        registration::class_<Clazz> operator()(Modifiers &&... mods) {
             implements::constructor_bind<Clazz, ConstructorArgs...>::operator()(std::forward<Modifiers>(mods)...,
                                                                                 implements::make_access_level_tag<AccLevel>::make());
             called_bind = true;
@@ -138,23 +149,27 @@ namespace rettr {
                                                                            implements::constructor_func_bind<Fx> {
     public:
         bind(std::shared_ptr<implements::registration_executer> reg_exec, Fx func) :
-            registration::class_<Clazz>(reg_exec),
-            implements::constructor_func_bind<Fx>{[this](constructor ctor) {
-                                                      reg_exec_->add_registration_func(this, [c = std::move(ctor)]() mutable {
-                                                          implements::store_item<Clazz>(std::move(c));
-                                                      });
-                                                  },
-                                                  std::move(func)},
+            registration::class_<
+                Clazz>(reg_exec),
+            implements::constructor_func_bind<Fx>{
+                [this](constructor ctor) {
+                    reg_exec_->add_registration_func(this, [c = std::move(ctor)]() mutable {
+                        implements::store_item<Clazz>(std::move(c));
+                    });
+                },
+                std::move(func)
+            },
             reg_exec_(std::move(reg_exec)) {
             reg_exec_->add_registration_func(static_cast<const void *>(this));
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
-            static constexpr std::size_t args_hash = rettr::annotations::implements::eval_for_constructor_func_args_hash<Fx>;
-            {
+            static constexpr std::size_t args_hash = rettr::annotations::implements::eval_for_constructor_func_args_hash
+                <Fx>; {
                 std::vector<metadata_item> inject_metadatas;
                 std::vector<std::string_view> names;
 
                 for (const auto &entry: implements::entity::constructor_entites_v<Clazz>) {
-                    if (args_hash == entry.param_hash && entry.category == implements::entity::constructor_category::ctor_func) {
+                    if (args_hash == entry.param_hash && entry.category ==
+                        implements::entity::constructor_category::ctor_func) {
                         for (const auto &item: std::span{entry.metadatas.start, entry.metadatas.count}) {
                             inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(),
                                                           item.value_storage());
@@ -183,7 +198,7 @@ namespace rettr {
         }
 
         template <typename... Modifiers>
-        registration::class_<Clazz> operator()(Modifiers &&...mods) {
+        registration::class_<Clazz> operator()(Modifiers &&... mods) {
             implements::constructor_func_bind<Fx>::operator()(std::forward<Modifiers>(mods)...,
                                                               implements::make_access_level_tag<AccLevel>::make());
             called_bind = true;
@@ -199,14 +214,17 @@ namespace rettr {
     class registration::bind<implements::prop, Clazz, Acc, AccLevel> : public registration::class_<Clazz>,
                                                                        implements::property_bind<Clazz, Acc> {
     public:
-        bind(std::shared_ptr<implements::registration_executer> reg_exec, std::string_view name, Acc accessor) :
+        bind(std::shared_ptr<implements::registration_executer> reg_exec, std::string_view name,
+             Acc accessor) :
             registration::class_<Clazz>(reg_exec),
-            implements::property_bind<Clazz, Acc>{std::move(accessor), name,
-                                                  [this](rettr::property prop) {
-                                                      reg_exec_->add_registration_func(this, [p = std::move(prop)]() mutable {
-                                                          implements::store_item<Clazz>(std::move(p));
-                                                      });
-                                                  }},
+            implements::property_bind<Clazz, Acc>{
+                std::move(accessor), name,
+                [this](rettr::property prop) {
+                    reg_exec_->add_registration_func(this, [p = std::move(prop)]() mutable {
+                        implements::store_item<Clazz>(std::move(p));
+                    });
+                }
+            },
             reg_exec_(std::move(reg_exec)) {
             implements::register_accessor_class_type_when_needed<Clazz, Acc>();
             reg_exec_->add_registration_func(static_cast<const void *>(this));
@@ -241,7 +259,7 @@ namespace rettr {
         }
 
         template <typename... Modifiers>
-        registration::class_<Clazz> operator()(Modifiers &&...mods) {
+        registration::class_<Clazz> operator()(Modifiers &&... mods) {
             implements::property_bind<Clazz, Acc>::operator()(std::forward<Modifiers>(mods)...,
                                                               implements::make_access_level_tag<AccLevel>::make());
             called_bind = true;
@@ -257,13 +275,17 @@ namespace rettr {
     class registration::bind<implements::prop, Clazz, Getter, Setter, AccLevel> : public registration::class_<Clazz>,
                                                                                   implements::property_bind<Clazz, Getter> {
     public:
-        bind(std::shared_ptr<implements::registration_executer> reg_exec, std::string_view name, Getter getter, Setter setter) :
+        bind(std::shared_ptr<implements::registration_executer> reg_exec, std::string_view name, Getter getter,
+             Setter setter) :
             registration::class_<Clazz>(reg_exec),
             implements::property_bind<Clazz, Getter>{
                 std::move(getter), std::move(setter), name,
                 [this, r = reg_exec](rettr::property prop) {
-                    r->add_registration_func(this, [p = std::move(prop)]() mutable { implements::store_item<Clazz>(std::move(p)); });
-                }},
+                    r->add_registration_func(this, [p = std::move(prop)]() mutable {
+                        implements::store_item<Clazz>(std::move(p));
+                    });
+                }
+            },
             reg_exec_(std::move(reg_exec)) {
             reg_exec_->add_registration_func(static_cast<const void *>(this));
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
@@ -294,7 +316,8 @@ namespace rettr {
                         if constexpr (std::is_same_v<return_type, member_type>) {
                             if (name == entry.name_ptr) {
                                 for (const auto &item: std::span{entry.metadatas.start, entry.metadatas.count}) {
-                                    inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(),
+                                    inject_metadatas.emplace_back(implements::internal_construct_tag,
+                                                                  item.key_storage(),
                                                                   item.value_storage());
                                 }
                                 break;
@@ -310,12 +333,13 @@ namespace rettr {
 
         ~bind() {
             if (!called_bind) {
-                implements::property_bind<Clazz, Getter>::operator()(implements::make_access_level_tag<AccLevel>::make());
+                implements::property_bind<Clazz, Getter>::operator()(
+                    implements::make_access_level_tag<AccLevel>::make());
             }
         }
 
         template <typename... Modifiers>
-        registration::class_<Clazz> operator()(Modifiers &&...mods) {
+        registration::class_<Clazz> operator()(Modifiers &&... mods) {
             implements::property_bind<Clazz, Getter>::operator()(std::forward<Modifiers>(mods)...,
                                                                  implements::make_access_level_tag<AccLevel>::make());
             called_bind = true;
@@ -331,13 +355,17 @@ namespace rettr {
     class registration::bind<implements::prop_readonly, Clazz, Getter, AccLevel> : public registration::class_<Clazz>,
                                                                                    implements::property_bind_readonly<Clazz> {
     public:
-        bind(std::shared_ptr<implements::registration_executer> reg_exec, std::string_view name, Getter getter) :
+        bind(std::shared_ptr<implements::registration_executer> reg_exec, std::string_view name,
+             Getter getter) :
             registration::class_<Clazz>(reg_exec),
             implements::property_bind_readonly<Clazz>{
                 std::move(getter), name,
                 [this, r = reg_exec](rettr::property prop) {
-                    r->add_registration_func(this, [p = std::move(prop)]() mutable { implements::store_item<Clazz>(std::move(p)); });
-                }},
+                    r->add_registration_func(this, [p = std::move(prop)]() mutable {
+                        implements::store_item<Clazz>(std::move(p));
+                    });
+                }
+            },
             reg_exec_(std::move(reg_exec)) {
             reg_exec_->add_registration_func(static_cast<const void *>(this));
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
@@ -368,7 +396,8 @@ namespace rettr {
                         if constexpr (std::is_same_v<ReturnType, MemberType>) {
                             if (name == entry.name_ptr) {
                                 for (const auto &item: std::span{entry.metadatas.start, entry.metadatas.count}) {
-                                    inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(),
+                                    inject_metadatas.emplace_back(implements::internal_construct_tag,
+                                                                  item.key_storage(),
                                                                   item.value_storage());
                                 }
                                 break;
@@ -384,12 +413,13 @@ namespace rettr {
 
         ~bind() {
             if (!called_bind) {
-                implements::property_bind_readonly<Clazz>::operator()(implements::make_access_level_tag<AccLevel>::make());
+                implements::property_bind_readonly<Clazz>::operator()(
+                    implements::make_access_level_tag<AccLevel>::make());
             }
         }
 
         template <typename... Modifiers>
-        registration::class_<Clazz> operator()(Modifiers &&...mods) {
+        registration::class_<Clazz> operator()(Modifiers &&... mods) {
             implements::property_bind_readonly<Clazz>::operator()(std::forward<Modifiers>(mods)...,
                                                                   implements::make_access_level_tag<AccLevel>::make());
             called_bind = true;
@@ -405,14 +435,19 @@ namespace rettr {
     class registration::bind<implements::meth, Clazz, Func, AccLevel> : public registration::class_<Clazz>,
                                                                         implements::method_bind<Func> {
     public:
-        bind(std::shared_ptr<implements::registration_executer> reg_exec, std::string_view name, Func func) :
+        bind(std::shared_ptr<implements::registration_executer> reg_exec, std::string_view name,
+             Func func) :
             registration::class_<Clazz>(reg_exec),
-            implements::method_bind<Func>{name, std::move(func), rettr::typeinfo::create<Clazz>(),
-                                          [this](rettr::method meth) {
-                                              reg_exec_->add_registration_func(
-                                                  static_cast<const void *>(this),
-                                                  [m = std::move(meth)]() mutable { implements::store_item<Clazz>(std::move(m)); });
-                                          }},
+            implements::method_bind<Func>{
+                name, std::move(func), rettr::typeinfo::create<Clazz>(),
+                [this](rettr::method meth) {
+                    reg_exec_->add_registration_func(
+                        static_cast<const void *>(this),
+                        [m = std::move(meth)]() mutable {
+                            implements::store_item<Clazz>(std::move(m));
+                        });
+                }
+            },
             reg_exec_(std::move(reg_exec)) {
             implements::register_accessor_class_type_when_needed<Clazz, Func>();
             reg_exec_->add_registration_func(static_cast<const void *>(this));
@@ -427,10 +462,13 @@ namespace rettr {
                         if constexpr (std::is_same_v<Func, ptr>) {
                             if (func == entry.ptr) {
                                 for (const auto &item: std::span{entry.metadatas.start, entry.metadatas.count}) {
-                                    inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(),
+                                    inject_metadatas.emplace_back(implements::internal_construct_tag,
+                                                                  item.key_storage(),
                                                                   item.value_storage());
                                 }
-                                for (const auto &name: std::span{entry.parameter_names.start, entry.parameter_names.count}) {
+                                for (const auto &name: std::span{
+                                         entry.parameter_names.start, entry.parameter_names.count
+                                     }) {
                                     names.emplace_back(name);
                                 }
                             }
@@ -448,7 +486,8 @@ namespace rettr {
                 if constexpr (function_traits<Func>::is_function_object && function_traits<Func>::arity != 0) {
                     std::vector<std::string_view> names;
 
-                    static constexpr auto parameters = std::define_static_array(std::meta::parameters_of(^^Func::operator()));
+                    static constexpr auto parameters = std::define_static_array(
+                        std::meta::parameters_of(^^Func::operator()));
                     // 由于C++26反射的在GCC的限制，如对于lambda表达式，尽管在许多实践被认为，它是一个匿名函数对象，以及源码可能考虑到了对隐式生成的lambda表达式扫描，但无论如何，我们只能用这种方式扫描
 
                     template for (constexpr auto item: parameters) {
@@ -474,7 +513,7 @@ namespace rettr {
         }
 
         template <typename... Modifiers>
-        registration::class_<Clazz> operator()(Modifiers &&...mods) {
+        registration::class_<Clazz> operator()(Modifiers &&... mods) {
             implements::method_bind<Func>::operator()(std::forward<Modifiers>(mods)...,
                                                       implements::make_access_level_tag<AccLevel>::make());
             called_bind = true;
@@ -490,15 +529,19 @@ namespace rettr {
     class registration::bind<implements::enum_, Clazz, EnumType> : public registration::class_<Clazz>,
                                                                    implements::enumeration_bind<Clazz, EnumType> {
     public:
-        bind(std::shared_ptr<implements::registration_executer> reg_exec, std::string_view name) :
+        bind(std::shared_ptr<implements::registration_executer> reg_exec,
+             std::string_view name) :
             registration::class_<Clazz>(reg_exec),
             implements::enumeration_bind<Clazz, EnumType>{
                 name,
                 [this](rettr::enumeration enum_data) {
-                    reg_exec_->add_registration_func(static_cast<const void *>(this), [e = enum_data]() mutable {
-                        implements::store_item<Clazz>(implements::enumeration_proxy{e}.get());
-                    });
-                }},
+                    reg_exec_->add_registration_func(
+                        static_cast<const void *>(this), [e = enum_data]() mutable {
+                            implements::store_item<Clazz>(
+                                implements::enumeration_proxy{e}.get());
+                        });
+                }
+            },
             reg_exec_(std::move(reg_exec)) {
             std::ignore = type::from<EnumType>(); // 确保被注册
             reg_exec_->add_registration_func(static_cast<const void *>(this));
@@ -507,7 +550,8 @@ namespace rettr {
             std::vector<metadata_item> inject_metadatas;
             std::span<const rettr::annotations::metadata_t> items{metadata.items, metadata.count};
             for (const auto &item: items) {
-                inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(), item.value_storage());
+                inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(),
+                                              item.value_storage());
             }
             implements::enumeration_bind<Clazz, EnumType>::apply_metadatas(std::move(inject_metadatas));
 #endif
@@ -525,12 +569,13 @@ namespace rettr {
                     names.emplace_back(entry.second);
                 }
 
-                implements::enumeration_bind<Clazz, EnumType>::apply_values(names, values); // 在bind销毁后，触发enumeration_bind的提交
+                implements::enumeration_bind<Clazz, EnumType>::apply_values(names, values);
+                // 在bind销毁后，触发enumeration_bind的提交
             }
         }
 
         template <typename... Modifiers>
-        registration::class_<Clazz> operator()(Modifiers &&...mods) {
+        registration::class_<Clazz> operator()(Modifiers &&... mods) {
             implements::enumeration_bind<Clazz, EnumType>::operator()(std::forward<Modifiers>(mods)...);
             called_bind = true;
             return {reg_exec_};
@@ -551,7 +596,8 @@ namespace rettr {
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
 namespace rettr {
     template <auto Entity, typename Clazz, typename AccLevel, typename... ConstructorArgs>
-    class registration::bind_entity<Entity, implements::ctor, Clazz, AccLevel, ConstructorArgs...> {};
+    class registration::bind_entity<Entity, implements::ctor, Clazz, AccLevel, ConstructorArgs...> {
+    };
 }
 #endif
 
@@ -594,15 +640,18 @@ namespace rettr::implements {
 
     template <typename Clazz, typename AccLevel>
     constexpr auto auto_scan_marked_constructors_members = [] {
-        static constexpr auto vec = std::define_static_array(std::meta::members_of(^^Clazz, std::meta::access_context::unchecked()));
+        static constexpr auto vec = std::define_static_array(
+            std::meta::members_of(^^Clazz, std::meta::access_context::unchecked()));
 
         auto level = implements::make_access_level_tag<AccLevel>::make().value;
 
         std::vector<std::meta::info> ctors;
 
         template for (constexpr auto item: vec) {
-            if constexpr (is_function(item) && !is_constructor(item) && !is_destructor(item) && !is_operator_function(item)) {
-                if constexpr (annotations::make_member_anno(item).template has<annotations::mark_as_constructor_func_t>()) {
+            if constexpr (is_function(item) && !is_constructor(item) && !is_destructor(item) && !
+                          is_operator_function(item)) {
+                if constexpr (annotations::make_member_anno(item).template has<
+                    annotations::mark_as_constructor_func_t>()) {
                     static_assert(remove_cvref(return_type_of(item)) == ^^Clazz,
                                   "You mark this constructor func, but, the return type is not This type itself!");
                 }
@@ -706,8 +755,9 @@ namespace rettr::implements {
         using type = typename concat_constructor_paramlist<
             Constructor,
             helper::type_list_push_back_t<
-                typename[:constructor_arguments_types<Constructor>[constructor_arguments_types<Constructor>.size() - Remain
-        ]:], TypeList>,
+                typename [:constructor_arguments_types<Constructor>[
+                    constructor_arguments_types<Constructor>.size() - Remain
+                ]:], TypeList>,
             Remain - 1>::type;
     };
 
@@ -717,7 +767,8 @@ namespace rettr::implements {
     };
 
     template <typename Clazz, typename AccLevel>
-    void make_constructor_available_impl(std::shared_ptr<implements::registration_executer> &self_reg_exec, auto &holders_) {
+    void make_constructor_available_impl(std::shared_ptr<implements::registration_executer> &self_reg_exec,
+                                         auto &holders_) {
         /* constructor */
         template for (constexpr auto ctor_ref: implements::auto_scan_constructors_members<Clazz, AccLevel>) {
             using param_type_list =
@@ -736,29 +787,37 @@ namespace rettr::implements {
             using fx_t = decltype(&[:ctor:]);
             using ctorbind = registration::bind<implements::ctor_func, Clazz, fx_t, AccLevel>;
             auto *ptr = new ctorbind(self_reg_exec, &[:ctor:]);
-            holders_.emplace_back(ptr, [](void *p) { delete static_cast<ctorbind *>(p); });
+            holders_.emplace_back(ptr, [](void *p) {
+                delete static_cast<ctorbind *>(p);
+            });
         }
     }
 
     template <typename Clazz, typename AccLevel>
-    void make_member_data_available_impl(std::shared_ptr<implements::registration_executer> &self_reg_exec, auto &holders_) {
+    void make_member_data_available_impl(std::shared_ptr<implements::registration_executer> &self_reg_exec,
+                                         auto &holders_) {
         template for (constexpr auto item: auto_scan_properties_members<Clazz, AccLevel>) {
             using member_ptr_t = decltype(&[:item:]);
             auto name = std::define_static_string(std::meta::identifier_of(item));
             using propbind = registration::bind<implements::prop, Clazz, member_ptr_t, AccLevel>;
             auto *ptr = new propbind(self_reg_exec, name, &[:item:]);
-            holders_.emplace_back(ptr, [](void *p) { delete static_cast<propbind *>(p); });
+            holders_.emplace_back(ptr, [](void *p) {
+                delete static_cast<propbind *>(p);
+            });
         }
     }
 
     template <typename Clazz, typename AccLevel>
-    void make_member_functions_available_impl(std::shared_ptr<implements::registration_executer> &self_reg_exec, auto &holders_) {
+    void make_member_functions_available_impl(std::shared_ptr<implements::registration_executer> &self_reg_exec,
+                                              auto &holders_) {
         template for (constexpr auto item: auto_scan_method_members<Clazz, AccLevel>) {
             using member_ptr_t = decltype(&[:item:]);
             auto name = std::define_static_string(std::meta::identifier_of(item));
             using methbind = registration::bind<implements::meth, Clazz, member_ptr_t, AccLevel>;
             auto *ptr = new methbind(self_reg_exec, name, &[:item:]);
-            holders_.emplace_back(ptr, [](void *p) { delete static_cast<methbind *>(p); });
+            holders_.emplace_back(ptr, [](void *p) {
+                delete static_cast<methbind *>(p);
+            });
         }
     }
 
@@ -803,13 +862,16 @@ namespace rettr::implements {
     }();
 
     template <typename Clazz, typename AccLevel>
-    void make_enumerators_available_impl(std::shared_ptr<implements::registration_executer> &self_reg_exec, auto &holders_) {
+    void make_enumerators_available_impl(std::shared_ptr<implements::registration_executer> &self_reg_exec,
+                                         auto &holders_) {
         template for (constexpr auto t: types_of<Clazz, AccLevel>) {
             if constexpr (std::meta::is_enum_type(t)) {
                 auto name = std::define_static_string(std::meta::identifier_of(t));
-                using enumbind = registration::bind<implements::enum_, Clazz, typename[:t:]>;
+                using enumbind = registration::bind<implements::enum_, Clazz, typename [:t:]>;
                 auto *ptr = new enumbind(self_reg_exec, name);
-                holders_.emplace_back(ptr, [](void *p) { delete static_cast<enumbind *>(p); });
+                holders_.emplace_back(ptr, [](void *p) {
+                    delete static_cast<enumbind *>(p);
+                });
             }
         }
     }
@@ -818,7 +880,7 @@ namespace rettr::implements {
     void make_sub_types_avaiable_impl() {
         template for (constexpr auto t: types_of<Clazz, AccLevel>) {
             if constexpr (std::meta::is_class_type(t)) {
-                registration::class_<typename[:t:]>(std::define_static_string(std::meta::identifier_of(t)))
+                registration::class_<typename [:t:]>(std::define_static_string(std::meta::identifier_of(t)))
                     .make_this_available(AccLevel());
             }
         }
@@ -830,14 +892,13 @@ namespace rettr {
     class registration::bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_all, AccLevel>
         : public registration::class_<Clazz> {
     public:
-        bind(std::shared_ptr<implements::registration_executer> reg_exec) : registration::class_<Clazz>(reg_exec) {
-            std::vector<std::unique_ptr<void, void (*)(void *)>> holders_;
+        bind(std::shared_ptr<implements::registration_executer> reg_exec) :
+            registration::class_<Clazz>(reg_exec) {
+            std::vector<std::unique_ptr<void, void (*)(void *)> > holders_;
             implements::make_constructor_available_impl<Clazz, AccLevel>(this->reg_exec, holders_);
             implements::make_member_data_available_impl<Clazz, AccLevel>(this->reg_exec, holders_);
             implements::make_member_functions_available_impl<Clazz, AccLevel>(this->reg_exec, holders_);
-            implements::make_enumerators_available_impl<Clazz, AccLevel>(this->reg_exec, holders_);
-
-            {
+            implements::make_enumerators_available_impl<Clazz, AccLevel>(this->reg_exec, holders_); {
                 implements::make_sub_types_avaiable_impl<Clazz, AccLevel>();
             }
         }
@@ -849,8 +910,9 @@ namespace rettr {
     class registration::bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_constructors, AccLevel>
         : public registration::class_<Clazz> {
     public:
-        bind(std::shared_ptr<implements::registration_executer> reg_exec) : registration::class_<Clazz>(reg_exec) {
-            std::vector<std::unique_ptr<void, void (*)(void *)>> holders_;
+        bind(std::shared_ptr<implements::registration_executer> reg_exec) :
+            registration::class_<Clazz>(reg_exec) {
+            std::vector<std::unique_ptr<void, void (*)(void *)> > holders_;
             implements::make_constructor_available_impl<Clazz, AccLevel>(this->reg_exec, holders_);
         }
     };
@@ -859,18 +921,21 @@ namespace rettr {
     class registration::bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_data_members, AccLevel>
         : public registration::class_<Clazz> {
     public:
-        bind(std::shared_ptr<implements::registration_executer> reg_exec) : registration::class_<Clazz>(reg_exec) {
-            std::vector<std::unique_ptr<void, void (*)(void *)>> holders_;
+        bind(std::shared_ptr<implements::registration_executer> reg_exec) :
+            registration::class_<Clazz>(reg_exec) {
+            std::vector<std::unique_ptr<void, void (*)(void *)> > holders_;
             implements::make_member_data_available_impl<Clazz, AccLevel>(this->reg_exec, holders_);
         }
     };
 
     template <typename Clazz, typename AccLevel>
-    class registration::bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_function_members, AccLevel>
+    class registration::bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_function_members,
+                             AccLevel>
         : public registration::class_<Clazz> {
     public:
-        bind(std::shared_ptr<implements::registration_executer> reg_exec) : registration::class_<Clazz>(reg_exec) {
-            std::vector<std::unique_ptr<void, void (*)(void *)>> holders_;
+        bind(std::shared_ptr<implements::registration_executer> reg_exec) :
+            registration::class_<Clazz>(reg_exec) {
+            std::vector<std::unique_ptr<void, void (*)(void *)> > holders_;
             implements::make_member_functions_available_impl<Clazz, AccLevel>(this->reg_exec, holders_);
         }
     };
@@ -879,8 +944,9 @@ namespace rettr {
     class registration::bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_enumerators, AccLevel>
         : public registration::class_<Clazz> {
     public:
-        bind(std::shared_ptr<implements::registration_executer> reg_exec) : registration::class_<Clazz>(reg_exec) {
-            std::vector<std::unique_ptr<void, void (*)(void *)>> holders_;
+        bind(std::shared_ptr<implements::registration_executer> reg_exec) :
+            registration::class_<Clazz>(reg_exec) {
+            std::vector<std::unique_ptr<void, void (*)(void *)> > holders_;
             implements::make_enumerators_available_impl<Clazz, AccLevel>(this->reg_exec, holders_);
         }
     };
@@ -889,10 +955,32 @@ namespace rettr {
     class registration::bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_all_bases, AccLevel>
         : public registration::class_<Clazz> {
     public:
-        bind(std::shared_ptr<implements::registration_executer> reg_exec) : registration::class_<Clazz>(reg_exec) {
+        bind(std::shared_ptr<implements::registration_executer> reg_exec) :
+            registration::class_<Clazz>(reg_exec) {
+            auto level = implements::make_access_level_tag<AccLevel>::make().value;
+
             template for (constexpr auto base: implements::bases_of<Clazz>) {
-                using t = [:std::meta::type_of(base):];
-                {
+                switch (level) {
+                    case access_levels::public_access:
+                        if (!std::meta::is_public(base)) {
+                            continue;
+                        }
+                        break;
+                    case access_levels::protected_access:
+                        if (!std::meta::is_protected(base)) {
+                            continue;
+                        }
+                        break;
+                    case access_levels::private_access:
+                        if (!std::meta::is_private(base)) {
+                            continue;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+
+                using t = [:std::meta::type_of(base):]; {
                     registration::class_<t>(std::define_static_string(std::meta::identifier_of(base)))
                         .make_this_available(AccLevel())
                         .make_bases_available(AccLevel());
