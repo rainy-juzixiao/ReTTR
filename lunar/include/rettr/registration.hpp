@@ -141,24 +141,6 @@ namespace rettr {
                           helper::type_list_contains<AccLevel, implements::registration_private::access_levels_list>::value>>
             bind<implements::clazz_, Clazz, implements::registration_auto_scan_for_all_bases, AccLevel> make_bases_available(
                 AccLevel level = AccLevel());
-
-            template <auto Entity, typename AccLevel = implements::registration_private::public_access,
-                      typename Tp = std::enable_if_t<
-                          helper::type_list_contains<AccLevel, implements::registration_private::access_levels_list>::value>>
-            bind_entity<Entity, implements::meth, Clazz, AccLevel> method(AccLevel level = AccLevel());
-
-            template <auto Entity, typename AccLevel = implements::registration_private::public_access,
-                      typename Tp = std::enable_if_t<
-                          helper::type_list_contains<AccLevel, implements::registration_private::access_levels_list>::value>>
-            bind_entity<Entity, implements::meth, Clazz, AccLevel> property(AccLevel level = AccLevel());
-
-            template <auto Entity, typename Acc, typename AccLevel = implements::registration_private::public_access,
-                      typename Tp = std::enable_if_t<
-                          helper::type_list_contains<AccLevel, implements::registration_private::access_levels_list>::value>>
-            bind_entity<Entity, implements::prop_readonly, Clazz, AccLevel> property_readonly(std::string_view name, Acc accessor,
-                                                                                              AccLevel level = AccLevel());
-
-
 #endif
         protected:
             class_(const std::shared_ptr<implements::registration_executer> &reg_exec);
