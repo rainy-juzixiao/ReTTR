@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/rainy-juzixiao/ReTTR/compare/v1.2.0...v1.3.0) (2026-07-06)
+
+
+### Features
+
+* **registration:** filter base class accessibility in auto-scan bases ([8301920](https://github.com/rainy-juzixiao/ReTTR/commit/8301920630bca3d6d66c8070a2c2d19d638cafe0))
+
 ## [1.2.0](https://github.com/rainy-juzixiao/ReTTR/compare/v1.1.0...v1.2.0) (2026-07-06)
 
 
