@@ -386,6 +386,17 @@ namespace rettr::implements {
         return custom_name_to_id_;
     }
 
+    static void collect_bases_postorder(const type &t, std::unordered_set<type> &visited,
+                                        std::vector<type> &result) noexcept {
+        for (const auto &base_type: t.base_classes()) {
+            if (visited.find(base_type) == visited.end()) {
+                visited.insert(base_type);
+                collect_bases_postorder(base_type, visited, result);
+                result.emplace_back(base_type);
+            }
+        }
+    }
+
     template <typename Ty>
     void type_register_private::update_class_list(const type &t, Ty item_ptr) {
         auto &all_class_items = (t.type_data_->my_class_data.*item_ptr);
@@ -393,7 +404,10 @@ namespace rettr::implements {
         helper::remove_cvref_t<decltype(all_class_items)> item_vec(item_range.begin(), item_range.end());
         all_class_items.reserve(all_class_items.size() + 1);
         all_class_items.clear();
-        for (const auto &base_type: t.base_classes()) {
+        std::unordered_set<type> visited;
+        std::vector<type> ordered_bases;
+        collect_bases_postorder(t, visited, ordered_bases);
+        for (const auto &base_type: ordered_bases) {
             auto base_properties = items_for_type(base_type, (base_type.type_data_->my_class_data.*item_ptr));
             if (base_properties.empty()) {
                 continue;

@@ -67,6 +67,11 @@ namespace rettr::implements {
         any_reference(ValueType &&value) : basic_any{std::in_place_type<decltype(value)>, std::forward<ValueType>(value)} {
         }
 
+        template <typename ValueType,
+                  std::enable_if_t<!helper::is_any_of_v<std::decay_t<ValueType>, basic_any, any_reference>, int> = 0>
+        any_reference(internal_construct_tag_t, ValueType &&value) : basic_any{std::in_place_type<std::decay_t<ValueType>>, std::forward<ValueType>(value)} {
+        }
+
         any_reference(const any_reference &) = default;
 
         any_reference(any_reference &&) = default;

@@ -46,6 +46,6 @@ namespace rettr {
             return implements::apply_offset(ptr, source, target);
         }
         auto derived_info = mytype.type_data_->my_class_data.derived_info_func(ptr);
-        return implements::apply_offset(ptr, derived_info.type.type_info(), target);
+        return implements::apply_offset(derived_info.ptr, derived_info.type.type_info(), target);
     }
 }

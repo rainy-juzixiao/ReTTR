@@ -136,7 +136,9 @@ namespace rettr {
 
         const auto &vec = raw_t.type_data_->my_class_data.properties;
 
-        const auto ret = std::find_if(vec.crbegin(), vec.crend(), [name](const class property &item) { return item.name() == name; });
+        const auto ret = std::find_if(vec.crbegin(), vec.crend(), [name](const rettr::property &item) {
+            return item.name() == name;
+        });
 
         if (ret != vec.crend()) {
             return *ret;
@@ -152,7 +154,9 @@ namespace rettr {
         if (!vec.empty()) {
             return array_range(vec.data(), vec.size(), // NOLINT(*-return-braced-init-list)
                                default_predicate<rettr::property>(
-                                   [](const rettr::property &item) { return item.access_level() == access_levels::public_access; }));
+                                   [](const rettr::property &item) {
+                                       return item.access_level() == access_levels::public_access;
+                                   }));
         }
         return {};
     }
@@ -333,8 +337,8 @@ namespace rettr {
 
         if (!vec.empty()) {
             return array_range<rettr::method>(vec.data(), vec.size(), default_predicate<rettr::method>([](const rettr::method &item) {
-                                                  return (item.access_level() == access_levels::public_access);
-                                              }));
+                return (item.access_level() == access_levels::public_access);
+            }));
         }
 
         return {};
