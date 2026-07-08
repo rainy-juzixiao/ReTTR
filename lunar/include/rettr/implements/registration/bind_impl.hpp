@@ -291,36 +291,38 @@ namespace rettr {
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
             std::vector<metadata_item> inject_metadatas;
 
-            if constexpr (std::is_pointer_v<typename function_traits<Getter>::return_type> ||
-                          std::is_reference_v<typename function_traits<Getter>::return_type>) {
-                using return_raw = std::remove_cvref_t<typename function_traits<Getter>::return_type>;
-                template for (constexpr auto &entry: implements::entity::properties_entites_v<Clazz>) {
-                    using entry_ptr = std::decay_t<decltype(entry.ptr)>;
-                    if constexpr (helper::member_pointer_traits<entry_ptr>::valid) {
-                        using member_type = typename helper::member_pointer_traits<entry_ptr>::type;
-                        if constexpr (std::is_same_v<return_raw, member_type>) {
-                            for (const auto &item: std::span{entry.metadatas.start, entry.metadatas.count}) {
-                                inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(),
-                                                              item.value_storage());
-                            }
-                            break;
-                        }
-                    }
-                }
-            } else {
-                using return_type = typename function_traits<Getter>::return_type;
-                template for (constexpr auto &entry: implements::entity::properties_entites_v<Clazz>) {
-                    using entry_ptr = std::decay_t<decltype(entry.ptr)>;
-                    if constexpr (helper::member_pointer_traits<entry_ptr>::valid) {
-                        using member_type = typename helper::member_pointer_traits<entry_ptr>::type;
-                        if constexpr (std::is_same_v<return_type, member_type>) {
-                            if (name == entry.name_ptr) {
+            if constexpr (function_traits<Getter>::valid) {
+                if constexpr (std::is_pointer_v<typename function_traits<Getter>::return_type> ||
+                              std::is_reference_v<typename function_traits<Getter>::return_type>) {
+                    using return_raw = std::remove_cvref_t<typename function_traits<Getter>::return_type>;
+                    template for (constexpr auto &entry: implements::entity::properties_entites_v<Clazz>) {
+                        using entry_ptr = std::decay_t<decltype(entry.ptr)>;
+                        if constexpr (helper::member_pointer_traits<entry_ptr>::valid) {
+                            using member_type = typename helper::member_pointer_traits<entry_ptr>::type;
+                            if constexpr (std::is_same_v<return_raw, member_type>) {
                                 for (const auto &item: std::span{entry.metadatas.start, entry.metadatas.count}) {
-                                    inject_metadatas.emplace_back(implements::internal_construct_tag,
-                                                                  item.key_storage(),
+                                    inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(),
                                                                   item.value_storage());
                                 }
                                 break;
+                            }
+                        }
+                    }
+                } else {
+                    using return_type = typename function_traits<Getter>::return_type;
+                    template for (constexpr auto &entry: implements::entity::properties_entites_v<Clazz>) {
+                        using entry_ptr = std::decay_t<decltype(entry.ptr)>;
+                        if constexpr (helper::member_pointer_traits<entry_ptr>::valid) {
+                            using member_type = typename helper::member_pointer_traits<entry_ptr>::type;
+                            if constexpr (std::is_same_v<return_type, member_type>) {
+                                if (name == entry.name_ptr) {
+                                    for (const auto &item: std::span{entry.metadatas.start, entry.metadatas.count}) {
+                                        inject_metadatas.emplace_back(implements::internal_construct_tag,
+                                                                      item.key_storage(),
+                                                                      item.value_storage());
+                                    }
+                                    break;
+                                }
                             }
                         }
                     }
@@ -371,36 +373,38 @@ namespace rettr {
 #if RETTR_HAS_CXX26 && RETTR_HAS_CXX26_STATIC_REFLECTION
             std::vector<metadata_item> inject_metadatas;
 
-            if constexpr (std::is_pointer_v<typename function_traits<Getter>::return_type> ||
-                          std::is_reference_v<typename function_traits<Getter>::return_type>) {
-                using ReturnRaw = std::remove_cvref_t<typename function_traits<Getter>::return_type>;
-                template for (constexpr auto &entry: implements::entity::properties_entites_v<Clazz>) {
-                    using EntryPtr = std::decay_t<decltype(entry.ptr)>;
-                    if constexpr (helper::member_pointer_traits<EntryPtr>::valid) {
-                        using MemberType = typename helper::member_pointer_traits<EntryPtr>::type;
-                        if constexpr (std::is_same_v<ReturnRaw, MemberType>) {
-                            for (const auto &item: std::span{entry.metadatas.start, entry.metadatas.count}) {
-                                inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(),
-                                                              item.value_storage());
-                            }
-                            break;
-                        }
-                    }
-                }
-            } else {
-                using ReturnType = typename function_traits<Getter>::return_type;
-                template for (constexpr auto &entry: implements::entity::properties_entites_v<Clazz>) {
-                    using EntryPtr = std::decay_t<decltype(entry.ptr)>;
-                    if constexpr (helper::member_pointer_traits<EntryPtr>::valid) {
-                        using MemberType = typename helper::member_pointer_traits<EntryPtr>::type;
-                        if constexpr (std::is_same_v<ReturnType, MemberType>) {
-                            if (name == entry.name_ptr) {
+            if constexpr (function_traits<Getter>::valid) {
+                if constexpr (std::is_pointer_v<typename function_traits<Getter>::return_type> ||
+                              std::is_reference_v<typename function_traits<Getter>::return_type>) {
+                    using ReturnRaw = std::remove_cvref_t<typename function_traits<Getter>::return_type>;
+                    template for (constexpr auto &entry: implements::entity::properties_entites_v<Clazz>) {
+                        using EntryPtr = std::decay_t<decltype(entry.ptr)>;
+                        if constexpr (helper::member_pointer_traits<EntryPtr>::valid) {
+                            using MemberType = typename helper::member_pointer_traits<EntryPtr>::type;
+                            if constexpr (std::is_same_v<ReturnRaw, MemberType>) {
                                 for (const auto &item: std::span{entry.metadatas.start, entry.metadatas.count}) {
-                                    inject_metadatas.emplace_back(implements::internal_construct_tag,
-                                                                  item.key_storage(),
+                                    inject_metadatas.emplace_back(implements::internal_construct_tag, item.key_storage(),
                                                                   item.value_storage());
                                 }
                                 break;
+                            }
+                        }
+                    }
+                } else {
+                    using ReturnType = typename function_traits<Getter>::return_type;
+                    template for (constexpr auto &entry: implements::entity::properties_entites_v<Clazz>) {
+                        using EntryPtr = std::decay_t<decltype(entry.ptr)>;
+                        if constexpr (helper::member_pointer_traits<EntryPtr>::valid) {
+                            using MemberType = typename helper::member_pointer_traits<EntryPtr>::type;
+                            if constexpr (std::is_same_v<ReturnType, MemberType>) {
+                                if (name == entry.name_ptr) {
+                                    for (const auto &item: std::span{entry.metadatas.start, entry.metadatas.count}) {
+                                        inject_metadatas.emplace_back(implements::internal_construct_tag,
+                                                                      item.key_storage(),
+                                                                      item.value_storage());
+                                    }
+                                    break;
+                                }
                             }
                         }
                     }

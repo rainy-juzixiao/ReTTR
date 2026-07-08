@@ -407,9 +407,23 @@ namespace rettr {
         template <typename Class, typename Getter>
         static property make_readonly(std::string_view name, Getter &&getter, access_levels levels = access_levels::public_access) {
             if constexpr (std::is_same_v<Class, implements::invalid_type_t>) {
-                return property(std::in_place_type<void>, name, std::forward<Getter>(getter), nullptr, nullptr, levels);
+                if constexpr (std::is_invocable_v<Getter>) {
+                    return property(std::in_place_type<void>, name, std::forward<Getter>(getter), nullptr, nullptr, levels);
+                } else {
+                    // Raw pointer to static data: wrap in a lambda to make it callable,
+                    // so the getter/setter accessor path is used and readonly set throws.
+                    return property(std::in_place_type<void>, name,
+                                    [ptr = std::forward<Getter>(getter)]() -> decltype(auto) { return *ptr; },
+                                    nullptr, nullptr, levels);
+                }
             } else {
-                return property(std::in_place_type<Class>, name, std::forward<Getter>(getter), nullptr, &rettr_typeid(Class), levels);
+                if constexpr (std::is_invocable_v<Getter, Class &>) {
+                    return property(std::in_place_type<Class>, name, std::forward<Getter>(getter), nullptr, &rettr_typeid(Class), levels);
+                } else {
+                    return property(std::in_place_type<Class>, name,
+                                    [ptr = std::forward<Getter>(getter)]() -> decltype(auto) { return *ptr; },
+                                    nullptr, &rettr_typeid(Class), levels);
+                }
             }
         }
 
