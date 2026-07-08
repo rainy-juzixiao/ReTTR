@@ -1,3 +1,5 @@
+#if RETTR_HAS_CXX26_STATIC_REFLECTION
+
 #include <rettr/registration>
 #include <print>
 
@@ -114,3 +116,9 @@ int main() {
     visit(rettr::type::from<MyStruct::t>());
     return 0;
 }
+
+#else
+
+int main() {}
+
+#endif
