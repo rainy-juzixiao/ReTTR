@@ -2967,6 +2967,21 @@ namespace rettr::helper {
 }
 
 namespace rettr::helper {
+    /**
+     * @brief C++17-compatible replacement for std::is_bounded_array (C++20).
+     *        Checks if T is an array with a known bound (e.g. T[N]).
+     *
+     * @tparam T The type to check
+     */
+    template <typename T>
+    struct is_bounded_array : std::false_type {};
+
+    template <typename T, std::size_t N>
+    struct is_bounded_array<T[N]> : std::true_type {};
+
+    template <typename T>
+    inline constexpr bool is_bounded_array_v = is_bounded_array<T>::value;
+
     template <typename Ty>
     struct pointer_rank : std::integral_constant<std::size_t, 0> {};
 
