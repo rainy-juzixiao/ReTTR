@@ -268,10 +268,24 @@ namespace rettr::implements {
 }
 
 namespace rettr::implements {
+    template<typename Elem>
+    struct array_iter_fallback { using iterator = Elem *; };
+
+    template<typename Elem>
+    struct const_array_iter_fallback { using const_iterator = const Elem *; };
+
     template<typename BasicAny, typename Type>
     struct any_proxy_iterator : BasicAny::iterator::iterator_proxy_vtable {
-        using iterator_t = typename Type::iterator;
-        using const_iterator_t = typename Type::const_iterator;
+        using iterator_t = typename std::conditional_t<
+            helper::has_iterator_v<Type>,
+            Type,
+            array_iter_fallback<std::remove_extent_t<Type>>
+        >::iterator;
+        using const_iterator_t = typename std::conditional_t<
+            helper::has_const_iterator_v<Type>,
+            Type,
+            const_array_iter_fallback<std::remove_extent_t<Type>>
+        >::const_iterator;
         using proxy_t = typename BasicAny::iterator::iterator_proxy_vtable;
         using basic_any = BasicAny;
         using reference = typename basic_any::reference;
@@ -434,7 +448,11 @@ namespace rettr::implements {
 
     template<typename BasicAny, typename Type>
     struct const_any_proxy_iterator : BasicAny::iterator::iterator_proxy_vtable {
-        using iterator_t = typename Type::const_iterator;
+        using iterator_t = typename std::conditional_t<
+            helper::has_const_iterator_v<Type>,
+            Type,
+            const_array_iter_fallback<std::remove_extent_t<Type>>
+        >::const_iterator;
         using proxy_t = typename BasicAny::iterator::iterator_proxy_vtable;
         using basic_any = BasicAny;
         using reference = typename basic_any::reference;

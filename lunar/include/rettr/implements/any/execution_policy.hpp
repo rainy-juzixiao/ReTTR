@@ -22,6 +22,7 @@
 #include <rettr/implements/any/cast.hpp>
 #include <rettr/implements/any/fwd.hpp>
 #include <rettr/implements/any/iteator.hpp>
+#include <rettr/implements/any/raii_manager.hpp>
 
 // NOLINTEND
 
@@ -535,6 +536,28 @@ namespace rettr::implements {
                 }
             }
             return !recv->empty();
+        } else if constexpr (helper::is_bounded_array_v<remove_cvref_t>) {
+            using tuple_t =
+                    std::tuple<bool /* is const */, typename any::reference * /* value */, typename any::iterator *
+                        /* recv */>;
+            using remove_ref_t = std::remove_reference_t<Ty>;
+            using const_as = std::add_const_t<remove_ref_t>;
+            using iterator = any_proxy_iterator<any, remove_cvref_t>;
+            using const_iterator = const_any_proxy_iterator<any, remove_cvref_t>;
+            auto *res = static_cast<tuple_t *>(data);
+            bool is_const = std::get<0>(*res);
+            rettr_let *value = std::get<1>(*res);
+            auto *recv = std::get<2>(*res);
+            if (is_const || value->type().is_const()) {
+                using std::begin;
+                ::new(recv) typename any::iterator(std::in_place_type<const_iterator>,
+                                                   begin(value->template as<const_as>()));
+            } else {
+                using std::begin;
+                ::new(recv) typename any::iterator(std::in_place_type<iterator>,
+                                                   begin(value->template as<remove_ref_t>()));
+            }
+            return !recv->empty();
         }
         return false;
     }
@@ -575,6 +598,28 @@ namespace rettr::implements {
                 }
             }
             return !recv->empty();
+        } else if constexpr (helper::is_bounded_array_v<remove_cvref_t>) {
+            using tuple_t =
+                    std::tuple<bool /* is const */, typename any::reference * /* value */, typename any::iterator *
+                        /* recv */>;
+            using remove_ref_t = std::remove_reference_t<Ty>;
+            using const_as = std::add_const_t<remove_ref_t>;
+            using iterator = any_proxy_iterator<any, remove_cvref_t>;
+            using const_iterator = const_any_proxy_iterator<any, remove_cvref_t>;
+            auto *res = static_cast<tuple_t *>(data);
+            bool is_const = std::get<0>(*res);
+            rettr_let *value = std::get<1>(*res);
+            auto *recv = std::get<2>(*res);
+            if (is_const || value->type().is_const()) {
+                using std::end;
+                ::new(recv) typename any::iterator(std::in_place_type<const_iterator>,
+                                                   end(value->template as<const_as>()));
+            } else {
+                using std::end;
+                ::new(recv) typename any::iterator(std::in_place_type<iterator>,
+                                                   end(value->template as<remove_ref_t>()));
+            }
+            return !recv->empty();
         }
         return false;
     }
@@ -582,10 +627,65 @@ namespace rettr::implements {
 
 namespace rettr::implements {
     template<typename Ty, typename BasicAnyImpl>
-    bool any_execution_policy::invoke_impl(operation op, void *const data) {
+    bool any_execution_policy::invoke_impl(operation op, ::rettr::any *this_, void *const data) {
         using any = BasicAnyImpl;
         using remove_cvref_t = helper::remove_cvref_t<Ty>;
-        if constexpr (!std::is_same_v<std::decay_t<Ty>, any>) {
+        if constexpr (std::is_same_v<std::decay_t<Ty>, any>) {
+            // This any wraps another any (created via wrap_any_tag).
+            // Unwrap the inner any and forward operations to it.
+            // For each operation, patch the data tuple to replace pointers
+            // to wrapper objects with pointers to their inner any objects,
+            // so the inner executor's as<Ty>() calls target the actual stored value.
+            auto *dependent_this = static_cast<any *>(this_);
+            auto &inner_any = dependent_this->template as<any &>();
+            switch (op) {
+                case operation::add:
+                case operation::subtract:
+                case operation::multiply:
+                case operation::divide:
+                case operation::mod: {
+                    auto *res = static_cast<std::tuple<const any *, const any *, any *> *>(data);
+                    auto &left_inner = const_cast<any &>((*std::get<0>(*res)).template as<any &>());
+                    auto &right_inner = const_cast<any &>((*std::get<1>(*res)).template as<any &>());
+                    auto patched = std::make_tuple(static_cast<const any *>(&left_inner),
+                                                   static_cast<const any *>(&right_inner),
+                                                   std::get<2>(*res));
+                    return inner_any.storage.executer->invoke(op, &inner_any, &patched);
+                }
+                case operation::compare: {
+                    auto *res = static_cast<const std::tuple<const any *, const any *, any_compare_operation> *>(data);
+                    auto &left_inner = const_cast<any &>((*std::get<0>(*res)).template as<any &>());
+                    auto &right_inner = const_cast<any &>((*std::get<1>(*res)).template as<any &>());
+                    auto patched = std::make_tuple(static_cast<const any *>(&left_inner),
+                                                   static_cast<const any *>(&right_inner),
+                                                   std::get<2>(*res));
+                    return inner_any.storage.executer->invoke(op, &inner_any, &patched);
+                }
+                case operation::incr_prefix:
+                case operation::decr_prefix:
+                case operation::incr_postfix:
+                case operation::decr_postfix: {
+                    auto *res = static_cast<std::tuple<any *, any *> *>(data);
+                    auto patched = std::make_tuple(&inner_any, std::get<1>(*res));
+                    return inner_any.storage.executer->invoke(op, &inner_any, &patched);
+                }
+                case operation::dereference: {
+                    auto *res = static_cast<std::tuple<bool, any *, any *> *>(data);
+                    auto patched = std::make_tuple(std::get<0>(*res), &inner_any, std::get<2>(*res));
+                    return inner_any.storage.executer->invoke(op, &inner_any, &patched);
+                }
+                case operation::construct_from: {
+                    // Data: tuple<bool, reference*, any*>
+                    // Patch the reference to point to a reference to the inner any
+                    auto *res = static_cast<std::tuple<bool, typename any::reference *, any *> *>(data);
+                    typename any::reference inner_ref(inner_any);
+                    auto patched = std::make_tuple(std::get<0>(*res), &inner_ref, std::get<2>(*res));
+                    return inner_any.storage.executer->invoke(op, &inner_any, &patched);
+                }
+                default:
+                    return inner_any.storage.executer->invoke(op, &inner_any, data);
+            }
+        } else {
             switch (op) {
                 case operation::compare: {
                     rettr_let res = static_cast<
@@ -835,6 +935,25 @@ namespace rettr::implements {
                                           }
                                       }
                                       has_value = recv.has_value();
+                                  } else if constexpr (helper::is_bounded_array_v<remove_cvref_t> &&
+                                                        helper::has_operator_index_v<remove_ref_t>) {
+                                      using elem_t = std::remove_extent_t<remove_cvref_t>;
+                                      std::size_t index{};
+                                      if (key->template is<std::size_t>()) {
+                                          index = key->template as<std::size_t>();
+                                      } else if (key->template is_convertible<std::size_t>()) {
+                                          index = key->template convert<std::size_t>();
+                                      }
+                                      if (is_const || value->type().is_const()) {
+                                          if constexpr (helper::has_operator_index_v<const_as>) {
+                                              const auto &extract = (*std::get<1>(*res)).template as<const_as>();
+                                              ::new(&recv) any(extract[index]);
+                                          }
+                                      } else {
+                                          auto &extract = (*std::get<1>(*res)).template as<Ty>();
+                                          ::new(&recv) any(extract[index]);
+                                      }
+                                      has_value = recv.has_value();
                                   } else if constexpr (is_index_tuple_v<Ty>) {
                                       std::size_t index{0};
                                       if (key->template is<std::size_t>()) {
@@ -1012,6 +1131,9 @@ namespace rettr::implements {
                     std::size_t &new_size = *std::get<1>(*res);
                     if constexpr (helper::has_size_v<const_as>) {
                         new_size = std::size(left->template as<Ty>());
+                        return true;
+                    } else if constexpr (helper::is_bounded_array_v<remove_cvref_t>) {
+                        new_size = std::extent_v<remove_cvref_t>;
                         return true;
                     }
                     break;
@@ -1196,12 +1318,12 @@ namespace rettr::implements {
         static_assert(size != 0, "Cannot process a invalid receiver!");
         std::array<any_binding_package, size> array;
         std::size_t count{};
-        bool ret = executer->invoke(implements::any_operation::query_for_is_tuple_like, &count);
+        bool ret = executer->invoke(implements::any_operation::query_for_is_tuple_like, const_cast<BasicAny *>(view), &count);
         if (!ret || count != size) {
             return false;
         }
         std::tuple tuple{view, UseConst, make_array_range(array)};
-        ret = executer->invoke(implements::any_operation::destructre_this_pack, &tuple);
+        ret = executer->invoke(implements::any_operation::destructre_this_pack, const_cast<BasicAny *>(view), &tuple);
         if (!ret) {
             return false;
         }

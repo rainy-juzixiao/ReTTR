@@ -262,7 +262,7 @@ namespace rettr::implements {
         bool is_compatible_impl(array_range<class typeinfo> paramlist,
                                 std::index_sequence<I...>) const {
             static auto &target_paramlist = implements::param_types_res<Args...>();
-            return ((I < paramlist.size() ? paramlist[I].is_compatible(target_paramlist[I]) : true) && ...); // NOLINT
+            return ((I < paramlist.raw_size() ? paramlist[I].is_compatible(target_paramlist[I]) : true) && ...); // NOLINT
         }
 
         template <std::size_t... I>

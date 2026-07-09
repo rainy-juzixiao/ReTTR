@@ -18,6 +18,8 @@
 #include <rettr/core/prerequisites.hpp>
 #include <rettr/implements/any/fwd.hpp>
 
+#include "raii_manager.hpp"
+
 #if RETTR_USING_MSVC
 #pragma warning(push)
 #pragma warning(disable : 26439)
@@ -62,6 +64,23 @@ namespace rettr::implements {
         any_reference() : basic_any{} {
         }
 
+        /// Construct from an existing basic_any by storing a reference to it.
+        /// This allows property accessors to return any_reference for member objects of type any.
+        any_reference(basic_any &value) {
+            this->storage.ptr = std::addressof(value);
+            this->storage.type_data = reinterpret_cast<std::uintptr_t>(&rettr_typeid(basic_any &)) |
+                                      static_cast<std::uintptr_t>(any_representation::reference);
+            this->storage.executer = &any_execution_policy_object<basic_any &, basic_any>;
+        }
+
+        /// Construct from a const basic_any by storing a const reference.
+        any_reference(const basic_any &value) {
+            this->storage.ptr = std::addressof(value);
+            this->storage.type_data = reinterpret_cast<std::uintptr_t>(&rettr_typeid(const basic_any &)) |
+                                      static_cast<std::uintptr_t>(any_representation::reference);
+            this->storage.executer = &any_execution_policy_object<const basic_any &, basic_any>;
+        }
+
         template <typename ValueType,
                   std::enable_if_t<!helper::is_any_of_v<std::decay_t<ValueType>, basic_any, any_reference>, int> = 0>
         any_reference(ValueType &&value) : basic_any{std::in_place_type<decltype(value)>, std::forward<ValueType>(value)} {
@@ -79,7 +98,7 @@ namespace rettr::implements {
         template <typename ValueType>
         any_reference &operator=(ValueType &&value) {
             auto tuple = std::make_tuple(this, BasicAny{std::forward<ValueType>(value)});
-            this->storage.executer->invoke(any_operation::assign, &tuple);
+            this->storage.executer->invoke(any_operation::assign, static_cast<basic_any *>(this), &tuple);
             return *this;
         }
 
@@ -88,7 +107,7 @@ namespace rettr::implements {
                 return *this;
             }
             auto tuple = std::make_tuple(this, static_cast<const basic_any &>(right));
-            this->storage.executer->invoke(any_operation::assign, &tuple);
+            this->storage.executer->invoke(any_operation::assign, static_cast<basic_any *>(this), &tuple);
             return *this;
         }
 
@@ -97,7 +116,7 @@ namespace rettr::implements {
                 return *this;
             }
             auto tuple = std::make_tuple(this, static_cast<basic_any &&>(right));
-            this->storage.executer->invoke(any_operation::assign, &tuple);
+            this->storage.executer->invoke(any_operation::assign, static_cast<basic_any *>(this), &tuple);
             return *this;
         }
 
@@ -116,14 +135,14 @@ namespace rettr::implements {
         basic_any construct_from_this() {
             basic_any any{};
             auto tuple = std::make_tuple(false, this, &any);
-            basic_any::storage.executer->invoke(implements::any_operation::construct_from, &tuple);
+            basic_any::storage.executer->invoke(implements::any_operation::construct_from, static_cast<basic_any *>(this), &tuple);
             return any;
         }
 
         basic_any construct_from_this() const {
             basic_any any{};
             auto tuple = std::make_tuple(true, this, &any);
-            basic_any::storage.executer->invoke(implements::any_operation::construct_from, &tuple);
+            basic_any::storage.executer->invoke(implements::any_operation::construct_from, static_cast<basic_any *>(this), &tuple);
             return any;
         }
 

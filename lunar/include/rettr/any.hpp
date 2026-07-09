@@ -62,6 +62,7 @@ namespace rettr {
     class any {
     public:
         friend class implements::any_reference<any>;
+        friend struct implements::any_execution_policy;
 
         template <typename... Handlers>
         using matcher = implements::any_matcher<any, Handlers...>;
@@ -104,6 +105,16 @@ namespace rettr {
          */
         RETTR_INLINE any(any &&right) noexcept {
             move_from(right);
+        }
+
+        template <typename T>
+        any(wrap_any_tag, T &&value) { // NOLINT
+            if constexpr (helper::is_any_of_v<std::decay_t<T>, any>) {
+                if (!value.has_value()) {
+                    return;
+                }
+            }
+            emplace_<any>(std::forward<T>(value));
         }
 
         template <
@@ -211,16 +222,45 @@ namespace rettr {
             return info != nullptr ? *info : rettr_typeid(void);
         }
 
+        RETTR_NODISCARD const typeinfo& unwrapped_type() const noexcept {
+            const typeinfo *const info = type_info();
+            if (info == nullptr) {
+                return rettr_typeid(void);
+            }
+            // For wrapped any (stored type is any), transparently return the
+            // inner any's type so is<T>() / as<T>() see the wrapped value's type.
+            if (info->remove_cvref() == rettr_typeid(any)) {
+                return static_cast<const any *>(target_as_void_ptr())->type();
+            }
+            return *info;
+        }
+
         RETTR_INLINE_NODISCARD typeinfo inner_decleartion_type(any_inner_declaertion query) const noexcept {
             typeinfo type;
             std::tuple tuple{query, &type};
-            storage.executer->invoke(implements::any_operation::query_inner_declaertion_type, &tuple);
+            storage.executer->invoke(implements::any_operation::query_inner_declaertion_type, const_cast<any *>(this), &tuple);
             return type;
         }
 
         template <typename Type>
         RETTR_ANY_AS_NODISCARD auto as() -> decltype(auto) {
-            if (!is<Type>()) {
+            const typeinfo *const raw = type_info();
+            if (rettr_unlikely(!is<Type>())) {
+                if (raw->remove_cvref() == rettr_typeid(any)) {
+                    if (!std::is_same_v<std::decay_t<Type>, any>) {
+                        auto *inner = static_cast<any *>(const_cast<void *>(target_as_void_ptr()));
+                        while (true) {
+                            const typeinfo *ir = inner->type_info();
+                            if (ir == nullptr || ir->remove_cvref() != rettr_typeid(any)) {
+                                break;
+                            }
+                            inner = static_cast<any *>(const_cast<void *>(inner->target_as_void_ptr()));
+                        }
+                        return implements::as_impl<Type>(inner->target_as_void_ptr(), inner->unwrapped_type());
+                    }
+                    return implements::as_impl<Type>(target_as_void_ptr(),
+                                                     rettr_typeid(helper::remove_cvref_t<std::decay_t<Type>>));
+                }
                 if (!implements::is_as_runnable<Type>(type())) {
                     throw std::bad_cast();
                 }
@@ -332,7 +372,7 @@ namespace rettr {
         friend bool operator<(const any &left, const any &right) {
             if (left.has_value() && right.has_value()) {
                 std::tuple tuple{&left, &right, implements::any_compare_operation::less};
-                return left.storage.executer->invoke(implements::any_operation::compare, &tuple);
+                return left.storage.executer->invoke(implements::any_operation::compare, const_cast<any *>(&left), &tuple);
             }
             return false;
         }
@@ -340,7 +380,7 @@ namespace rettr {
         friend bool operator<=(const any &left, const any &right) {
             if (left.has_value() && right.has_value()) {
                 std::tuple tuple{&left, &right, implements::any_compare_operation::less_eq};
-                return left.storage.executer->invoke(implements::any_operation::compare, &tuple);
+                return left.storage.executer->invoke(implements::any_operation::compare, const_cast<any *>(&left), &tuple);
             }
             return false;
         }
@@ -348,7 +388,7 @@ namespace rettr {
         friend bool operator==(const any &left, const any &right) {
             if (left.has_value() && right.has_value()) {
                 std::tuple tuple{&left, &right, implements::any_compare_operation::eq};
-                return left.storage.executer->invoke(implements::any_operation::compare, &tuple);
+                return left.storage.executer->invoke(implements::any_operation::compare, const_cast<any *>(&left), &tuple);
             }
             return false;
         }
@@ -356,7 +396,7 @@ namespace rettr {
         friend bool operator>=(const any &left, const any &right) {
             if (left.has_value() && right.has_value()) {
                 std::tuple tuple{&left, &right, implements::any_compare_operation::greater_eq};
-                return left.storage.executer->invoke(implements::any_operation::compare, &tuple);
+                return left.storage.executer->invoke(implements::any_operation::compare, const_cast<any *>(&left), &tuple);
             }
             return false;
         }
@@ -364,7 +404,7 @@ namespace rettr {
         friend bool operator>(const any &left, const any &right) {
             if (left.has_value() && right.has_value()) {
                 std::tuple tuple{&left, &right, implements::any_compare_operation::greater};
-                return left.storage.executer->invoke(implements::any_operation::compare, &tuple);
+                return left.storage.executer->invoke(implements::any_operation::compare, const_cast<any *>(&left), &tuple);
             }
             return false;
         }
@@ -379,100 +419,100 @@ namespace rettr {
         friend any operator+(const any &left, const any &right) {
             any recv;
             std::tuple tuple{&left, &right, &recv};
-            left.storage.executer->invoke(implements::any_operation::add, &tuple);
+            left.storage.executer->invoke(implements::any_operation::add, const_cast<any *>(&left), &tuple);
             return recv;
         }
 
         friend any operator-(const any &left, const any &right) {
             any recv;
             std::tuple tuple{&left, &right, &recv};
-            left.storage.executer->invoke(implements::any_operation::subtract, &tuple);
+            left.storage.executer->invoke(implements::any_operation::subtract, const_cast<any *>(&left), &tuple);
             return recv;
         }
 
         friend any operator%(const any &left, const any &right) {
             any recv;
             std::tuple tuple{&left, &right, &recv};
-            left.storage.executer->invoke(implements::any_operation::mod, &tuple);
+            left.storage.executer->invoke(implements::any_operation::mod, const_cast<any *>(&left), &tuple);
             return recv;
         }
 
         friend any operator*(const any &left, const any &right) {
             any recv;
             std::tuple tuple{&left, &right, &recv};
-            left.storage.executer->invoke(implements::any_operation::multiply, &tuple);
+            left.storage.executer->invoke(implements::any_operation::multiply, const_cast<any *>(&left), &tuple);
             return recv;
         }
 
         friend any operator/(const any &left, const any &right) {
             any recv;
             std::tuple tuple{&left, &right, &recv};
-            left.storage.executer->invoke(implements::any_operation::divide, &tuple);
+            left.storage.executer->invoke(implements::any_operation::divide, const_cast<any *>(&left), &tuple);
             return recv;
         }
 
         any operator--() {
             any recv;
             std::tuple tuple{this, &recv};
-            storage.executer->invoke(implements::any_operation::decr_prefix, &tuple);
+            storage.executer->invoke(implements::any_operation::decr_prefix, const_cast<any *>(this), &tuple);
             return recv;
         }
 
         any operator++() {
             any recv;
             std::tuple tuple{this, &recv};
-            storage.executer->invoke(implements::any_operation::incr_prefix, &tuple);
+            storage.executer->invoke(implements::any_operation::incr_prefix, const_cast<any *>(this), &tuple);
             return recv;
         }
 
         any operator++(int) {
             any recv;
             std::tuple tuple{this, &recv};
-            storage.executer->invoke(implements::any_operation::incr_postfix, &tuple);
+            storage.executer->invoke(implements::any_operation::incr_postfix, const_cast<any *>(this), &tuple);
             return recv;
         }
 
         any operator--(int) {
             any recv;
             std::tuple tuple{this, &recv};
-            storage.executer->invoke(implements::any_operation::decr_postfix, &tuple);
+            storage.executer->invoke(implements::any_operation::decr_postfix, const_cast<any *>(this), &tuple);
             return recv;
         }
 
         any operator*() const {
             any recv;
             std::tuple tuple{true, this, &recv};
-            storage.executer->invoke(implements::any_operation::dereference, &tuple);
+            storage.executer->invoke(implements::any_operation::dereference, const_cast<any *>(this), &tuple);
             return recv;
         }
 
         any &operator+=(const any &right) {
             std::tuple tuple{this, &right, this};
-            storage.executer->invoke(implements::any_operation::add, &tuple);
+            storage.executer->invoke(implements::any_operation::add, const_cast<any *>(this), &tuple);
             return *this;
         }
 
         any &operator-=(const any &right) {
             std::tuple tuple{this, &right, this};
-            storage.executer->invoke(implements::any_operation::subtract, &tuple);
+            storage.executer->invoke(implements::any_operation::subtract, const_cast<any *>(this), &tuple);
             return *this;
         }
 
         any &operator/=(const any &right) {
             std::tuple tuple{this, &right, this};
-            storage.executer->invoke(implements::any_operation::divide, &tuple);
+            storage.executer->invoke(implements::any_operation::divide, const_cast<any *>(this), &tuple);
             return *this;
         }
 
         any &operator%=(const any &right) {
             std::tuple tuple{this, &right, this};
-            storage.executer->invoke(implements::any_operation::mod, &tuple);
+            storage.executer->invoke(implements::any_operation::mod, const_cast<any *>(this), &tuple);
             return *this;
         }
 
         any &operator*=(const any &right) {
             std::tuple tuple{this, &right, this};
-            storage.executer->invoke(implements::any_operation::multiply, &tuple);
+            storage.executer->invoke(implements::any_operation::multiply, const_cast<any *>(this), &tuple);
             return *this;
         }
 
@@ -480,7 +520,7 @@ namespace rettr {
             reference ret;
             any the_index{std::in_place_type<std::size_t>, index};
             std::tuple tuple{false, this, &ret, &the_index};
-            storage.executer->invoke(implements::any_operation::access_element, &tuple);
+            storage.executer->invoke(implements::any_operation::access_element, const_cast<any *>(this), &tuple);
             return ret;
         }
 
@@ -488,49 +528,49 @@ namespace rettr {
             const_reference ret;
             any the_index{std::in_place_type<std::size_t>, index};
             std::tuple tuple{true, this, &ret, &the_index};
-            storage.executer->invoke(implements::any_operation::access_element, &tuple);
+            storage.executer->invoke(implements::any_operation::access_element, const_cast<any *>(this), &tuple);
             return ret;
         }
 
         reference operator[](const any &key) {
             reference ret;
             std::tuple tuple{false, this, &ret, &key};
-            storage.executer->invoke(implements::any_operation::access_element, &tuple);
+            storage.executer->invoke(implements::any_operation::access_element, const_cast<any *>(this), &tuple);
             return ret;
         }
 
         const_reference operator[](const any &key) const {
             const_reference ret;
             std::tuple tuple{true, this, &ret, &key};
-            storage.executer->invoke(implements::any_operation::access_element, &tuple);
+            storage.executer->invoke(implements::any_operation::access_element, const_cast<any *>(this), &tuple);
             return ret;
         }
 
         RETTR_NODISCARD iterator begin() {
             iterator ret{};
             std::tuple tuple{false, this, &ret};
-            storage.executer->invoke(implements::any_operation::container_begin, &tuple);
+            storage.executer->invoke(implements::any_operation::container_begin, const_cast<any *>(this), &tuple);
             return ret;
         }
 
         RETTR_NODISCARD const_iterator begin() const {
             const_iterator ret{};
             std::tuple tuple{true, this, &ret};
-            storage.executer->invoke(implements::any_operation::container_begin, &tuple);
+            storage.executer->invoke(implements::any_operation::container_begin, const_cast<any *>(this), &tuple);
             return ret;
         }
 
         RETTR_NODISCARD iterator end() {
             iterator ret{};
             std::tuple tuple{false, this, &ret};
-            storage.executer->invoke(implements::any_operation::container_end, &tuple);
+            storage.executer->invoke(implements::any_operation::container_end, const_cast<any *>(this), &tuple);
             return ret;
         }
 
         RETTR_NODISCARD const_iterator end() const {
             const_iterator ret{};
             std::tuple tuple{true, this, &ret};
-            storage.executer->invoke(implements::any_operation::container_end, &tuple);
+            storage.executer->invoke(implements::any_operation::container_end, const_cast<any *>(this), &tuple);
             return ret;
         }
 
@@ -542,7 +582,7 @@ namespace rettr {
         RETTR_NODISCARD std::size_t hash_code() const noexcept {
             std::size_t ret{};
             std::tuple tuple{this, &ret};
-            if (storage.executer->invoke(implements::any_operation::eval_hash, &tuple)) {
+            if (storage.executer->invoke(implements::any_operation::eval_hash, const_cast<any *>(this), &tuple)) {
                 return ret;
             }
             std::terminate();
@@ -606,15 +646,26 @@ namespace rettr {
             constexpr bool is_char = std::is_same_v<CharType, char>;
             std::tuple<std::basic_ostream<CharType> * /* ostream */, const any * /* any */> params{&left, &right};
             std::tuple<bool /* is_char/is_wchar_t */, void * /* params */> tuple{is_char, &params};
-            if (const bool ok = right.storage.executer->invoke(implements::any_operation::output_any, &tuple); !ok) {
+            if (const bool ok = right.storage.executer->invoke(implements::any_operation::output_any, const_cast<any *>(&right), &tuple); !ok) {
                 left.setstate(std::ios::ios_base::failbit);
             }
             return left;
         }
 
         template <typename Type>
-        RETTR_NODISCARD bool is() const noexcept {
+        RETTR_NODISCARD bool is() const noexcept { // NOLINT
             return type() == rettr_typeid(Type);
+        }
+
+        template <typename Type>
+        RETTR_NODISCARD bool unwraped_is() const noexcept { // NOLINT
+            if (type() == rettr_typeid(Type)) {
+                return true;
+            }
+            if (type().remove_cvref() == rettr_typeid(any)) {
+                return static_cast<const any *>(target_as_void_ptr())->template unwraped_is<Type>();
+            }
+            return false;
         }
 
         template <typename... Types>
@@ -669,39 +720,39 @@ namespace rettr {
 
         void swap_value(any &reference) {
             auto tuple = std::make_tuple(this, &reference);
-            storage.executer->invoke(implements::any_operation::swap_value, &tuple);
+            storage.executer->invoke(implements::any_operation::swap_value, const_cast<any *>(this), &tuple);
         }
 
         const_iterator insert(const const_iterator &pos, const any &value) {
             const_iterator iterator;
             std::tuple tuple{this, &iterator, &pos, &value};
-            storage.executer->invoke(implements::any_operation::container_insert_seq_like, &tuple);
+            storage.executer->invoke(implements::any_operation::container_insert_seq_like, const_cast<any *>(this), &tuple);
             return iterator;
         }
 
         std::pair<const_iterator, bool> insert_as_maplike(const any &key) {
             std::pair<const_iterator, bool> ret_pair;
             std::tuple tuple{this, &ret_pair, &key, nullptr};
-            storage.executer->invoke(implements::any_operation::container_insert_map_like, &tuple);
+            storage.executer->invoke(implements::any_operation::container_insert_map_like, const_cast<any *>(this), &tuple);
             return ret_pair;
         }
 
         std::pair<const_iterator, bool> insert_as_maplike(const any &key, const any &value) {
             std::pair<const_iterator, bool> ret_pair;
             std::tuple tuple{this, &ret_pair, &key, &value};
-            storage.executer->invoke(implements::any_operation::container_insert_map_like, &tuple);
+            storage.executer->invoke(implements::any_operation::container_insert_map_like, const_cast<any *>(this), &tuple);
             return ret_pair;
         }
 
         void resize(const std::size_t new_size) {
             std::tuple tuple{this, new_size};
-            storage.executer->invoke(implements::any_operation::container_resize, &tuple);
+            storage.executer->invoke(implements::any_operation::container_resize, const_cast<any *>(this), &tuple);
         }
 
         RETTR_NODISCARD std::size_t size() const {
             std::size_t size{};
             std::tuple tuple{this, &size};
-            storage.executer->invoke(implements::any_operation::container_size, &tuple);
+            storage.executer->invoke(implements::any_operation::container_size, const_cast<any *>(this), &tuple);
             return size;
         }
 
@@ -713,7 +764,7 @@ namespace rettr {
             reference reference;
             if (has_value()) {
                 auto tuple = std::make_tuple(true, this, &reference);
-                storage.executer->invoke(Operation, &tuple);
+                storage.executer->invoke(Operation, const_cast<any *>(this), &tuple);
             }
             return reference;
         }
@@ -723,7 +774,7 @@ namespace rettr {
             const_reference reference;
             if (has_value()) {
                 auto tuple = std::make_tuple(true, this, &reference);
-                storage.executer->invoke(Operation, &tuple);
+                storage.executer->invoke(Operation, const_cast<any *>(this), &tuple);
             }
             return reference;
         }
@@ -770,7 +821,13 @@ namespace rettr {
             using decayed = std::decay_t<Decayed>;
             if constexpr (std::is_reference_v<Decayed>) {
                 using remove_reference = std::remove_reference_t<Decayed>;
-                if constexpr (!std::is_array_v<remove_reference>) {
+                if constexpr (std::is_function_v<remove_reference> ||
+                              (std::is_pointer_v<remove_reference> &&
+                               std::is_function_v<std::remove_pointer_t<remove_reference>>)) {
+                    // Function references and function pointer references cannot be stored
+                    // as const void*. Decay to the value type and store by value.
+                    return emplace_<decayed>(std::forward<Types>(args)...);
+                } else if constexpr (!std::is_array_v<remove_reference>) {
                     return emplace_ref<Decayed>(std::forward<Types>(args)...);
                 } else {
                     return emplace_<decayed>(std::forward<Types>(args)...);
@@ -842,6 +899,10 @@ namespace rettr {
 
     RETTR_INLINE void swap(any &left, any &right) noexcept {
         left.swap(right);
+    }
+
+    RETTR_INLINE any wrap_any(any &value) noexcept {
+        return any(wrap_any_tag{}, value);
     }
 }
 

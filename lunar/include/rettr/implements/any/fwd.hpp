@@ -86,6 +86,12 @@ namespace rettr::implements {
     struct any_proxy_iterator;
 }
 
+namespace rettr {
+    /// Tag type to select the wrapping constructor of any.
+    /// Usage: any(wrap_any_tag{}, value) wraps value inside an any.
+    struct wrap_any_tag {};
+}
+
 namespace rettr::implements {
     template <typename Ty>
     using add_const_helper_for_access_element =
@@ -212,10 +218,10 @@ namespace rettr::implements {
     struct any_execution_policy {
         using operation = any_operation;
 
-        using invoke_fn = bool(operation op, void *data) noexcept;
+        using invoke_fn = bool(operation op, ::rettr::any *this_, void *data) noexcept;
 
         template <typename Ty, typename BasicAnyImpl>
-        static bool invoke_impl(operation op, void *data);
+        static bool invoke_impl(operation op, ::rettr::any *this_, void *data);
 
         invoke_fn *invoke;
     };
@@ -227,8 +233,8 @@ namespace rettr::implements {
      */
     template <typename Ty, typename BasicAnyImpl>
     inline const any_execution_policy any_execution_policy_object = {
-        +[](const any_execution_policy::operation op, void *const data) noexcept -> bool {
-            return any_execution_policy::invoke_impl<Ty, BasicAnyImpl>(op, data);
+        +[](const any_execution_policy::operation op, ::rettr::any *this_, void *const data) noexcept -> bool {
+            return any_execution_policy::invoke_impl<Ty, BasicAnyImpl>(op, this_, data);
         }};
 
     template <bool UseConst, typename Ty, typename BasicAny>
