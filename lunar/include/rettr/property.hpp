@@ -214,11 +214,34 @@ namespace rettr {
                             }
                             ptr = static_cast<Class *>(object.target_as_void_ptr());
                         }
-                        std::invoke(property_ptr, *ptr) = any.convert<Type>();
+                        if constexpr (rettr::helper::is_bounded_array_v<Type>) {
+                            auto *dest = std::invoke(property_ptr, *ptr);
+                            const void *src = any.target_as_void_ptr();
+                            if (src && dest) {
+                                std::memcpy(dest, src, sizeof(Type));
+                            }
+                        } else {
+                            if constexpr (std::is_same_v<Type, ::rettr::any>) {
+                                std::invoke(property_ptr, *ptr) = any;
+                            } else {
+                                std::invoke(property_ptr, *ptr) = any.convert<Type>();
+                            }
+                        }
                     }
                 } else {
                     if constexpr (std::negation_v<std::is_const<Type> >) {
-                        *property_ptr = any.convert<Type>();
+                        if constexpr (rettr::helper::is_bounded_array_v<Type>) {
+                            const void *src = any.target_as_void_ptr();
+                            if (src && property_ptr) {
+                                std::memcpy(property_ptr, src, sizeof(Type));
+                            }
+                        } else {
+                            if constexpr (std::is_same_v<Type, ::rettr::any>) {
+                                *property_ptr = any;
+                            } else {
+                                *property_ptr = any.convert<Type>();
+                            }
+                        }
                     }
                 }
             }
@@ -335,7 +358,12 @@ namespace rettr {
         private:
             any::reference get_impl(object_view object) const noexcept {
                 if constexpr (is_member) {
-                    return {std::invoke(getter_, object.as<Class>())};
+                    using invoke_result = decltype(std::invoke(getter_, std::declval<Class &>()));
+                    if constexpr (std::is_reference_v<invoke_result>) {
+                        return {std::invoke(getter_, object.as<Class>())};
+                    } else {
+                        return {implements::internal_construct_tag, std::invoke(getter_, object.as<Class>())};
+                    }
                 } else {
                     if constexpr (std::is_reference_v<std::invoke_result_t<Getter> >) {
                         return {std::invoke(getter_)};
