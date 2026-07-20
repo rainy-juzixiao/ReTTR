@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.4.0](https://github.com/rainy-juzixiao/ReTTR/compare/v1.3.1...v1.4.0) (2026-07-20)
+
+
+### Features
+
+* Added is_bounded_array/is_bounded_array_v. ([9958581](https://github.com/rainy-juzixiao/ReTTR/commit/995858182e296472b35388e99c8bed2c6201030c))
+* **any:** add any-wrapping support and bounded array iteration ([48616af](https://github.com/rainy-juzixiao/ReTTR/commit/48616af30a8633b6ae954a360be75dcb5eca23e3))
+
+
+### Bug Fixes
+
+* Fix some performance issues. ([2d1387a](https://github.com/rainy-juzixiao/ReTTR/commit/2d1387a8c20c514534eee2561cd48a9612988d01))
+* **property:** Fix some type issues in property. ([044ed3b](https://github.com/rainy-juzixiao/ReTTR/commit/044ed3bde4e61e39a767196d47577cf552a91785))
+
 ## [1.3.1](https://github.com/rainy-juzixiao/ReTTR/compare/v1.3.0...v1.3.1) (2026-07-08)
 
 
