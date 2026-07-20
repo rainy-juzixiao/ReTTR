@@ -205,6 +205,10 @@ namespace rettr {
             std::swap(pred_, right.pred_);
         }
 
+        size_type raw_size() const noexcept {
+            return size_;
+        }
+
     private:
         template <typename C>
         RETTR_CONSTEXPR20 static auto data(std::vector<C> &value) noexcept {

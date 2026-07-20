@@ -246,7 +246,7 @@ namespace rettr::implements {
         }
 
         any dynamic_invoke(object_view &object, array_range<any> arg_view) override {
-            const std::size_t size = arg_view.size();
+            const std::size_t size = arg_view.raw_size();
             static constexpr std::size_t arity = storage_t::arity;
             static constexpr std::size_t least = arity - storage_t::default_arity;
             void *ptr = nullptr;
@@ -259,7 +259,7 @@ namespace rettr::implements {
             }
             if (size == arity) {
                 const std::size_t args_hash =
-                    std::accumulate(arg_view.begin(), arg_view.end(), std::size_t{0},
+                    std::accumulate(arg_view.data(), arg_view.data() + arg_view.raw_size(), std::size_t{0},
                                     [right = std::size_t{1}](const std::size_t acc, const any &item) mutable {
                                         return acc + static_cast<std::size_t>(item.type().hash_code() * right++);
                                     });

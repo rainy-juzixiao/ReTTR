@@ -41,10 +41,10 @@ namespace rettr {
     }
 
     void *object_view::apply_offset(void *ptr, const rettr::typeinfo &source, const rettr::typeinfo &target) const {
-        auto mytype = reflect_type();
-        if (mytype.empty()) {
-            return implements::apply_offset(ptr, source, target);
+        if (!ptr || source.hash_code() == target.hash_code()) {
+            return ptr;
         }
+        auto mytype = reflect_type();
         auto derived_info = mytype.type_data_->my_class_data.derived_info_func(ptr);
         return implements::apply_offset(derived_info.ptr, derived_info.type.type_info(), target);
     }
